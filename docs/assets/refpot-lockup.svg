@@ -1,25 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
-  <title id="title">RefPot</title>
-  <desc id="desc">An emerald potion bottle holding three linked layers of data beside the RefPot wordmark.</desc>
-  <defs>
-    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9fff0"/><stop offset="1" stop-color="#46b995"/></linearGradient>
-    <linearGradient id="potion" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#39ddae"/><stop offset="1" stop-color="#077d67"/></linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8dd9a"/><stop offset="1" stop-color="#ba8550"/></linearGradient>
-  </defs>
-  <rect width="1200" height="440" rx="36" fill="#101b22"/>
-  <circle cx="232" cy="225" r="163" fill="#17332f"/>
-  <path d="M196 100h72v64c0 16 17 28 37 43 28 20 43 46 43 77 0 53-43 84-116 84s-116-31-116-84c0-31 15-57 43-77 20-15 37-27 37-43z" fill="#173c37" stroke="url(#glass)" stroke-width="9" stroke-linejoin="round"/>
-  <path d="M134 258c29-13 54 12 98 0s70-12 98 0c5 9 7 18 7 27 0 44-38 72-105 72s-105-28-105-72c0-9 2-18 7-27z" fill="url(#potion)"/>
-  <rect x="185" y="90" width="94" height="22" rx="8" fill="url(#glass)"/>
-  <path d="M202 65h60l-4 27h-52z" fill="url(#gold)"/>
-  <path d="M164 229c-15 14-23 29-24 45" stroke="#e1fff3" stroke-opacity=".75" stroke-width="8" stroke-linecap="round" fill="none"/>
-  <g fill="none" stroke="#d3fff0" stroke-width="3.5">
-    <ellipse cx="232" cy="283" rx="40" ry="10"/>
-    <path d="M192 283v18c0 6 18 10 40 10s40-4 40-10v-18M192 300v18c0 6 18 10 40 10s40-4 40-10v-18"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">RefPot logo</title>
+  <desc id="desc">Minimal RefPot lockup using the ModePot family mark. A custom relational engine. A simple Python ORM. Planned, not released.</desc>
+  <rect width="1200" height="900" fill="#090C11"/>
+  <line x1="456" y1="220" x2="456" y2="680" stroke="#2A3039" stroke-width="2"/>
+  <g transform="translate(98 270) scale(2.75)">
+    <path d="M44 22h10v20c0 5-2.3 9.6-6.2 12.4C34.1 64.3 26 78.2 26 93c0 17 12.7 25 38 25s38-8 38-25c0-14.8-8.1-28.7-21.8-38.6C76.3 51.6 74 47 74 42V22h10" fill="none" stroke="#58DFB4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="none" stroke="#58DFB4" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="64" cy="76" rx="19" ry="6"/>
+      <path d="M45 76v14c0 3.3 8.5 6 19 6s19-2.7 19-6V76M45 89v14c0 3.3 8.5 6 19 6s19-2.7 19-6V89"/>
+    </g>
   </g>
-  <circle cx="259" cy="220" r="8" fill="#72ebc3"/>
-  <circle cx="225" cy="192" r="5" fill="#a7f8db"/>
-  <path d="M342 100v22m-11-11h22M124 139v14m-7-7h14" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
-  <text x="422" y="251" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="119" font-weight="700" letter-spacing="-5" fill="#f0f7f5">Ref<tspan fill="#58dfb4">Pot</tspan></text>
-  <text x="429" y="302" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="22" letter-spacing="5" fill="#a2bdb7">EMBEDDED. RELATIONAL. SIMPLE.</text>
+  <text x="520" y="286" fill="#58DFB4" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" letter-spacing="5">MODEPOT / OPEN SOURCE</text>
+  <text x="514" y="444" fill="#F4F2EA" font-family="Arial, Helvetica, sans-serif" font-size="126" font-weight="700" letter-spacing="-4">refpot</text>
+  <text x="520" y="526" fill="#C4CAD3" font-family="Arial, Helvetica, sans-serif" font-size="31">A custom relational engine.</text>
+  <text x="520" y="572" fill="#C4CAD3" font-family="Arial, Helvetica, sans-serif" font-size="31">A simple Python ORM.</text>
+  <line x1="520" y1="626" x2="1090" y2="626" stroke="#58DFB4" stroke-width="4"/>
 </svg>

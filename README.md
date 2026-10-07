@@ -6,9 +6,19 @@
 
 <p align="center">Part of <a href="https://modepot.io/">ModePot</a>. &nbsp; <a href="https://tugrul.modepot.io/">Created by Tugrul Guner</a></p>
 
-<p align="center"><strong>A custom embedded relational engine. A simple Python ORM. No database server.</strong></p>
+<p align="center">
+  <strong>A custom relational engine. A simple Python ORM.</strong>
+</p>
 
-<p align="center">Own the engine, remove unnecessary work, and make ordinary database operations straightforward.</p>
+<p align="center">
+  An embedded database designed for direct engine use and straightforward Python operations. Own the engine; keep one execution core and explicit transaction guarantees.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Research%20%26%20design-58DFB4" alt="Status: research and design">
+  <a href="https://discord.gg/u3AANZr6RG"><img src="https://img.shields.io/badge/Discord-Join%20ModePot-5865F2?logo=discord&amp;logoColor=white" alt="Join the ModePot Discord"></a>
+  <a href="https://github.com/tugrulguner/refpot"><img src="https://img.shields.io/github/stars/tugrulguner/refpot?style=flat" alt="GitHub stars"></a>
+</p>
 
 <p align="center">
   <a href="#why-refpot">Why RefPot</a> ·
@@ -16,7 +26,12 @@
   <a href="ROADMAP.md">Roadmap</a> ·
   <a href="#design-direction">Design direction</a> ·
   <a href="#performance-target">Performance target</a> ·
+  <a href="#community">Community</a> ·
   <a href="#contributing">Contributing</a>
+</p>
+
+<p align="center">
+  <img src="docs/assets/refpot-execution.png" alt="Planned RefPot architecture, not shipped: direct SQL and a Python ORM's structured operations share one execution core, validation, constraints, transaction guarantees, storage, and recovery" width="960">
 </p>
 
 > [!IMPORTANT]
@@ -65,17 +80,9 @@ Research provides a reason to continue, not a product claim:
 
 ## Design direction
 
-The proposed layers are:
-
-```text
-SQL frontend ────────┐
-                    ├── Execution core ── Indexes / storage
-Structured operations┘                 └─ Transactions / recovery
-          ↑
-      Python ORM
-```
-
-These are planned boundaries, not existing modules.
+The [architecture visual above](#refpot) shows the proposed boundaries, not existing
+modules: direct SQL and structured ORM operations share the same execution core, storage,
+transaction rules, and recovery. The engine must remain usable without the ORM.
 
 - **Engine first.** Establish correctness and performance before building the ORM.
 - **One semantic boundary.** Direct operations must not bypass validation or constraints.
@@ -111,6 +118,13 @@ Include maintenance and synchronization in throughput; report tail latency, memo
 disk growth, recovery, and concurrency separately. Repeat complete campaigns when results
 are unstable. Keep native macOS, Linux VM, and bare-metal results distinct. A faster lookup
 or a favorable batch does not make RefPot a faster database across the board.
+
+## Community
+
+Join the [ModePot Discord](https://discord.gg/u3AANZr6RG) for design discussions,
+implementation questions, early ideas, and database use cases across the family.
+Use [GitHub Issues](https://github.com/tugrulguner/refpot/issues) for scoped proposals
+and reproducible findings. RefPot is still research-stage; there is no package to install yet.
 
 ## Contributing
 

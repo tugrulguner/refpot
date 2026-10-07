@@ -13,6 +13,7 @@
 <p align="center">
   <a href="#why-refpot">Why RefPot</a> ·
   <a href="#project-status">Status</a> ·
+  <a href="ROADMAP.md">Roadmap</a> ·
   <a href="#design-direction">Design direction</a> ·
   <a href="#performance-target">Performance target</a> ·
   <a href="#contributing">Contributing</a>

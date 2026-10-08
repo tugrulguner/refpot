@@ -1,0 +1,26 @@
+{
+  "name": "refpot-website",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/sync-public-docs.mjs",
+    "precheck": "node scripts/sync-public-docs.mjs",
+    "prebuild": "node scripts/sync-public-docs.mjs",
+    "render:assets": "node scripts/render-social.mjs",
+    "dev": "astro dev",
+    "build": "astro build && node scripts/verify-rendered-output.mjs && playwright test",
+    "check": "astro check",
+    "test:e2e": "playwright test",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.5",
+    "astro": "^7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@playwright/test": "^1.63.0",
+    "typescript": "^6.0.3"
+  }
+}

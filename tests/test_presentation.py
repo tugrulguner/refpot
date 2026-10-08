@@ -30,10 +30,15 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         self.assertIn('width="600"', text)
         self.assertIn('width="960"', text)
+        self.assertIn('href="https://refpot.modepot.io/"', text)
+        self.assertIn('RefPot — research and design</a>', text)
+        self.assertNotIn('launch pending', text)
+        self.assertIn('href="https://modepot.io/"', text)
+        self.assertIn('href="https://tugrul.modepot.io/"', text)
         self.assertIn('href="#community"', text)
         self.assertEqual(text.count("https://discord.gg/u3AANZr6RG"), 2)
         self.assertIn("## Community", text)
-        for nonexistent_surface in ('pypi.org', 'badge/License', 'workflows/ci.yml', 'refpot.modepot.io'):
+        for nonexistent_surface in ('pypi.org', 'badge/License', 'workflows/ci.yml'):
             self.assertNotIn(nonexistent_surface, text)
 
     def test_planned_boundary(self):

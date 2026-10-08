@@ -1,0 +1,42 @@
+import { readFile, readdir } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const root = new URL('../dist/', import.meta.url);
+const routes = ['index.html', 'status/index.html', 'design/index.html', 'performance-method/index.html', 'project/roadmap/index.html', '404.html'];
+for (const route of routes) {
+  const html = await readFile(new URL(route, root), 'utf8');
+  assert.equal((html.match(/<h1\b/g) ?? []).length, 1, `${route}: one H1`);
+  for (const destination of ['https://modepot.io/', 'https://github.com/tugrulguner/refpot', 'https://discord.gg/u3AANZr6RG', 'https://tugrul.modepot.io/']) assert.ok(html.includes(destination), `${route}: ${destination}`);
+  assert.equal((html.match(/posthog\.init\(/g) ?? []).length, 1, `${route}: one PostHog initialization`);
+  for (const setting of ["api_host:'https://us.i.posthog.com'", "person_profiles:'identified_only'", 'capture_pageview:true', 'capture_pageleave:true', 'disable_session_recording:true', "dom_event_allowlist:['click']", "element_allowlist:['a','button']"]) assert.ok(html.includes(setting), `${route}: ${setting}`);
+  assert.ok(html.includes('rel="alternate" type="text/plain" href="/llms.txt"'));
+  assert.ok(html.includes('https://refpot.modepot.io/social-card.png'));
+  const blocks = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
+  assert.equal(blocks.length, 1);
+  const data = JSON.parse(blocks[0][1]);
+  for (const type of ['SoftwareSourceCode', 'WebSite']) assert.ok(data['@graph'].some(entry => entry['@type'] === type));
+  assert.doesNotMatch(JSON.stringify(data), /"(?:installUrl|license|runtimePlatform|programmingLanguage)"/);
+  assert.doesNotMatch(html, /pypi\.org|href="\/(?:quickstart|playground)\//i);
+  // Every advertised local destination must exist in the emitted artifact.
+  for (const [, href] of html.matchAll(/href="(\/[^"#?]*)[^" ]*"/g)) {
+    if (href.startsWith('//') || href === '/') continue;
+    const file = href.endsWith('/') ? href.slice(1) + 'index.html' : href.slice(1);
+    await readFile(new URL(file, root));
+  }
+}
+const actualHtml=[];
+async function walk(dir) { for (const item of await readdir(dir,{withFileTypes:true})) { const url=new URL(item.name+(item.isDirectory()?'/':''),dir); if(item.isDirectory()) await walk(url); else if(item.name.endsWith('.html')) actualHtml.push(url); } }
+await walk(root);
+assert.equal(actualHtml.length, routes.length, 'Unexpected HTML layout must join verification scope');
+const png = await readFile(new URL('social-card.png', root));
+assert.equal(png.subarray(1,4).toString(),'PNG');
+assert.equal(png.readUInt32BE(16),1200); assert.equal(png.readUInt32BE(20),630);
+for (const file of ['robots.txt','llms.txt','sitemap-index.xml','sitemap-0.xml','refpot-mark.svg','refpot-lockup.png','refpot-execution.png']) assert.ok((await readFile(new URL(file, root))).length);
+for (const [source, output] of [['status.md','status.md'],['design-direction.md','design.md'],['performance-method.md','performance-method.md']]) {
+  const canonical = (await readFile(new URL('../src/content/docs/'+source, import.meta.url),'utf8')).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/,'');
+  assert.equal(await readFile(new URL('docs/'+output,root),'utf8'),canonical);
+}
+assert.equal(await readFile(new URL('docs/project-roadmap.md',root),'utf8'),await readFile(new URL('../../ROADMAP.md',import.meta.url),'utf8'));
+assert.equal(await readFile(new URL('docs/project-readme.md',root),'utf8'),await readFile(new URL('../../README.md',import.meta.url),'utf8'));
+const llms=await readFile(new URL('llms.txt',root),'utf8');
+assert.match(llms,/acceptance target only/); assert.match(llms,/License and distribution policy remain/);
+console.log(`Verified ${routes.length} HTML layouts, one PostHog initialization each, canonical destinations, PNG dimensions, discovery and five same-source Markdown exports.`);

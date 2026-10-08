@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+website/node_modules/
+website/.astro/
+website/dist/
+website/test-results/
+website/playwright-report/
+website/.wrangler/

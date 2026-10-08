@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">RefPot — two entry points, one engine</title>
+  <desc id="desc">Planned architecture, not shipped. SQL is parsed and planned; a Python ORM submits structured operations. Both use one execution core and the same validation, constraints, transactions, storage and recovery. The engine is independently usable without the ORM.</desc>
+  <defs>
+    <linearGradient id="bg"><stop stop-color="#090C11"/><stop offset="1" stop-color="#11182B"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#58DFB4"/></marker>
+  </defs>
+  <rect x="1" y="1" width="1598" height="898" rx="28" fill="url(#bg)" stroke="#303A4B" stroke-width="2"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="800" y="64" text-anchor="middle" fill="#58DFB4" font-size="18" font-weight="700" letter-spacing="5">TWO ENTRY POINTS · ONE ENGINE</text>
+    <text x="800" y="124" text-anchor="middle" fill="#F4F2EA" font-size="44" font-weight="700">Direct engine use. A simpler ORM path.</text>
+    <text x="800" y="170" text-anchor="middle" fill="#C4CAD3" font-size="24">Planned architecture — no engine, binding, SQL frontend, or ORM is shipped yet.</text>
+    <g fill="none" stroke="#58DFB4" stroke-width="4" marker-end="url(#arrow)">
+      <path d="M440 330H505Q530 330 530 375V437H605"/>
+      <path d="M440 549H505Q530 549 530 505V465H605"/>
+      <path d="M995 451H1100"/>
+    </g>
+    <g fill="#101722" stroke="#58DFB4" stroke-width="2.5">
+      <rect x="80" y="240" width="360" height="180" rx="20"/>
+      <rect x="80" y="459" width="360" height="180" rx="20"/>
+      <rect x="610" y="295" width="380" height="312" rx="20"/>
+      <rect x="1110" y="295" width="410" height="312" rx="20"/>
+    </g>
+    <text x="106" y="280" fill="#58DFB4" font-size="18" font-weight="700" letter-spacing="3">DIRECT SQL</text>
+    <text x="106" y="327" fill="#F4F2EA" font-size="28" font-weight="700">Parse + plan</text>
+    <text x="106" y="366" fill="#C4CAD3" font-size="21">Direct engine entry point</text>
+    <text x="106" y="397" fill="#C4CAD3" font-size="21">SQL subset still to be defined</text>
+    <text x="106" y="499" fill="#58DFB4" font-size="18" font-weight="700" letter-spacing="3">PYTHON ORM</text>
+    <text x="106" y="546" fill="#F4F2EA" font-size="28" font-weight="700">Structured operations</text>
+    <text x="106" y="585" fill="#C4CAD3" font-size="21">No required SQL round trip</text>
+    <text x="106" y="616" fill="#C4CAD3" font-size="21">Built after the engine</text>
+    <text x="642" y="341" fill="#58DFB4" font-size="18" font-weight="700" letter-spacing="3">SHARED SEMANTICS</text>
+    <text x="642" y="403" fill="#F4F2EA" font-size="32" font-weight="700">Execution core</text>
+    <line x1="642" y1="431" x2="958" y2="431" stroke="#303A4B" stroke-width="2"/>
+    <text x="642" y="478" fill="#C4CAD3" font-size="23">Validation + constraints</text>
+    <text x="642" y="522" fill="#C4CAD3" font-size="23">Transaction rules</text>
+    <text x="642" y="566" fill="#C4CAD3" font-size="23">Same guarantees on both paths</text>
+    <text x="1142" y="341" fill="#58DFB4" font-size="18" font-weight="700" letter-spacing="3">CUSTOM ENGINE</text>
+    <text x="1142" y="403" fill="#F4F2EA" font-size="32" font-weight="700">Storage + recovery</text>
+    <line x1="1142" y1="431" x2="1488" y2="431" stroke="#303A4B" stroke-width="2"/>
+    <text x="1142" y="478" fill="#C4CAD3" font-size="23">Indexes + record storage</text>
+    <text x="1142" y="522" fill="#C4CAD3" font-size="23">Durable log + checkpoints</text>
+    <text x="1142" y="566" fill="#C4CAD3" font-size="23">Architecture still under research</text>
+    <rect x="80" y="704" width="1440" height="116" rx="20" fill="#0C121B" stroke="#303A4B" stroke-width="2"/>
+    <text x="800" y="751" text-anchor="middle" fill="#F4F2EA" font-size="27" font-weight="700">Own the engine. Keep guarantees explicit. Make ordinary usage simple.</text>
+    <text x="800" y="791" text-anchor="middle" fill="#C4CAD3" font-size="22">Engine independently usable · Not a SQLite wrapper · 2× performance is a target, not a result</text>
+  </g>
+</svg>

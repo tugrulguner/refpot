@@ -70,7 +70,8 @@ const resources = [
   .family-menu-panel[hidden] { display:none; }
   .family-menu-panel a { justify-content:flex-start; }
   .title-wrapper { padding:.25rem; margin:-.25rem; min-width:0; gap:.375rem; }
-  .refpot-mark { display:block; flex:none; width:20px; height:20px; }
+  .refpot-mark { display:block; flex:none; width:20px; height:20px; filter:brightness(.31); }
+  :global(:root[data-theme='dark']) .refpot-mark { filter:none; }
   .title-wrapper :global(a) { box-sizing:border-box; min-width:44px; min-height:44px; display:inline-flex; align-items:center; }
   .header :global(button) { box-sizing:border-box; min-width:44px; min-height:44px; }
   .social-icons :global(a) { box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; }

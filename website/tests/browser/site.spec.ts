@@ -28,6 +28,7 @@ for (const width of [1280, 768, 390, 320]) {
         return { overflow:document.documentElement.scrollWidth>innerWidth, copy:{left:copy.left,right:copy.right,top:copy.top,bottom:copy.bottom}, art:{left:art.left,top:art.top}, creatorTop:creator.top, creatorBottom:creator.bottom, actionsBottom:actions.bottom };
       });
       const isDark = theme === 'dark';
+      await expect(page.locator('header .refpot-mark')).toHaveCSS('filter', isDark ? 'none' : 'brightness(0.31)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('color', isDark ? 'rgb(24, 26, 29)' : 'rgb(255, 255, 255)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('background-color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
       await expect(page.locator('.sl-markdown-content p a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');

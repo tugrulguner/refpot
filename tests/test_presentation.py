@@ -13,6 +13,29 @@ FAMILY_FLASK = (
 
 
 class PresentationTests(unittest.TestCase):
+    def test_refpot_identity_palette_and_canonical_geometry_parity(self):
+        sources = [ROOT / "docs/assets/refpot-lockup.svg", ROOT / "docs/assets/refpot-execution.svg"]
+        copies = [ROOT / "website/public/refpot-lockup.svg", ROOT / "website/public/refpot-execution.svg"]
+        for source, copy in zip(sources, copies):
+            self.assertEqual(source.read_bytes(), copy.read_bytes())
+            text = source.read_text()
+            self.assertNotRegex(text, r"(?i)#58dfb4|#39c99a")
+            self.assertIn("#F4F2EA", text)
+        mark = (ROOT / "website/public/refpot-mark.svg").read_text()
+        self.assertNotIn("#58DFB4", mark)
+        self.assertIn("#F4F2EA", mark)
+        self.assertIn("#F4F2EA", (ROOT / "website/public/social-card.svg").read_text())
+        css = (ROOT / "website/src/styles/custom.css").read_text()
+        self.assertIn("--mp-accent: #49515e", css)
+        self.assertIn("--mp-accent: #f4f2ea", css)
+        for stale in ("#58DFB4", "#39c99a", "#087a58", "#f3ead6", "#393326"):
+            self.assertNotIn(stale.lower(), css.lower())
+        self.assertIn("--mp-selected: #e6e8eb", css)
+        self.assertIn("--mp-selected: #35383d", css)
+        self.assertIn("--sl-color-text-accent: #49515e", css)
+        self.assertIn("--sl-color-text-accent: #f4f2ea", css)
+        self.assertIn("--sl-color-accent-high: #f4f2ea", css)
+
     def test_family_identity(self):
         svg = ET.parse(ROOT / "docs/assets/refpot-lockup.svg").getroot()
         self.assertEqual(svg.attrib["viewBox"], "0 0 1200 900")

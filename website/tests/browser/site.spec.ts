@@ -27,6 +27,11 @@ for (const width of [1280, 768, 390, 320]) {
         const creator=document.querySelector('.creator-attribution')!.getBoundingClientRect();
         return { overflow:document.documentElement.scrollWidth>innerWidth, copy:{left:copy.left,right:copy.right,top:copy.top,bottom:copy.bottom}, art:{left:art.left,top:art.top}, creatorTop:creator.top, creatorBottom:creator.bottom, actionsBottom:actions.bottom };
       });
+      const isDark = theme === 'dark';
+      await expect(page.locator('header .refpot-mark')).toHaveCSS('filter', isDark ? 'none' : 'brightness(0.31)');
+      await expect(page.locator('.framework-action.primary')).toHaveCSS('color', isDark ? 'rgb(24, 26, 29)' : 'rgb(255, 255, 255)');
+      await expect(page.locator('.framework-action.primary')).toHaveCSS('background-color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
+      await expect(page.locator('.sl-markdown-content p a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
       expect(measured.overflow).toBe(false);
       expect(measured.creatorTop).toBeGreaterThanOrEqual(measured.actionsBottom);
       expect(measured.creatorBottom).toBeLessThan(900);
@@ -68,6 +73,6 @@ test('Auto follows live OS changes, metadata and the social raster are real',asy
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://refpot.modepot.io/');
   const data=JSON.parse(await page.locator('script[type="application/ld+json"]').innerText());
   expect(data['@graph'].map((item:{'@type':string})=>item['@type'])).toEqual(['SoftwareSourceCode','WebSite']);
-  const image=await page.request.get('/social-card.png'); expect(image.status()).toBe(200);
+  const image=await page.request.get('/social-card.png?v=offwhite-1'); expect(image.status()).toBe(200);
   const bytes=await image.body(); expect([bytes.readUInt32BE(16),bytes.readUInt32BE(20)]).toEqual([1200,630]);
 });

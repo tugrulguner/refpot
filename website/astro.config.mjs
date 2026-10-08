@@ -15,19 +15,19 @@ export default defineConfig({
   integrations: [starlight({
     title: 'RefPot',
     description: 'Research and design for a custom embedded relational database engine and simple Python ORM.',
-    favicon: '/refpot-mark.svg',
+    favicon: '/refpot-mark.svg?v=offwhite-1',
     social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/tugrulguner/refpot' }],
     customCss: ['./src/styles/custom.css'],
     components: { Header: './src/components/FamilyHeader.astro', PageTitle: './src/components/ProjectPageTitle.astro' },
     head: [
       { tag: 'script', attrs: {}, content: posthogScript },
       { tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', href: '/llms.txt', title: 'RefPot summary for AI agents' } },
-      { tag: 'meta', attrs: { property: 'og:image', content: 'https://refpot.modepot.io/social-card.png' } },
+      { tag: 'meta', attrs: { property: 'og:image', content: 'https://refpot.modepot.io/social-card.png?v=offwhite-1' } },
       { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
       { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
       { tag: 'meta', attrs: { property: 'og:image:alt', content: 'RefPot: research and design for a custom embedded relational database engine' } },
       { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
-      { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://refpot.modepot.io/social-card.png' } },
+      { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://refpot.modepot.io/social-card.png?v=offwhite-1' } },
       { tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON.stringify(structuredData) },
     ],
     sidebar: [

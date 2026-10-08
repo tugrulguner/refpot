@@ -9,7 +9,7 @@ for (const route of routes) {
   assert.equal((html.match(/posthog\.init\(/g) ?? []).length, 1, `${route}: one PostHog initialization`);
   for (const setting of ["api_host:'https://us.i.posthog.com'", "person_profiles:'identified_only'", 'capture_pageview:true', 'capture_pageleave:true', 'disable_session_recording:true', "dom_event_allowlist:['click']", "element_allowlist:['a','button']"]) assert.ok(html.includes(setting), `${route}: ${setting}`);
   assert.ok(html.includes('rel="alternate" type="text/plain" href="/llms.txt"'));
-  assert.ok(html.includes('https://refpot.modepot.io/social-card.png'));
+  assert.ok(html.includes('https://refpot.modepot.io/social-card.png?v=offwhite-1'));
   const blocks = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
   assert.equal(blocks.length, 1);
   const data = JSON.parse(blocks[0][1]);
@@ -40,3 +40,6 @@ assert.equal(await readFile(new URL('docs/project-readme.md',root),'utf8'),await
 const llms=await readFile(new URL('llms.txt',root),'utf8');
 assert.match(llms,/acceptance target only/); assert.match(llms,/License and distribution policy remain/);
 console.log(`Verified ${routes.length} HTML layouts, one PostHog initialization each, canonical destinations, PNG dimensions, discovery and five same-source Markdown exports.`);
+
+for (const [source, copy] of [["../../docs/assets/refpot-lockup.svg","refpot-lockup.svg"],["../../docs/assets/refpot-execution.svg","refpot-execution.svg"]]) assert.equal((await readFile(new URL(source, import.meta.url))).toString(), (await readFile(new URL(copy, root))).toString());
+for (const route of routes) { const html=await readFile(new URL(route,root),"utf8"); assert.ok(html.includes("/refpot-mark.svg?v=offwhite-1")); assert.ok(html.includes("social-card.png?v=offwhite-1")); if(route==="index.html") { assert.ok(html.includes("/refpot-lockup.png?v=offwhite-1")); assert.ok(html.includes("/refpot-execution.png?v=offwhite-1")); } }

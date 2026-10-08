@@ -4,7 +4,7 @@
   <img src="docs/assets/refpot-lockup.png" alt="RefPot — embedded, relational, simple" width="600">
 </p>
 
-<p align="center"><a href="https://modepot.io/">Part of ModePot</a> &nbsp; · &nbsp; Project website: <a href="https://refpot.modepot.io/">RefPot — research and design (launch pending)</a> &nbsp; · &nbsp; <a href="https://tugrul.modepot.io/">Created by Tugrul Guner</a></p>
+<p align="center"><a href="https://modepot.io/">Part of ModePot</a> &nbsp; · &nbsp; Project website: <a href="https://refpot.modepot.io/">RefPot — research and design</a> &nbsp; · &nbsp; <a href="https://tugrul.modepot.io/">Created by Tugrul Guner</a></p>
 
 <p align="center">
   <strong>A custom relational engine. A simple Python ORM.</strong>

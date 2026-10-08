@@ -27,8 +27,10 @@ for (const width of [1280, 768, 390, 320]) {
         const creator=document.querySelector('.creator-attribution')!.getBoundingClientRect();
         return { overflow:document.documentElement.scrollWidth>innerWidth, copy:{left:copy.left,right:copy.right,top:copy.top,bottom:copy.bottom}, art:{left:art.left,top:art.top}, creatorTop:creator.top, creatorBottom:creator.bottom, actionsBottom:actions.bottom };
       });
-      const colors=await page.locator('.sl-markdown-content a').first().evaluate((el) => ({fg:getComputedStyle(el).color,bg:getComputedStyle(document.documentElement).getPropertyValue('--mp-canvas').trim()}));
-      expect(colors.fg).not.toBe('rgb(24, 26, 29)');
+      const isDark = theme === 'dark';
+      await expect(page.locator('.framework-action.primary')).toHaveCSS('color', isDark ? 'rgb(24, 26, 29)' : 'rgb(255, 255, 255)');
+      await expect(page.locator('.framework-action.primary')).toHaveCSS('background-color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
+      await expect(page.locator('.sl-markdown-content p a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
       expect(measured.overflow).toBe(false);
       expect(measured.creatorTop).toBeGreaterThanOrEqual(measured.actionsBottom);
       expect(measured.creatorBottom).toBeLessThan(900);

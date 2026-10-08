@@ -63,7 +63,7 @@
   --sl-color-bg-sidebar: var(--mp-raised);
   --sl-color-text: var(--mp-ink);
 }
-:root[data-theme='dark'] .sl-markdown-content a:not(:where(.not-content *)) { color: #f4f2ea; }
+:root[data-theme='dark'] .sl-markdown-content a:not(:where(.not-content *)):not(.framework-action):not(.creator-attribution) { color: #f4f2ea; }
 html, body { font-family: var(--mp-font); font-size: 16px; line-height: 1.6; background: var(--mp-canvas); color: var(--mp-ink); }
 a.creator-attribution { display:inline-flex; align-items:center; min-height:44px; padding:0 .5rem; margin:0 0 1.5rem; border-radius:var(--mp-radius); font-size:14px; color:var(--mp-ink); font-weight:600; text-underline-offset:.2em; }
 body { margin: 0; }

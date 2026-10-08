@@ -1,0 +1,33 @@
+---
+title: Embedded relational engine research
+template: splash
+---
+
+<section class="framework-hero" aria-labelledby="refpot-title">
+  <div class="framework-copy">
+    <p class="framework-eyebrow">MODEPOT · DATABASE RESEARCH</p>
+    <h1 id="refpot-title">A custom relational engine. A simple Python ORM.</h1>
+    <p class="framework-tagline">RefPot is research into an embedded relational database engine that stands on its own—not a SQLite wrapper—with a straightforward Python ORM on top.</p>
+    <nav class="framework-actions" aria-label="Project actions">
+      <a class="framework-action primary" href="/status/">Research status</a>
+      <a class="framework-action secondary" href="/design/">Design direction</a>
+      <a class="framework-action tertiary" href="https://github.com/tugrulguner/refpot">GitHub</a>
+    </nav>
+    <a class="creator-attribution" href="https://tugrul.modepot.io/">Created by Tugrul Guner</a>
+  </div>
+  <figure class="framework-art"><img src="/refpot-lockup.png" alt="RefPot — a custom relational engine and simple Python ORM. Research and design; not released." width="600" height="450" /></figure>
+</section>
+
+<div class="research-notice"><strong>Research &amp; design — no released database yet.</strong>This project has no installable package, stable API, production durability guarantee, or general 2× performance claim. The research and architecture shown here do not describe a shipped engine.</div>
+
+## What RefPot is exploring
+
+RefPot's goal is its own embedded relational database engine, usable directly, with a simple Python ORM built on top. It is not a SQLite wrapper. Direct engine operations and ORM operations should share semantic validation, constraints, transaction rules, and recovery behavior rather than round-tripping ORM operations through a SQL parser.
+
+The intended developer experience is deliberately straightforward: open a local database, declare data, perform ordinary reads and writes, and make transaction ownership explicit. This is a design goal, not an API available today.
+
+## Proposed architecture — not shipped
+
+<figure class="planned-architecture"><img src="/refpot-execution.png" alt="Planned RefPot architecture, not shipped: SQL and structured ORM operations share one execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Proposed architecture only. No engine, SQL frontend, Python binding, ORM, storage, or recovery implementation is shipped.</figcaption></figure>
+
+Read the [design direction](/design/), the [performance qualification method](/performance-method/), and the [source roadmap](/project/roadmap/). The roadmap is the canonical source for project milestones; all milestone checkboxes remain planned until implementation and evidence land.

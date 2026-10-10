@@ -1,0 +1,130 @@
+[
+  {
+    "campaign": 1,
+    "n": 100000,
+    "clients": 1,
+    "native_reopen_with_full_oracle_s": 0.0607491665,
+    "best_SQL_reopen_with_full_oracle_s": 0.022205625,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 100000,
+    "clients": 4,
+    "native_reopen_with_full_oracle_s": 0.0378071465,
+    "best_SQL_reopen_with_full_oracle_s": 0.023971,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 100000,
+    "clients": 16,
+    "native_reopen_with_full_oracle_s": 0.031156729,
+    "best_SQL_reopen_with_full_oracle_s": 0.023497375,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 100000,
+    "clients": 64,
+    "native_reopen_with_full_oracle_s": 0.0284171875,
+    "best_SQL_reopen_with_full_oracle_s": 0.023187792,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 1000000,
+    "clients": 1,
+    "native_reopen_with_full_oracle_s": 0.3814042085,
+    "best_SQL_reopen_with_full_oracle_s": 0.284645875,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 1000000,
+    "clients": 4,
+    "native_reopen_with_full_oracle_s": 0.3060961665,
+    "best_SQL_reopen_with_full_oracle_s": 0.286332042,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 1000000,
+    "clients": 16,
+    "native_reopen_with_full_oracle_s": 0.38956579199999997,
+    "best_SQL_reopen_with_full_oracle_s": 0.297493667,
+    "native_faster": false
+  },
+  {
+    "campaign": 1,
+    "n": 1000000,
+    "clients": 64,
+    "native_reopen_with_full_oracle_s": 0.3143547495,
+    "best_SQL_reopen_with_full_oracle_s": 0.296223834,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 100000,
+    "clients": 1,
+    "native_reopen_with_full_oracle_s": 0.058449104,
+    "best_SQL_reopen_with_full_oracle_s": 0.022364666,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 100000,
+    "clients": 4,
+    "native_reopen_with_full_oracle_s": 0.0342644795,
+    "best_SQL_reopen_with_full_oracle_s": 0.023869208,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 100000,
+    "clients": 16,
+    "native_reopen_with_full_oracle_s": 0.029392229,
+    "best_SQL_reopen_with_full_oracle_s": 0.02340925,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 100000,
+    "clients": 64,
+    "native_reopen_with_full_oracle_s": 0.0288569165,
+    "best_SQL_reopen_with_full_oracle_s": 0.023644,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 1000000,
+    "clients": 1,
+    "native_reopen_with_full_oracle_s": 0.316577479,
+    "best_SQL_reopen_with_full_oracle_s": 0.282206791,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 1000000,
+    "clients": 4,
+    "native_reopen_with_full_oracle_s": 0.3030089585,
+    "best_SQL_reopen_with_full_oracle_s": 0.290903251,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 1000000,
+    "clients": 16,
+    "native_reopen_with_full_oracle_s": 0.3008782505,
+    "best_SQL_reopen_with_full_oracle_s": 0.291297542,
+    "native_faster": false
+  },
+  {
+    "campaign": 2,
+    "n": 1000000,
+    "clients": 64,
+    "native_reopen_with_full_oracle_s": 0.3255927915,
+    "best_SQL_reopen_with_full_oracle_s": 0.274735458,
+    "native_faster": false
+  }
+]

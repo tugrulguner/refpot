@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" role="img" aria-labelledby="title desc">
+<title id="title">RefPot audited random-update benchmark</title>
+<desc id="desc">672 records and 16 repeated cells. Service speedup 3.04 to 5.95 times and setup-inclusive 2.99 to 5.91 times against best-tested equally batched SQLite with atomic receipt tracking. Both campaigns shown for 100k and 1M rows and 1, 4, 16, 64 clients. Every tested cell passes service, setup and p99. Reopen with full-state validation loses all 16 cells. Fixed-schema research in a Linux ARM64 Docker ext4 VM, not a general database claim.</desc>
+<rect width="1600" height="1100" rx="28" fill="#090C11"/>
+<g font-family="Arial,Helvetica,sans-serif">
+<text x="70" y="65" fill="#C4CAD3" font-size="20" letter-spacing="4">MODEPOT / REFPOT · AUDITED ENGINE RESEARCH</text>
+<text x="70" y="125" fill="#F4F2EA" font-size="46" font-weight="700">Random updates. Repeated success.</text>
+<text x="70" y="165" fill="#C4CAD3" font-size="23">131,072 requests per trial · 100k / 1M existing rows · 1 / 4 / 16 / 64 clients</text>
+<rect x="70" y="205" width="350" height="116" rx="14" fill="#101722" stroke="#303A4B"/>
+<text x="92" y="252" fill="#F4F2EA" font-size="34" font-weight="700">3.04–5.95×</text>
+<text x="92" y="294" fill="#C4CAD3" font-size="17" letter-spacing="1">SERVICE SPEEDUP</text>
+<rect x="440" y="205" width="350" height="116" rx="14" fill="#101722" stroke="#303A4B"/>
+<text x="462" y="252" fill="#F4F2EA" font-size="34" font-weight="700">2.99–5.91×</text>
+<text x="462" y="294" fill="#C4CAD3" font-size="17" letter-spacing="1">INCLUDING SETUP</text>
+<rect x="810" y="205" width="350" height="116" rx="14" fill="#101722" stroke="#303A4B"/>
+<text x="832" y="252" fill="#F4F2EA" font-size="34" font-weight="700">16 / 16</text>
+<text x="832" y="294" fill="#C4CAD3" font-size="17" letter-spacing="1">SERVICE + SETUP + P99 PASS</text>
+<rect x="1180" y="205" width="350" height="116" rx="14" fill="#101722" stroke="#303A4B"/>
+<text x="1202" y="252" fill="#F4F2EA" font-size="34" font-weight="700">672</text>
+<text x="1202" y="294" fill="#C4CAD3" font-size="17" letter-spacing="1">VERIFIED RAW RECORDS</text>
+<text x="70" y="371" fill="#F4F2EA" font-size="24" font-weight="700">Service speedup vs best-tested SQLite</text>
+<rect x="1020" y="352" width="22" height="14" fill="#F4F2EA"/><text x="1052" y="367" fill="#C4CAD3" font-size="20">Campaign 1</text>
+<rect x="1260" y="352" width="22" height="14" fill="#8C9CB0"/><text x="1292" y="367" fill="#C4CAD3" font-size="20">Campaign 2</text>
+<line x1="420" y1="401" x2="420" y2="861" stroke="#263040"/>
+<text x="420" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">0×</text>
+<line x1="590" y1="401" x2="590" y2="861" stroke="#263040"/>
+<text x="590" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">1×</text>
+<line x1="760" y1="401" x2="760" y2="861" stroke="#F4F2EA" stroke-dasharray="6 6"/>
+<text x="760" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">2×</text>
+<line x1="930" y1="401" x2="930" y2="861" stroke="#263040"/>
+<text x="930" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">3×</text>
+<line x1="1100" y1="401" x2="1100" y2="861" stroke="#263040"/>
+<text x="1100" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">4×</text>
+<line x1="1270" y1="401" x2="1270" y2="861" stroke="#263040"/>
+<text x="1270" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">5×</text>
+<line x1="1440" y1="401" x2="1440" y2="861" stroke="#263040"/>
+<text x="1440" y="899" fill="#C4CAD3" font-size="21" text-anchor="middle">6×</text>
+<text x="70" y="441" fill="#F4F2EA" font-size="22">100k rows / 1 client</text>
+<rect x="420" y="417" width="651.54" height="15" rx="3" fill="#F4F2EA"/>
+<text x="1080.54" y="431" fill="#C4CAD3" font-size="17">3.83×</text>
+<rect x="420" y="437" width="1012.02" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1441.02" y="451" fill="#C4CAD3" font-size="17">5.95×</text>
+<text x="70" y="497" fill="#F4F2EA" font-size="22">100k rows / 4 clients</text>
+<rect x="420" y="473" width="570.05" height="15" rx="3" fill="#F4F2EA"/>
+<text x="999.05" y="487" fill="#C4CAD3" font-size="17">3.35×</text>
+<rect x="420" y="493" width="914.92" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1343.92" y="507" fill="#C4CAD3" font-size="17">5.38×</text>
+<text x="70" y="553" fill="#F4F2EA" font-size="22">100k rows / 16 clients</text>
+<rect x="420" y="529" width="739.47" height="15" rx="3" fill="#F4F2EA"/>
+<text x="1168.47" y="543" fill="#C4CAD3" font-size="17">4.35×</text>
+<rect x="420" y="549" width="818.93" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1247.93" y="563" fill="#C4CAD3" font-size="17">4.82×</text>
+<text x="70" y="609" fill="#F4F2EA" font-size="22">100k rows / 64 clients</text>
+<rect x="420" y="585" width="516.27" height="15" rx="3" fill="#F4F2EA"/>
+<text x="945.27" y="599" fill="#C4CAD3" font-size="17">3.04×</text>
+<rect x="420" y="605" width="666.46" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1095.46" y="619" fill="#C4CAD3" font-size="17">3.92×</text>
+<text x="70" y="665" fill="#F4F2EA" font-size="22">1000k rows / 1 client</text>
+<rect x="420" y="641" width="910.76" height="15" rx="3" fill="#F4F2EA"/>
+<text x="1339.76" y="655" fill="#C4CAD3" font-size="17">5.36×</text>
+<rect x="420" y="661" width="856.75" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1285.75" y="675" fill="#C4CAD3" font-size="17">5.04×</text>
+<text x="70" y="721" fill="#F4F2EA" font-size="22">1000k rows / 4 clients</text>
+<rect x="420" y="697" width="834.17" height="15" rx="3" fill="#F4F2EA"/>
+<text x="1263.17" y="711" fill="#C4CAD3" font-size="17">4.91×</text>
+<rect x="420" y="717" width="897.12" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1326.12" y="731" fill="#C4CAD3" font-size="17">5.28×</text>
+<text x="70" y="777" fill="#F4F2EA" font-size="22">1000k rows / 16 clients</text>
+<rect x="420" y="753" width="848.91" height="15" rx="3" fill="#F4F2EA"/>
+<text x="1277.91" y="767" fill="#C4CAD3" font-size="17">4.99×</text>
+<rect x="420" y="773" width="899.28" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1328.28" y="787" fill="#C4CAD3" font-size="17">5.29×</text>
+<text x="70" y="833" fill="#F4F2EA" font-size="22">1000k rows / 64 clients</text>
+<rect x="420" y="809" width="854.82" height="15" rx="3" fill="#F4F2EA"/>
+<text x="1283.82" y="823" fill="#C4CAD3" font-size="17">5.03×</text>
+<rect x="420" y="829" width="574.34" height="15" rx="3" fill="#8C9CB0"/>
+<text x="1003.34" y="843" fill="#C4CAD3" font-size="17">3.38×</text>
+<text x="70" y="942" fill="#C4CAD3" font-size="21">2× target shown dashed · Prepared WAL/FULL SQLite · Same batching + atomic receipt frontier</text>
+<rect x="70" y="969" width="1460" height="103" rx="14" fill="#101722" stroke="#303A4B"/>
+<text x="92" y="1006" fill="#F4F2EA" font-size="24" font-weight="700">Known miss: reopen + full-state validation is slower in all 16 cells.</text>
+<text x="92" y="1043" fill="#C4CAD3" font-size="20">4–9 checkpoints included · Linux ARM64 Docker / ext4 VM · Fixed-schema updates, not general CRUD or power-loss proof</text>
+</g></svg>

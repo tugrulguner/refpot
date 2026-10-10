@@ -57,26 +57,34 @@ not an API available today.
 
 ## Project status
 
-**In this repository:** the project definition and editable logo artwork.
+**In this repository:** project documentation, editable artwork, and an
+[audited random-update experiment](benchmarks/random-updates/README.md) with frozen
+experimental source, 672 raw timing records, analysis and reproduction commands.
 
-**In earlier research:** isolated native read, transaction, logging, checkpoint, and routing
-prototypes. These are not a finished RefPot implementation or a supported distribution.
+**Measured result:** all 16 repeated campaign/dataset/client cells passed the scoped
+service/setup 2× target and beat best-tested SQLite p99: **3.04–5.95× service** and
+**2.99–5.91× including setup** across 100k/1M existing rows and 1/4/16/64 clients.
+SQLite is prepared, WAL/FULL, equally batched, and transactionally tracks receipts.
+This is not a plain update-only baseline or a general database claim.
 
-**Not shipped:** a general relational engine, durable insert/update/delete API, qualified
-concurrency, SQL frontend, Python binding, or ORM. The exploratory benchmark artifacts have
-not been imported into this repository; no published performance result is reproducible
-from this checkout yet.
+**Remaining failure:** reopen with full-state validation was slower in all 16 cells.
+Earlier workload misses and comparator variation remain documented alongside the win.
 
-Research provides a reason to continue, not a product claim:
+**Not shipped:** a general relational engine, durable arbitrary CRUD API, qualified
+concurrent-reader isolation, SQL frontend, Python binding, ORM, or supported distribution.
+The imported prototype is experimental, not a stable public API or product milestone.
 
-- Cache-aware separated key/value layouts improved scoped native point-read costs. That
-  does not establish durable database performance.
-- Preallocated redo rings with bounded snapshots exceeded 2× against best-tested SQLite
-  configurations in some large update-batch workloads in a Linux ARM64 VM.
-- Small durable transactions did not reliably meet the target. Dataset scaling and
-  recovery exposed tradeoffs; no single tested layout won everywhere.
-- A short-pilot strategy selector sometimes chose poorly. Automatic adaptation still
-  needs representative measurement, bounded costs, and a safe fallback.
+## Retained benchmark findings
+
+<p align="center"><img src="docs/assets/refpot-benchmark.png" alt="Audited random-update benchmark: both campaigns pass the scoped service/setup/p99 matrix; reopen with full-state validation loses every cell" width="960"></p>
+
+[Detailed findings, raw evidence and reproduction](benchmarks/random-updates/README.md) ·
+[Full-size chart](docs/assets/refpot-benchmark.png) ·
+[Next package recommendation](docs/package-recommendation.md)
+
+The experimental findings are retained separately from the package contract. The next
+recommended deliverable is durable CRUD and explicit transactions, with SQL and ORM later;
+that package is not implemented or qualified by this benchmark.
 
 ## Design direction
 

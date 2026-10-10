@@ -1,0 +1,246 @@
+{
+  "record_count": 336,
+  "summary": [
+    {
+      "campaign": 1,
+      "n": 1000000,
+      "clients": 4,
+      "horizon_multiplier": 1,
+      "ring_slots": 2048,
+      "service_s": 15.3452156525,
+      "cold_s": 15.6877854025,
+      "ratio_vs_best_same_policy_sql_service": 3.237412666527529,
+      "ratio_vs_best_same_policy_sql_cold": 3.207365126691597,
+      "best_sql_service": {
+        "s": 49.678795524,
+        "cache_kib": 131072,
+        "candidate": "sqlite_64"
+      },
+      "best_sql_cold": {
+        "s": 50.316455815,
+        "cache_kib": 131072,
+        "candidate": "sqlite_64"
+      },
+      "checkpoint_s": 0.871651937,
+      "checkpoint_bytes": 57534248.0,
+      "checkpoint_count": 32.0,
+      "commit_sync_s": 13.393363472499999,
+      "p99_s": 0.000549958,
+      "recovery_s": 0.2727077295,
+      "backend_setup_s": 0.32925508299999995,
+      "native_mean_group": 2.000122078229282,
+      "best_sql_p99_s": 0.008333708
+    },
+    {
+      "campaign": 1,
+      "n": 1000000,
+      "clients": 4,
+      "horizon_multiplier": 4,
+      "ring_slots": 8192,
+      "service_s": 14.0148553815,
+      "cold_s": 14.3936522565,
+      "ratio_vs_best_same_policy_sql_service": 4.186261016538624,
+      "ratio_vs_best_same_policy_sql_cold": 4.1214724561801495,
+      "best_sql_service": {
+        "s": 58.669842736,
+        "cache_kib": 131072,
+        "candidate": "sqlite_256"
+      },
+      "best_sql_cold": {
+        "s": 59.323041319,
+        "cache_kib": 131072,
+        "candidate": "sqlite_256"
+      },
+      "checkpoint_s": 0.2773978335,
+      "checkpoint_bytes": 31683600.0,
+      "checkpoint_count": 8.0,
+      "commit_sync_s": 12.748579914,
+      "p99_s": 0.0004921039999999999,
+      "recovery_s": 0.256671375,
+      "backend_setup_s": 0.3710416875,
+      "native_mean_group": 2.000030518509476,
+      "best_sql_p99_s": 0.009646042
+    },
+    {
+      "campaign": 1,
+      "n": 1000000,
+      "clients": 64,
+      "horizon_multiplier": 1,
+      "ring_slots": 128,
+      "service_s": 3.1372226055,
+      "cold_s": 3.4385988139999997,
+      "ratio_vs_best_same_policy_sql_service": 2.966363101771932,
+      "ratio_vs_best_same_policy_sql_cold": 2.9149096417387415,
+      "best_sql_service": {
+        "s": 9.306141379000001,
+        "cache_kib": 131072,
+        "candidate": "sqlite_1024"
+      },
+      "best_sql_cold": {
+        "s": 10.023204837,
+        "cache_kib": 131072,
+        "candidate": "sqlite_1024"
+      },
+      "checkpoint_s": 0.8622935435,
+      "checkpoint_bytes": 58626976.0,
+      "checkpoint_count": 33.0,
+      "commit_sync_s": 1.1937115745,
+      "p99_s": 0.024450396,
+      "recovery_s": 0.2875560625,
+      "backend_setup_s": 0.31161814600000004,
+      "native_mean_group": 31.439673782681698,
+      "best_sql_p99_s": 0.015071708
+    },
+    {
+      "campaign": 1,
+      "n": 1000000,
+      "clients": 64,
+      "horizon_multiplier": 4,
+      "ring_slots": 512,
+      "service_s": 2.734910501,
+      "cold_s": 3.064865981,
+      "ratio_vs_best_same_policy_sql_service": 3.7259189415061598,
+      "ratio_vs_best_same_policy_sql_cold": 3.5425559761205103,
+      "best_sql_service": {
+        "s": 10.190054839,
+        "cache_kib": 131072,
+        "candidate": "sqlite_128"
+      },
+      "best_sql_cold": {
+        "s": 10.857459297,
+        "cache_kib": 131072,
+        "candidate": "sqlite_128"
+      },
+      "checkpoint_s": 0.296715979,
+      "checkpoint_bytes": 32762720.0,
+      "checkpoint_count": 9.0,
+      "commit_sync_s": 1.2575057365,
+      "p99_s": 0.0018683749999999998,
+      "recovery_s": 0.2552648745,
+      "backend_setup_s": 0.328609396,
+      "native_mean_group": 31.469867947178873,
+      "best_sql_p99_s": 0.010761542
+    },
+    {
+      "campaign": 2,
+      "n": 1000000,
+      "clients": 4,
+      "horizon_multiplier": 1,
+      "ring_slots": 2048,
+      "service_s": 11.726021193000001,
+      "cold_s": 12.128916651,
+      "ratio_vs_best_same_policy_sql_service": 5.169957153769234,
+      "ratio_vs_best_same_policy_sql_cold": 5.062398639530398,
+      "best_sql_service": {
+        "s": 60.623027152,
+        "cache_kib": 2000,
+        "candidate": "sqlite_512"
+      },
+      "best_sql_cold": {
+        "s": 61.401411153,
+        "cache_kib": 2000,
+        "candidate": "sqlite_512"
+      },
+      "checkpoint_s": 0.8550924795,
+      "checkpoint_bytes": 57533268.0,
+      "checkpoint_count": 32.0,
+      "commit_sync_s": 9.904816542999999,
+      "p99_s": 0.00042452099999999997,
+      "recovery_s": 0.2754525215,
+      "backend_setup_s": 0.39881641749999996,
+      "native_mean_group": 2.000122078229282,
+      "best_sql_p99_s": 0.0129725
+    },
+    {
+      "campaign": 2,
+      "n": 1000000,
+      "clients": 4,
+      "horizon_multiplier": 4,
+      "ring_slots": 8192,
+      "service_s": 11.4497550885,
+      "cold_s": 11.906619422,
+      "ratio_vs_best_same_policy_sql_service": 5.389133214471551,
+      "ratio_vs_best_same_policy_sql_cold": 5.247099972857434,
+      "best_sql_service": {
+        "s": 61.704255445,
+        "cache_kib": 2000,
+        "candidate": "sqlite_1024"
+      },
+      "best_sql_cold": {
+        "s": 62.475222446,
+        "cache_kib": 2000,
+        "candidate": "sqlite_1024"
+      },
+      "checkpoint_s": 0.28900887649999996,
+      "checkpoint_bytes": 31687504.0,
+      "checkpoint_count": 8.0,
+      "commit_sync_s": 10.249445095999999,
+      "p99_s": 0.00046381250000000003,
+      "recovery_s": 0.29792075,
+      "backend_setup_s": 0.42617364550000003,
+      "native_mean_group": 2.000106817344527,
+      "best_sql_p99_s": 0.009912125
+    },
+    {
+      "campaign": 2,
+      "n": 1000000,
+      "clients": 64,
+      "horizon_multiplier": 1,
+      "ring_slots": 128,
+      "service_s": 3.1040970640000003,
+      "cold_s": 3.4209825645,
+      "ratio_vs_best_same_policy_sql_service": 3.469415941884992,
+      "ratio_vs_best_same_policy_sql_cold": 3.3483809347254563,
+      "best_sql_service": {
+        "s": 10.769403838999999,
+        "cache_kib": 131072,
+        "candidate": "sqlite_1024"
+      },
+      "best_sql_cold": {
+        "s": 11.454752797,
+        "cache_kib": 131072,
+        "candidate": "sqlite_1024"
+      },
+      "checkpoint_s": 0.9040154170000001,
+      "checkpoint_bytes": 58625048.0,
+      "checkpoint_count": 33.0,
+      "commit_sync_s": 1.1809615835,
+      "p99_s": 0.0254988955,
+      "recovery_s": 0.2829007295,
+      "backend_setup_s": 0.385656042,
+      "native_mean_group": 31.61035140187351,
+      "best_sql_p99_s": 0.021309875
+    },
+    {
+      "campaign": 2,
+      "n": 1000000,
+      "clients": 64,
+      "horizon_multiplier": 4,
+      "ring_slots": 512,
+      "service_s": 3.2873647725,
+      "cold_s": 3.700250335,
+      "ratio_vs_best_same_policy_sql_service": 3.3829784087339214,
+      "ratio_vs_best_same_policy_sql_cold": 3.2245765963831743,
+      "best_sql_service": {
+        "s": 11.121084047,
+        "cache_kib": 2000,
+        "candidate": "sqlite_1024"
+      },
+      "best_sql_cold": {
+        "s": 11.931740631,
+        "cache_kib": 2000,
+        "candidate": "sqlite_1024"
+      },
+      "checkpoint_s": 0.8722039375,
+      "checkpoint_bytes": 32747076.0,
+      "checkpoint_count": 9.0,
+      "commit_sync_s": 1.3111143090000001,
+      "p99_s": 0.0034357705,
+      "recovery_s": 0.313076896,
+      "backend_setup_s": 0.4141138545,
+      "native_mean_group": 31.65226529208251,
+      "best_sql_p99_s": 0.026935792
+    }
+  ],
+  "scope": "Currentvaluebankengineext4volume,100k/1Mnonaffine existingrows131072requests4/64trueclients;singletondirect,multiclientdrain-onlytargetedqueueequalSQL/native;8192/32768logicaloperationredo upperbudget viaCAP8192/group,frames128/256/512/2048,coupledpolicygeometryexplicit;>=4maintenancecheckpointsallcells. TwoactualSQLcachebudgets,fiveWALthresholds,serialcontrol;nativepooledsixtrialmedians,strongestsame-policySQLpercell. NotgeneralCRUD,powerloss ornativephysicalLinuxqualification."
+}

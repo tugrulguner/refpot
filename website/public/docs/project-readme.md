@@ -74,6 +74,18 @@ Earlier workload misses and comparator variation remain documented alongside the
 concurrent-reader isolation, SQL frontend, Python binding, ORM, or supported distribution.
 The imported prototype is experimental, not a stable public API or product milestone.
 
+## Retained benchmark findings
+
+<p align="center"><img src="docs/assets/refpot-benchmark.png" alt="Audited random-update benchmark: both campaigns pass the scoped service/setup/p99 matrix; reopen with full-state validation loses every cell" width="960"></p>
+
+[Detailed findings, raw evidence and reproduction](benchmarks/random-updates/README.md) ·
+[Full-size chart](docs/assets/refpot-benchmark.png) ·
+[Next package recommendation](docs/package-recommendation.md)
+
+The experimental findings are retained separately from the package contract. The next
+recommended deliverable is durable CRUD and explicit transactions, with SQL and ORM later;
+that package is not implemented or qualified by this benchmark.
+
 ## Design direction
 
 The [architecture visual above](#refpot) shows the proposed boundaries, not existing

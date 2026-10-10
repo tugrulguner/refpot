@@ -36,6 +36,19 @@ class ResearchEvidenceTests(unittest.TestCase):
             self.assertEqual(json.loads((output / 'run.json').read_text())['exit_code'], 23)
             self.assertTrue((output / 'execution.log').is_file())
 
+    def test_chart_is_grounded_and_website_asset_matches(self):
+        import xml.etree.ElementTree as ET
+        source = ROOT / 'docs/assets/refpot-benchmark.svg'
+        copy = ROOT / 'website/public/refpot-benchmark.svg'
+        self.assertEqual(source.read_bytes(), copy.read_bytes())
+        self.assertEqual((ROOT / 'docs/assets/refpot-benchmark.png').read_bytes(),
+                         (ROOT / 'website/public/refpot-benchmark.png').read_bytes())
+        texts = list(ET.parse(source).getroot().itertext())
+        records = json.loads((EXPERIMENT / 'summary.json').read_text())['summary']
+        for record in records:
+            self.assertIn(f"{record['ratio_vs_best_same_policy_sql_service']:.2f}×", texts)
+        self.assertIn('Known miss: reopen + full-state validation is slower in all 16 cells.', texts)
+
     def test_reopen_misses_remain_visible(self):
         recovery = json.loads((EXPERIMENT / 'recovery-comparison.json').read_text())
         self.assertEqual(len(recovery), 16)

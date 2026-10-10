@@ -30,6 +30,8 @@ The intended developer experience is deliberately straightforward: open a local 
 
 An [audited random-update experiment](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates) passed the scoped service/setup 2× target in all 16 repeated cells: **3.04–5.95× service** and **2.99–5.91× including setup**, with better tested p99. The repository includes frozen experimental source, 672 raw records and reproduction commands.
 
+<figure class="planned-architecture"><img src="/refpot-benchmark.png" alt="Audited random-update benchmark, both campaigns and the recovery limitation" width="1600" height="1100" /><figcaption>Scoped experimental result only. Full numbers and limitations are in the linked findings.</figcaption></figure>
+
 This is existing-row mutation with atomic receipt tracking against equally batched, tuned SQLite in a Linux ARM64 Docker/ext4 VM—not a supported general database. **Reopen with full-state validation was slower in all 16 cells.** Earlier failed workloads remain documented.
 
 ## Proposed architecture — not shipped

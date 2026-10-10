@@ -10,6 +10,14 @@ Two complete campaigns produced **672 records**: 2 campaigns × 2 datasets × 4 
 - **4–9 checkpoints per trial**, including final maintenance; ring reuse is exercised.
 - **Remaining failure:** reopen with full-state validation is slower for native in all 16 cells. This includes the oracle scan, not isolated recovery latency.
 
+## Visual summary
+
+![Audited RefPot random-update result: both campaigns, with limitations](../../docs/assets/refpot-benchmark.png)
+
+[Full-size PNG](../../docs/assets/refpot-benchmark.png) · [Editable SVG](../../docs/assets/refpot-benchmark.svg)
+
+The chart shows both campaigns separately, with the 2× target and the recovery failure visible. All values below and in `summary.json` are the accessible text equivalent.
+
 ## Full results
 
 Ratios are best-tested SQLite time / native time. The two numbers on each line are campaigns 1 and 2; no averaging away a campaign.

@@ -3,7 +3,7 @@ title: Performance qualification method
 description: Evidence standards for any future RefPot-versus-SQLite performance claim.
 ---
 
-**At least 2× improvement over SQLite is an acceptance target, not an achieved guarantee.** No result in this checkout establishes a general database performance advantage. Earlier isolated read or batch experiments are not a finished engine or reproducible product benchmark.
+**At least 2× improvement over SQLite is an acceptance target, not an achieved guarantee.** No result in this checkout establishes a general database performance advantage. The [audited random-update experiment](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates) supplies experimental source, 672 raw records and executable analysis. It passes the service/setup/p99 matrix for existing-row updates with receipt tracking, not general CRUD. Reopen with full-state validation loses every cell; prior misses remain visible.
 
 ## Compare equivalent work
 

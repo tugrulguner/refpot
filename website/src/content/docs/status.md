@@ -7,11 +7,11 @@ RefPot is in **engine-first research and design**, not a released database.
 
 ## Available today
 
-The repository contains the project definition, design direction, qualification roadmap, and editable artwork. Earlier isolated native experiments inform the hypotheses, but their exploratory artifacts have not been imported as a supported implementation.
+The repository contains project documentation, editable artwork, and an [audited random-update experiment](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates) with frozen experimental source, 672 raw records and reproduction commands. All 16 repeated matrix cells passed the scoped 2× service/setup target and best-tested SQLite p99: **3.04–5.95× service**, **2.99–5.91× including setup**. This measures existing-row updates with atomic receipt tracking and equal batching in a Linux ARM64 Docker/ext4 VM, not a general database advantage. Reopen with full-state validation loses all 16 cells; earlier misses remain documented.
 
 ## Not shipped
 
-There is no general relational engine, durable insert/update/delete API, qualified concurrency, SQL frontend, Python binding, supported ORM, installable package, or stable public API. No reproducible general performance result is available from this checkout.
+There is no general relational engine, durable insert/update/delete API, qualified concurrency, SQL frontend, Python binding, supported ORM, installable package, or stable public API. The reproducible experimental result does not establish a general performance guarantee.
 
 The **2×-over-SQLite threshold is an acceptance target, not an achieved guarantee**. Performance claims require equivalent complete operations and the declared correctness, durability, and qualification matrix.
 

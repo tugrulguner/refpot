@@ -1,0 +1,61 @@
+name: Changelog
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: changelog-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changelog:
+    name: changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Honor maintainer skip label
+        if: contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+        run: echo "skip-changelog label present"
+      - name: Enforce fragment format and uniqueness
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='^changelog\.d/([0-9]+|\+[A-Za-z0-9][A-Za-z0-9._-]*)\.(added|changed|deprecated|removed|fixed)\.md$'
+          mapfile -t files < <(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" --paginate --jq '.[] | select(.status != "removed") | .filename')
+          mapfile -t fragments < <(printf '%s\n' "${files[@]}" | grep -E "$pattern" || true)
+          if (( ${#fragments[@]} == 0 )); then
+            echo "::error::add an issue-numbered fragment or unique orphan fragment, or apply skip-changelog"
+            exit 1
+          fi
+          for f in "${fragments[@]}"; do
+            if [[ "$f" =~ ^changelog\.d/([0-9]+)\. ]]; then
+              issue="${BASH_REMATCH[1]}"
+              kind="$(gh api "repos/${REPOSITORY}/issues/${issue}" --jq 'if has("pull_request") then "pull-request" else "issue" end')"
+              [[ "$kind" == issue ]] || { echo "::error::$f must refer to an issue, not a pull request"; exit 1; }
+            fi
+            if [[ "$f" =~ ^changelog\.d/\+ ]]; then
+              slug="$(basename "$f" | cut -d. -f1)"
+              existing="$(gh api "repos/${REPOSITORY}/contents/changelog.d" --jq '.[].name' 2>/dev/null || true)"
+              while IFS= read -r name; do
+                [[ -z "$name" || "$name" == "$slug."* ]] || continue
+                echo "::error::orphan slug collision: $slug"
+                exit 1
+              done <<< "$existing"
+              count=0
+              for other in "${fragments[@]}"; do [[ "$other" == "$f" ]] || [[ "$other" != changelog.d/+"$slug".* ]] || count=$((count + 1)); done
+              (( count == 0 )) || { echo "::error::duplicate orphan fragment slug $slug in PR"; exit 1; }
+            fi
+          done
+          echo "${#fragments[@]} changelog fragment(s) validated"

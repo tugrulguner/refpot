@@ -1,4 +1,5 @@
 """A committed transaction survives reopen; an aborted one does not."""
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 

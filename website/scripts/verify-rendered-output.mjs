@@ -14,7 +14,10 @@ for (const route of routes) {
   assert.equal(blocks.length, 1);
   const data = JSON.parse(blocks[0][1]);
   for (const type of ['SoftwareSourceCode', 'WebSite']) assert.ok(data['@graph'].some(entry => entry['@type'] === type));
-  assert.doesNotMatch(JSON.stringify(data), /"(?:installUrl|license|runtimePlatform|programmingLanguage)"/);
+  assert.doesNotMatch(JSON.stringify(data), /"(?:installUrl)"/);
+  assert.deepEqual(data['@graph'][0].programmingLanguage, 'Python');
+  assert.deepEqual(data['@graph'][0].runtimePlatform, 'Python 3.11–3.14');
+  assert.deepEqual(data['@graph'][0].license, 'https://spdx.org/licenses/MIT.html');
   assert.doesNotMatch(html, /pypi\.org|href="\/(?:quickstart|playground)\//i);
   // Every advertised local destination must exist in the emitted artifact.
   for (const [, href] of html.matchAll(/href="(\/[^"#?]*)[^" ]*"/g)) {

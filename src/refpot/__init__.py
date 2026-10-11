@@ -1,9 +1,10 @@
 """RefPot's initial native CRUD slice; SQL and ORM are not implemented."""
+
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from os import PathLike, getpid
-import threading
 from types import TracebackType
 
 from ._core import _Database
@@ -46,8 +47,12 @@ class _Transaction:
         self.db._in_transaction = True
         return self.db
 
-    def __exit__(self, typ: type[BaseException] | None, value: BaseException | None,
-                 traceback: TracebackType | None) -> bool:
+    def __exit__(
+        self,
+        typ: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool:
         self.db._check()
         try:
             if typ is None:
@@ -66,6 +71,7 @@ class Database:
     this is not a concurrent-reader or multiwriter API. This initial format is
     separate from the benchmark prototype and has no qualified speed claim.
     """
+
     def __init__(self, path: str | PathLike[str]) -> None:
         self._owner = threading.get_ident()
         self._pid = getpid()
@@ -90,9 +96,11 @@ class Database:
 
     def update(self, key: int, *, value: int | None = None, text: str | None = None) -> None:
         self._check()
-        self._core.update(_integer(key, "key"),
-                          _integer(value, "value") if value is not None else None,
-                          _text(text) if text is not None else None)
+        self._core.update(
+            _integer(key, "key"),
+            _integer(value, "value") if value is not None else None,
+            _text(text) if text is not None else None,
+        )
 
     def delete(self, key: int) -> None:
         self._check()

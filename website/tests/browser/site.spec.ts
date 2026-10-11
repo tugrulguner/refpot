@@ -12,13 +12,19 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme === 'auto' ? 'light' : theme);
       await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(img => img.decode())); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
       await expect(page.locator('main h1')).toHaveCount(1);
-      await expect(page.locator('main h1')).toHaveText('An unreleased custom database engine preview.');
+      await expect(page.locator('main h1')).toHaveText('A custom embedded database for Python.');
       await expect(page.locator('.research-notice')).toBeVisible();
-      await expect(page.locator('.framework-actions a')).toHaveText(['Research status','Design direction','GitHub']);
+      await expect(page.locator('.framework-actions a')).toHaveText(['Quick start','Examples','GitHub']);
+      await expect(page.locator('.framework-actions a').nth(0)).toHaveAttribute('href','/package/');
+      await expect(page.locator('.framework-actions a').nth(1)).toHaveAttribute('href','https://github.com/tugrulguner/refpot/tree/main/examples');
+      await expect(page.locator('.framework-actions a').nth(2)).toHaveAttribute('href','https://github.com/tugrulguner/refpot');
       await expect(page.locator('.framework-copy .creator-attribution')).toBeVisible();
+      await expect(page.locator('.installation-strip code')).toHaveText('uv pip install .');
+      await expect(page.locator('main h2')).toContainText(['Current package architecture','Run the shipped CRUD and transaction examples']);
+      await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg');
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveCount(1);
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveAttribute('href','/package/');
-      await expect(page.locator('.pagination-links a[rel="next"]')).toContainText('Package preview');
+      await expect(page.locator('.pagination-links a[rel="next"]')).toContainText('Quick start');
       await expect(page.locator('iframe')).toHaveCount(0);
       const measured = await page.evaluate(() => {
         const copy=document.querySelector('.framework-copy')!.getBoundingClientRect();

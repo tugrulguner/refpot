@@ -1,45 +1,65 @@
 ---
-title: Unreleased embedded database preview
+title: Unreleased native database package preview
+description: RefPot is an unreleased native C++ database package preview for Python with CRUD and explicit transactions.
 template: splash
+next: { label: Quick start, link: /package/ }
 ---
 
 <section class="framework-hero" aria-labelledby="refpot-title">
   <div class="framework-copy">
-    <p class="framework-eyebrow">MODEPOT · UNRELEASED PREVIEW</p>
-    <h1 id="refpot-title">An unreleased custom database engine preview.</h1>
-    <p class="framework-tagline">RefPot is an unreleased local source-build preview of a custom C++ engine with Python CRUD and explicit transactions; it is not a PyPI release.</p>
+    <p class="framework-eyebrow">MODEPOT · UNRELEASED PACKAGE PREVIEW</p>
+    <h1 id="refpot-title">A custom embedded database for Python.</h1>
+    <p class="framework-tagline">RefPot is a native C++ redo-and-checkpoint engine with a small Python CRUD and explicit-transaction interface. The package preview builds from source; no PyPI release is available.</p>
     <nav class="framework-actions" aria-label="Project actions">
-      <a class="framework-action primary" href="/status/">Research status</a>
-      <a class="framework-action secondary" href="/design/">Design direction</a>
+      <a class="framework-action primary" href="/package/">Quick start</a>
+      <a class="framework-action secondary" href="https://github.com/tugrulguner/refpot/tree/main/examples">Examples</a>
       <a class="framework-action tertiary" href="https://github.com/tugrulguner/refpot">GitHub</a>
     </nav>
     <a class="creator-attribution" href="https://tugrul.modepot.io/">Created by Tugrul Guner</a>
   </div>
-  <figure class="framework-art"><img src="/refpot-lockup.png?v=offwhite-1" alt="RefPot — a custom relational engine and simple Python ORM. Research and design; not released." width="600" height="450" /></figure>
+  <figure class="framework-art"><img src="/refpot-lockup.png?v=offwhite-1" alt="RefPot — a custom relational engine and simple Python ORM. The pictured SQL and ORM direction is planned, not shipped." width="600" height="450" /></figure>
 </section>
 
-<div class="research-notice"><strong>Unreleased source-build preview — not a PyPI release.</strong>Package qualification is ongoing; there is no supported release, general performance claim, or production durability guarantee.</div>
+<section class="installation-strip" aria-label="Source installation">
+  <div><p class="section-eyebrow">SOURCE BUILD</p><h2>Try the package preview</h2></div>
+  <code>{'uv pip install .'}</code>
+  <a href="/package/">Quick start guide <span aria-hidden="true">→</span></a>
+</section>
 
-## Current package preview
-
-The Python `Database` and `Row` interface supports caller-provided signed-64-bit integer keys and values, UTF-8 text up to 31 encoded bytes, CRUD, and explicit transactions. Database paths identify files; the parent directory must already exist. A C++17 toolchain is required for local source installation: `uv pip install .`. No PyPI release is available.
+<div class="research-notice"><strong>Unreleased source-build preview — not a PyPI release.</strong> Package and platform qualification remains in progress. No stable API, general performance claim, or production durability guarantee is made.</div>
 
 ## Current package architecture
 
-<figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Unreleased package preview: Python Database and Row over a native C++ engine. WAL transaction copies are synchronized before memory publication; checkpoint snapshot sync, rename and directory sync happen before log truncation." width="1200" height="760" /></a><figcaption>Unreleased local source-build preview; package qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
+The Python `Database` and `Row` interface uses a native C++ engine for fixed-schema CRUD and explicit transactions. The illustration shows this current source-build preview; it is not the planned SQL/ORM design below.
 
-The API is thread-affine with exclusive process ownership. SQL, ORM, Windows, concurrent readers, multiwriter operation, existing-format compatibility, and physical power-loss qualification are not claimed. Recovery bounds each snapshot and WAL to 64 MiB.
+<figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Unreleased package preview architecture: Python Database and Row use a native C++ engine; duplicated checksummed redo is synchronized before in-memory publication, and checkpoint snapshot sync, rename and directory sync precede log truncation." width="1200" height="760" /></a><figcaption>Current package preview; qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
 
-## Audited experimental result
+## Run the shipped CRUD and transaction examples
 
-An [audited random-update experiment](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates) passed the scoped service/setup 2× target in all 16 repeated cells: **3.04–5.95× service** and **2.99–5.91× including setup**, with better tested p99. The repository includes frozen experimental source, 672 raw records and reproduction commands.
+The preview supports caller-provided signed-64-bit integer keys and values, UTF-8 text up to 31 encoded bytes, CRUD, and explicit transactions. The parent directory of a database file must already exist. Build prerequisites, ownership, recovery behavior, errors, and limits are in the [package contract](/package-contract/).
 
-<figure class="planned-architecture"><img src="/refpot-benchmark.png" alt="Audited random-update benchmark, both campaigns and the recovery limitation" width="1600" height="1100" /><figcaption>Scoped experimental result only. Full numbers and limitations are in the linked findings.</figcaption></figure>
+From a checkout with a C++17 toolchain, run the literal install and shipped examples:
 
-This is existing-row mutation with atomic receipt tracking against equally batched, tuned SQLite in a Linux ARM64 Docker/ext4 VM—not a supported general database. **Reopen with full-state validation was slower in all 16 cells.** Earlier failed workloads remain documented.
+```sh
+uv pip install .
+python examples/crud.py
+python examples/transactions.py
+```
+
+The examples use temporary files, exercise inserts/updates/deletes and commit/rollback, then reopen persisted state. They run the native package; this site does not simulate database execution. The [example sources](https://github.com/tugrulguner/refpot/tree/main/examples) are the executable reference.
+
+## Package contract and qualification
+
+A database is exclusively owned by one process and usable only by its creating thread. Snapshot and WAL recovery are bounded to 64 MiB each. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details do not establish broad recovery or physical power-loss qualification. SQL, ORM, concurrent readers, multiwriter operation, Windows, and existing-format compatibility are not supported.
+
+The historical 3.04–5.95× result is from a separate experimental update harness, not this package. The historical reopen comparison remains 16/16 losses. Package performance is unqualified.
+
+Read the [exact package contract](/package-contract/), [status and next steps](/status/), [design direction](/design/), [performance qualification method](/performance-method/), and [canonical roadmap](/project/roadmap/). SQL and ORM are design direction, not shipped functionality.
 
 ## Planned architecture — not shipped
 
-<figure class="planned-architecture"><img src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: SQL and structured ORM operations share one execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Planned SQL/ORM direction only. The current package engine is separately shown above; SQL and ORM are not implemented.</figcaption></figure>
+<figure class="planned-architecture"><img src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: future SQL and structured ORM operations converge on one proposed execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Planned SQL/ORM direction only. The native package preview above is a separate shipped implementation.</figcaption></figure>
 
-Read the [design direction](/design/), the [performance qualification method](/performance-method/), and the [source roadmap](/project/roadmap/). The roadmap is the canonical source for project milestones; all milestone checkboxes remain planned until implementation and evidence land.
+## Next — Quick start
+
+Continue to the [package quick start and source-build instructions](/package/), then browse the [shipped examples on GitHub](https://github.com/tugrulguner/refpot/tree/main/examples).

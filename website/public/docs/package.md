@@ -1,21 +1,54 @@
 
+**Unreleased local source-build preview — not a PyPI release or supported distribution.** RefPot contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains in progress.
 
-**Unreleased local source-build preview; no PyPI release.** The checkout now contains an early native C++ redo-and-checkpoint engine with a Python CRUD and transaction interface. It is a preview, not a supported release, and package qualification is still in progress.
+## Prerequisites and install
 
-## What is present in this preview
+Use Python 3.11–3.14, `uv`, and a C++17 compiler. From the repository root, with its `pyproject.toml`:
 
-- `Database` and `Row` public Python types for caller-supplied signed-64-bit keys and values and UTF-8 text up to 31 encoded bytes.
-- An initially empty database, stored at a file path whose parent directory must exist.
-- CRUD and explicit transactions; one process owns a database exclusively and the public interface is thread-affine.
-- Version-2 `RPSNAP2` snapshots and a `.wal` redo log containing two identical checksummed copies per changed-row transaction.
-- Snapshot publication via sync, atomic rename, parent-directory sync, then log truncation and sync.
+```sh
+uv pip install .
+```
 
-Install the preview from this source checkout with `uv pip install .` and a C++17 toolchain. Examples are in `examples/`. This is not a released or broadly qualified install path.
+This builds the package from the current checkout. There is no PyPI installation command; do not use `pip install refpot` as a published path.
 
-## Boundaries and remaining work
+## Run the examples
 
-No SQL, ORM, concurrent-reader or multiwriter support, Windows support, existing-format compatibility, independent physical replicas, or physical power-loss qualification is claimed. Recovery accepts incomplete unacknowledged tails as discarded, rejects complete corrupt transactions with both copies corrupt, and bounds each snapshot/WAL to 64 MiB. Uncertain writes poison the writer. See the [package contract](/package-contract/) for detail.
+```sh
+python examples/crud.py
+python examples/transactions.py
+```
 
-Package performance is not established: map copies occur on mutation and diff scan, and CPU optimization remains future work. Historical experimental update-harness results remain scoped at 3.04–5.95×; historical reopen remains a 16/16 loss. Neither is a package benchmark.
+Both scripts create temporary database files and exercise the native package. The CRUD example inserts, updates, deletes, closes, and reopens persisted state. The transaction example verifies read-your-writes, commit, rollback, checkpoint, and reopen.
 
-Remaining gates include failure/recovery tests, installed-artifact and platform verification, package-specific performance screening, and release readiness. No roadmap milestone is implied complete and publishing requires separate approval.
+## Minimal API
+
+```python
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from refpot import Database, Row
+
+with TemporaryDirectory() as directory:
+    path = Path(directory) / "example.rp"  # Parent directory already exists.
+    with Database(path) as db:
+        db.insert(1, 42, "answer")
+        db.update(1, value=43)
+        assert db.get(1) == Row(1, 43, "answer")
+        with db.transaction():
+            db.insert(2, 99)
+        try:
+            with db.transaction():
+                db.update(1, value=100)
+                raise RuntimeError("roll back")
+        except RuntimeError:
+            pass
+        assert db.get(1) == Row(1, 43, "answer")
+    with Database(path) as db:
+        assert db.get(1) == Row(1, 43, "answer")
+```
+
+The code uses the actual Python API and native package, not a browser playground or simulated database. Run the shipped scripts for complete executable examples.
+
+## Next — Reference
+
+Read the [complete package contract](/package-contract/) for operations, errors, ownership, file formats, recovery limits, and qualification boundaries. See [status and next steps](/status/), [design direction](/design/), and [performance methodology](/performance-method/). The [roadmap](/project/roadmap/) remains the canonical milestone record.

@@ -7,7 +7,7 @@ for (const route of routes) {
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1, `${route}: one H1`);
   for (const destination of ['https://modepot.io/', 'https://github.com/tugrulguner/refpot', 'https://discord.gg/u3AANZr6RG', 'https://tugrul.modepot.io/']) assert.ok(html.includes(destination), `${route}: ${destination}`);
   assert.equal((html.match(/posthog\.init\(/g) ?? []).length, 1, `${route}: one PostHog initialization`);
-  for (const setting of ["api_host:'https://us.i.posthog.com'", "person_profiles:'identified_only'", 'capture_pageview:true', 'capture_pageleave:true', 'disable_session_recording:true', "dom_event_allowlist:['click']", "element_allowlist:['a','button']"]) assert.ok(html.includes(setting), `${route}: ${setting}`);
+  for (const setting of ["api_host:'https://us.i.posthog.com'", "person_profiles:'identified_only'", 'capture_pageview:true', 'capture_pageleave:true', 'disable_session_recording:true', 'save_referrer:false', 'save_campaign_params:false', 'advanced_disable_flags:true', 'sanitize_properties:function sanitizeAnalyticsProperties(properties)', "dom_event_allowlist:['click']", "element_allowlist:['a','button']"]) assert.ok(html.includes(setting), `${route}: ${setting}`);
   assert.ok(html.includes('rel="alternate" type="text/plain" href="/llms.txt"'));
   assert.ok(html.includes('https://refpot.modepot.io/social-card.png?v=offwhite-1'));
   const blocks = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];

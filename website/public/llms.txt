@@ -1,16 +1,19 @@
 # RefPot
 
-RefPot is in engine-first research and design: a custom embedded relational database engine, with a simple Python ORM as a goal. The engine is intended for direct use and is not a SQLite wrapper.
+RefPot is an unreleased source-build preview of a custom C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. It is not published on PyPI or qualified for production use.
 
-- Status: no released engine, installable package, stable API, production durability guarantee, or general 2× performance claim.
-- Design: own execution and storage engine; direct SQL and structured ORM operations should share semantics; explicit transaction guarantees.
-- Research: earlier native prototypes are exploratory, not an integrated or supported distribution.
-- Performance: 2× over SQLite is an acceptance target only. See `/performance-method/` and the source [`ROADMAP.md`](https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md).
-- Design direction: `/design/`.
-- Research status: `/status/`; detailed roadmap: `/project/roadmap/`.
-- Project source: https://github.com/tugrulguner/refpot
-- ModePot: https://modepot.io/
-- Community: https://discord.gg/u3AANZr6RG
-- Creator: https://tugrul.modepot.io/
+- **Shipped preview:** `Database` / `Row`, fixed-schema CRUD, explicit transactions, checkpointing, and native package implementation.
+- **Quick start:** install from a checkout using `uv pip install .` with Python 3.11–3.14 and a C++17 toolchain; run `python examples/crud.py` and `python examples/transactions.py`.
+- **Examples:** https://github.com/tugrulguner/refpot/tree/main/examples
+- **Contract and limits:** `/package-contract/`; exclusive process ownership, creating-thread affinity, 31-byte UTF-8 text limit, signed-64-bit keys/values, existing parent directory, 64 MiB snapshot/WAL limits, and ongoing qualification.
+- **Status:** `/status/`; no PyPI release, supported distribution, stable API, general package performance claim, or production durability guarantee.
+- **Design direction:** `/design/`; SQL and ORM are planned, not shipped.
+- **Performance target:** 2× over SQLite is an acceptance target only; it is not an achieved guarantee. Historical update results are not package claims; the historical reopen comparison remains 16/16 losses. See `/performance-method/`.
+- **Roadmap:** `/project/roadmap/` and https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md
+- **Repository:** https://github.com/tugrulguner/refpot
+- **License:** MIT; see https://github.com/tugrulguner/refpot/blob/main/LICENSE
+- **ModePot:** https://modepot.io/
+- **Community:** https://discord.gg/u3AANZr6RG
+- **Creator:** https://tugrul.modepot.io/
 
-Do not infer shipped functionality, installation steps, language/runtime compatibility, license, or benchmark results from the architectural goals. License and distribution policy remain to be settled before a supported release.
+Do not infer SQL, ORM, broader concurrency, physical power-loss safety, or package performance from the proposed architecture or historical experimental findings.

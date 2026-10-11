@@ -12,6 +12,18 @@ language or isolated data structures.
 All milestones below are **planned and unchecked**. Earlier scratch experiments inform the
 hypotheses; they do not complete a product milestone. This roadmap has no delivery dates.
 
+## Current implementation focus: qualify the unreleased source-build preview
+
+A local source-build preview now provides caller-supplied signed-64-bit integer keys/values, bounded UTF-8 text, CRUD, explicit transactions, a native custom engine, and Python `Database`/`Row`. It is not a PyPI release. See the [package contract](docs/package-contract.md). Qualification and release gates below remain unchecked; this is not a completion claim.
+
+- [ ] Complete native CRUD/transaction/recovery failure qualification; implementation exists but qualification remains in progress.
+- [ ] Verify wheel/source distribution and installed examples on declared platforms; preview install is local source-build only.
+- [ ] Execute runnable CRUD and transaction examples through the installed interface.
+- [ ] Qualify errors, corruption, lock ownership and process-restart behavior.
+- [ ] Update README, actual architecture diagram, website and exports to verified package behavior.
+- [ ] Requalify package performance with an estimated, bounded screening matrix; do not inherit
+      the experimental update-harness ratios.
+
 ## Non-negotiable gates
 
 - Own the execution and storage engine; do not substitute a SQLite wrapper.

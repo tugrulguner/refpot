@@ -1,0 +1,100 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.13"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "refpot"
+version = "0.1.1"
+description = "Experimental embedded native key-value database engine"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Tugrul Guner" }]
+requires-python = ">=3.11,<3.15"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX",
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Database",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/tugrulguner/refpot"
+Repository = "https://github.com/tugrulguner/refpot"
+Issues = "https://github.com/tugrulguner/refpot/issues"
+Changelog = "https://github.com/tugrulguner/refpot/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+  "actionlint-py>=1.7.7",
+  "pre-commit>=4.0",
+  "pyright>=1.1.380",
+  "pytest>=8",
+  "pytest-cov>=5",
+  "pyyaml>=6",
+  "ruff>=0.6",
+  "towncrier>=24.8",
+  "twine>=6",
+]
+
+[tool.scikit-build]
+wheel.packages = ["src/refpot"]
+wheel.force-include = { "src/refpot/_core.pyi" = "refpot/_core.pyi" }
+sdist.exclude = ["website/**", "benchmarks/**", ".venv/**", "dist/**", "uv.lock"]
+
+[tool.towncrier]
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+title_format = "## [{version}] - {project_date}"
+
+[[tool.towncrier.type]]
+directory = "added"
+name = "Added"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "changed"
+name = "Changed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "deprecated"
+name = "Deprecated"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removed"
+name = "Removed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fixed"
+name = "Fixed"
+showcontent = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests", "examples", "scripts"]
+
+[tool.ruff.lint]
+# Documentation regressions assert the literal published range and ratios.
+allowed-confusables = ["–", "×"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
+include = ["src", "tests", "examples", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

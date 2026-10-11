@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  wheels:
+    uses: ./.github/workflows/wheels.yml
+  verify-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify release commit is on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: Verify tag, version, and changelog
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/verify_release.py
+  artifacts:
+    needs: [ci, wheels, verify-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wheel-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: source-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.3'
+          enable-cache: false
+      - run: (cd dist && shasum -a 256 -c SOURCE-SHA256SUMS)
+      - run: uv run --locked python scripts/verify_artifacts.py dist/
+      - run: uv run --locked twine check dist/*.whl dist/*.tar.gz
+      - name: Write SHA-256 manifest
+        run: python3 scripts/write_manifest.py dist/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: artifacts
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/
+      - name: Keep checksum manifest out of PyPI upload
+        run: |
+          (cd dist && shasum -a 256 -c SHA256SUMS)
+          rm dist/SHA256SUMS dist/SOURCE-SHA256SUMS
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          attestations: true
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/
+      - name: Verify artifact checksums
+        run: (cd dist && shasum -a 256 -c SHA256SUMS)
+      - name: Extract changelog notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/release_notes.py > release-notes.md
+      - name: Create GitHub Release from the published artifact set
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" --title "$RELEASE_TAG" --notes-file release-notes.md --verify-tag dist/*.whl dist/*.tar.gz

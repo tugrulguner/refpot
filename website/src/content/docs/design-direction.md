@@ -4,7 +4,7 @@ slug: design
 description: Current RefPot architecture hypotheses, design constraints, and unresolved choices.
 ---
 
-RefPot is proposed as a custom embedded relational database engine with a simple Python ORM on top. It is not a SQLite wrapper; direct engine use must remain useful without the ORM.
+The current unreleased source-build preview is a custom C++ engine with Python CRUD and explicit transactions. It is not a SQLite wrapper. SQL and the ORM are later planned work, not current capabilities.
 
 ## One semantic execution core
 
@@ -24,8 +24,8 @@ Language, storage format, index structure, isolation model, SQL compatibility sc
 
 Candidate mechanisms include cache-aware separated key/value layouts, occupancy-dependent routing, preallocated bounded logical redo, incremental dirty-region checkpoints, and mutation-density-aware encoding. These are hypotheses, not selected architecture. The page-image prototype lost against tuned SQLite; it does not rule out a full copy-on-write tree/root-swap design. A Rust rewrite is a permitted option, not proof of performance.
 
-## Research status
+## Preview and roadmap
 
-Earlier isolated native prototypes inform hypotheses but are not an integrated implementation. They do not establish a durable database, qualified concurrency, a supported API, or product performance claims. See the [roadmap](/project/roadmap/) for current unchecked milestones and the [performance method](/performance-method/) for evidence requirements.
+The package preview implements CRUD, transactions and snapshot/WAL persistence. It is not a supported release; recovery qualification remains in progress and no package performance claims are established. See the [roadmap](/project/roadmap/) for current unchecked milestones and the [performance method](/performance-method/) for evidence requirements.
 
 <a class="next-link" href="/performance-method/">Next — Performance qualification method →</a>

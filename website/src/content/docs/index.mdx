@@ -1,13 +1,13 @@
 ---
-title: Embedded relational engine research
+title: Unreleased embedded database preview
 template: splash
 ---
 
 <section class="framework-hero" aria-labelledby="refpot-title">
   <div class="framework-copy">
-    <p class="framework-eyebrow">MODEPOT · DATABASE RESEARCH</p>
-    <h1 id="refpot-title">A custom relational engine. A simple Python ORM.</h1>
-    <p class="framework-tagline">RefPot is research into an embedded relational database engine that stands on its own—not a SQLite wrapper—with a straightforward Python ORM on top.</p>
+    <p class="framework-eyebrow">MODEPOT · UNRELEASED PREVIEW</p>
+    <h1 id="refpot-title">An unreleased custom database engine preview.</h1>
+    <p class="framework-tagline">RefPot is an unreleased local source-build preview of a custom C++ engine with Python CRUD and explicit transactions; it is not a PyPI release.</p>
     <nav class="framework-actions" aria-label="Project actions">
       <a class="framework-action primary" href="/status/">Research status</a>
       <a class="framework-action secondary" href="/design/">Design direction</a>
@@ -18,13 +18,17 @@ template: splash
   <figure class="framework-art"><img src="/refpot-lockup.png?v=offwhite-1" alt="RefPot — a custom relational engine and simple Python ORM. Research and design; not released." width="600" height="450" /></figure>
 </section>
 
-<div class="research-notice"><strong>Research &amp; design — no released database yet.</strong>This project has no installable package, stable API, production durability guarantee, or general 2× performance claim. The research and architecture shown here do not describe a shipped engine.</div>
+<div class="research-notice"><strong>Unreleased source-build preview — not a PyPI release.</strong>Package qualification is ongoing; there is no supported release, general performance claim, or production durability guarantee.</div>
 
-## What RefPot is exploring
+## Current package preview
 
-RefPot's goal is its own embedded relational database engine, usable directly, with a simple Python ORM built on top. It is not a SQLite wrapper. Direct engine operations and ORM operations should share semantic validation, constraints, transaction rules, and recovery behavior rather than round-tripping ORM operations through a SQL parser.
+The Python `Database` and `Row` interface supports caller-provided signed-64-bit integer keys and values, UTF-8 text up to 31 encoded bytes, CRUD, and explicit transactions. Database paths identify files; the parent directory must already exist. A C++17 toolchain is required for local source installation: `uv pip install .`. No PyPI release is available.
 
-The intended developer experience is deliberately straightforward: open a local database, declare data, perform ordinary reads and writes, and make transaction ownership explicit. This is a design goal, not an API available today.
+## Current package architecture
+
+<figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Unreleased package preview: Python Database and Row over a native C++ engine. WAL transaction copies are synchronized before memory publication; checkpoint snapshot sync, rename and directory sync happen before log truncation." width="1200" height="760" /></a><figcaption>Unreleased local source-build preview; package qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
+
+The API is thread-affine with exclusive process ownership. SQL, ORM, Windows, concurrent readers, multiwriter operation, existing-format compatibility, and physical power-loss qualification are not claimed. Recovery bounds each snapshot and WAL to 64 MiB.
 
 ## Audited experimental result
 
@@ -34,8 +38,8 @@ An [audited random-update experiment](https://github.com/tugrulguner/refpot/tree
 
 This is existing-row mutation with atomic receipt tracking against equally batched, tuned SQLite in a Linux ARM64 Docker/ext4 VM—not a supported general database. **Reopen with full-state validation was slower in all 16 cells.** Earlier failed workloads remain documented.
 
-## Proposed architecture — not shipped
+## Planned architecture — not shipped
 
-<figure class="planned-architecture"><img src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: SQL and structured ORM operations share one execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Proposed architecture only. No engine, SQL frontend, Python binding, ORM, storage, or recovery implementation is shipped.</figcaption></figure>
+<figure class="planned-architecture"><img src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: SQL and structured ORM operations share one execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Planned SQL/ORM direction only. The current package engine is separately shown above; SQL and ORM are not implemented.</figcaption></figure>
 
 Read the [design direction](/design/), the [performance qualification method](/performance-method/), and the [source roadmap](/project/roadmap/). The roadmap is the canonical source for project milestones; all milestone checkboxes remain planned until implementation and evidence land.

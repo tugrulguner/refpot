@@ -1,4 +1,9 @@
-# RefPot package status and next steps
+---
+title: Package preview
+slug: package
+description: Current RefPot source-build package status and remaining qualification.
+---
+
 
 **Unreleased local source-build preview; no PyPI release.** The checkout now contains an early native C++ redo-and-checkpoint engine with a Python CRUD and transaction interface. It is a preview, not a supported release, and package qualification is still in progress.
 
@@ -14,7 +19,7 @@ Install the preview from this source checkout with `uv pip install .` and a C++1
 
 ## Boundaries and remaining work
 
-No SQL, ORM, concurrent-reader or multiwriter support, Windows support, existing-format compatibility, independent physical replicas, or physical power-loss qualification is claimed. Recovery accepts incomplete unacknowledged tails as discarded, rejects complete corrupt transactions with both copies corrupt, and bounds each snapshot/WAL to 64 MiB. Uncertain writes poison the writer. See the [package contract](package-contract.md) for detail.
+No SQL, ORM, concurrent-reader or multiwriter support, Windows support, existing-format compatibility, independent physical replicas, or physical power-loss qualification is claimed. Recovery accepts incomplete unacknowledged tails as discarded, rejects complete corrupt transactions with both copies corrupt, and bounds each snapshot/WAL to 64 MiB. Uncertain writes poison the writer. See the [package contract](/package-contract/) for detail.
 
 Package performance is not established: map copies occur on mutation and diff scan, and CPU optimization remains future work. Historical experimental update-harness results remain scoped at 3.04–5.95×; historical reopen remains a 16/16 loss. Neither is a package benchmark.
 

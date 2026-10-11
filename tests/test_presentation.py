@@ -48,11 +48,13 @@ class PresentationTests(unittest.TestCase):
 
     def test_hero_hierarchy_and_community(self):
         text = (ROOT / "README.md").read_text()
-        markers = ['refpot-lockup.png', 'Part of', 'Created by Tugrul Guner', '<strong>', 'Status-Research', 'href="#why-refpot"', 'refpot-execution.png', '> [!IMPORTANT]']
+        markers = ['refpot-lockup.png', 'Part of', 'Created by Tugrul Guner', '<strong>', 'Status-Unreleased', 'href="#project-status"', 'refpot-execution.png', '> [!IMPORTANT]']
         positions = [text.index(marker) for marker in markers]
         self.assertEqual(positions, sorted(positions))
         self.assertIn('width="600"', text)
         self.assertIn('width="960"', text)
+        self.assertIn('refpot-package.png', text)
+        self.assertIn('docs/assets/refpot-package.svg', text)
         self.assertIn('href="https://refpot.modepot.io/"', text)
         self.assertIn('RefPot — research and design</a>', text)
         self.assertNotIn('launch pending', text)
@@ -66,7 +68,7 @@ class PresentationTests(unittest.TestCase):
 
     def test_planned_boundary(self):
         text = (ROOT / "README.md").read_text()
-        self.assertIn("not a released database", text)
+        self.assertIn("not a PyPI release", text)
         self.assertIn("acceptance target, not an achieved guarantee", text)
         diagram = ET.parse(ROOT / "docs/assets/refpot-execution.svg").getroot()
         labels = " ".join(diagram.itertext())

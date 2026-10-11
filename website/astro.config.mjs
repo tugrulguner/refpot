@@ -5,7 +5,7 @@ const posthogScript = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'SoftwareSourceCode', name: 'RefPot', description: 'Research and design for a custom embedded relational database engine and simple Python ORM.', url: 'https://refpot.modepot.io/', codeRepository: 'https://github.com/tugrulguner/refpot', isPartOf: { '@type': 'Organization', name: 'ModePot', url: 'https://modepot.io/' } },
+    { '@type': 'SoftwareSourceCode', name: 'RefPot', description: 'Unreleased local source-build preview of a custom embedded engine with Python CRUD and transactions; not a PyPI release.', url: 'https://refpot.modepot.io/', codeRepository: 'https://github.com/tugrulguner/refpot', isPartOf: { '@type': 'Organization', name: 'ModePot', url: 'https://modepot.io/' } },
     { '@type': 'WebSite', name: 'RefPot documentation', url: 'https://refpot.modepot.io/', inLanguage: 'en' },
   ],
 };
@@ -14,7 +14,7 @@ export default defineConfig({
   vite: { preview: { strictPort: true }, server: { strictPort: true } },
   integrations: [starlight({
     title: 'RefPot',
-    description: 'Research and design for a custom embedded relational database engine and simple Python ORM.',
+    description: 'Unreleased local source-build preview of a custom embedded engine with Python CRUD and transactions; not a PyPI release.',
     favicon: '/refpot-mark.svg?v=offwhite-1',
     social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/tugrulguner/refpot' }],
     customCss: ['./src/styles/custom.css'],
@@ -31,7 +31,7 @@ export default defineConfig({
       { tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON.stringify(structuredData) },
     ],
     sidebar: [
-      { label: 'Project', items: [{ slug: 'index', label: 'Overview' }, { slug: 'status', label: 'Research status' }, { slug: 'design' }, { slug: 'performance-method' }, { slug: 'project/roadmap', label: 'Roadmap' }] },
+      { label: 'Project', items: [{ slug: 'index', label: 'Overview' }, { slug: 'package', label: 'Package preview' }, { slug: 'package-contract', label: 'Package contract' }, { slug: 'status', label: 'Package status' }, { slug: 'design' }, { slug: 'performance-method' }, { slug: 'project/roadmap', label: 'Roadmap' }] },
     ],
   })],
 });

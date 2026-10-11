@@ -1,11 +1,13 @@
 # RefPot
 
-RefPot is in engine-first research and design: a custom embedded relational database engine, with a simple Python ORM as a goal. The engine is intended for direct use and is not a SQLite wrapper.
+RefPot has an unreleased local source-build preview: a custom C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. There is no PyPI release or supported distribution.
 
-- Status: no released engine, installable package, stable API, production durability guarantee, or general 2× performance claim.
+- Status: no PyPI release, supported distribution, or production durability guarantee; qualification remains ongoing.
 - Design: own execution and storage engine; direct SQL and structured ORM operations should share semantics; explicit transaction guarantees.
 - Research: earlier native prototypes are exploratory, not an integrated or supported distribution.
 - Performance: 2× over SQLite is an acceptance target only. See `/performance-method/` and the source [`ROADMAP.md`](https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md).
+- Package preview: `/package/`.
+- Exact contract: `/package-contract/`.
 - Design direction: `/design/`.
 - Research status: `/status/`; detailed roadmap: `/project/roadmap/`.
 - Project source: https://github.com/tugrulguner/refpot

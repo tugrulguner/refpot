@@ -7,24 +7,25 @@
 <p align="center"><a href="https://modepot.io/">Part of ModePot</a> &nbsp; · &nbsp; Project website: <a href="https://refpot.modepot.io/">RefPot — research and design</a> &nbsp; · &nbsp; <a href="https://tugrul.modepot.io/">Created by Tugrul Guner</a></p>
 
 <p align="center">
-  <strong>A custom relational engine. A simple Python ORM.</strong>
+  <strong>An unreleased custom embedded database preview for Python.</strong>
 </p>
 
 <p align="center">
-  An embedded database designed for direct engine use and straightforward Python operations. Own the engine; keep one execution core and explicit transaction guarantees.
+  A source-build preview of a custom C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Not a PyPI release or a qualified production database.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Research%20%26%20design-49515e" alt="Status: research and design">
+  <img src="https://img.shields.io/badge/Status-Unreleased%20preview-49515e" alt="Status: unreleased local source-build preview">
   <a href="https://discord.gg/u3AANZr6RG"><img src="https://img.shields.io/badge/Discord-Join%20ModePot-5865F2?logo=discord&amp;logoColor=white" alt="Join the ModePot Discord"></a>
   <a href="https://github.com/tugrulguner/refpot"><img src="https://img.shields.io/github/stars/tugrulguner/refpot?style=flat" alt="GitHub stars"></a>
 </p>
 
 <p align="center">
-  <a href="#why-refpot">Why RefPot</a> ·
-  <a href="#project-status">Status</a> ·
+  <a href="#project-status">Package preview</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="docs/package-contract.md">Package contract</a> ·
   <a href="ROADMAP.md">Roadmap</a> ·
-  <a href="#design-direction">Design direction</a> ·
+  <a href="#planned-design-direction">Design direction</a> ·
   <a href="#performance-target">Performance target</a> ·
   <a href="#community">Community</a> ·
   <a href="#contributing">Contributing</a>
@@ -35,44 +36,29 @@
 </p>
 
 > [!IMPORTANT]
-> RefPot is in engine-first research and design. This repository starts with project
-> documentation and identity, not a released database. There is no installable package,
-> stable API, production durability guarantee, or general 2× performance claim yet.
-
-## Why RefPot?
-
-RefPot is being designed as **its own embedded relational database engine**, with a
-Python ORM built on top. It is not a SQLite wrapper, and the engine should be useful
-without the ORM.
-
-The architectural hypothesis is one execution core with two entry points: SQL for direct
-engine use, and structured operations for the ORM. The ORM should not need to generate SQL
-only for the engine to parse the same operation back again. Both paths must enforce the
-same constraints, transaction rules, and recovery behavior.
-
-The developer experience matters just as much: open a local database, declare data, perform
-ordinary reads and writes, and use explicit transactions. Avoid mandatory repository stacks,
-hidden queries, and a public menu of internal tuning strategies. This is a design goal,
-not an API available today.
+> This checkout contains an unreleased local source-build preview, not a PyPI release or supported distribution. Package failure and platform qualification remain in progress. There is no general performance claim or production durability guarantee.
 
 ## Project status
 
-**In this repository:** project documentation, editable artwork, and an
-[audited random-update experiment](benchmarks/random-updates/README.md) with frozen
-experimental source, 672 raw timing records, analysis and reproduction commands.
+The repository has an early native C++ custom redo-and-checkpoint engine and Python `Database` / `Row` CRUD plus explicit transactions. The database starts empty and uses caller-provided signed-64-bit integer keys/values and UTF-8 text up to 31 encoded bytes. It opens a file path (not a directory); the parent directory must exist.
 
-**Measured result:** all 16 repeated campaign/dataset/client cells passed the scoped
-service/setup 2× target and beat best-tested SQLite p99: **3.04–5.95× service** and
-**2.99–5.91× including setup** across 100k/1M existing rows and 1/4/16/64 clients.
-SQLite is prepared, WAL/FULL, equally batched, and transactionally tracks receipts.
-This is not a plain update-only baseline or a general database claim.
+The source-build preview can be installed with `uv pip install .` from this checkout with a C++17 toolchain. It is **not released on PyPI**. The public interface is thread-affine, one process owns a database exclusively, and concurrent readers, multiwriter, Windows, existing-format compatibility, and SQL/ORM are unsupported. Recovery and failure qualification remain ongoing.
 
-**Remaining failure:** reopen with full-state validation was slower in all 16 cells.
-Earlier workload misses and comparator variation remain documented alongside the win.
+### Quick start
 
-**Not shipped:** a general relational engine, durable arbitrary CRUD API, qualified
-concurrent-reader isolation, SQL frontend, Python binding, ORM, or supported distribution.
-The imported prototype is experimental, not a stable public API or product milestone.
+```sh
+uv pip install .
+```
+
+See runnable [CRUD example](examples/crud.py) and [transaction example](examples/transactions.py), plus the exact [package contract](docs/package-contract.md). Provide an existing parent directory and a file path to `Database`; databases start empty.
+
+## Current package architecture
+
+<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="Unreleased source-build preview architecture: Python Database and Row use a native C++ engine; transactions synchronize duplicated checksummed redo before memory publication; checkpoint snapshot sync, rename and directory sync precede log truncation. Limits and qualifications are listed in the accessible text below." width="960"></a></p>
+
+[Open the full-size editable SVG](docs/assets/refpot-package.svg) · [Detailed package contract](docs/package-contract.md)
+
+The Python interface is thread-affine and process-exclusive. Snapshot/WAL recovery is bounded to 64 MiB each. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details do not mean broad recovery qualification is complete. Mutation and diff scan copy maps; this preview is not benchmark-fast.
 
 ## Retained benchmark findings
 
@@ -82,15 +68,11 @@ The imported prototype is experimental, not a stable public API or product miles
 [Full-size chart](docs/assets/refpot-benchmark.png) ·
 [Next package recommendation](docs/package-recommendation.md)
 
-The experimental findings are retained separately from the package contract. The next
-recommended deliverable is durable CRUD and explicit transactions, with SQL and ORM later;
-that package is not implemented or qualified by this benchmark.
+The experimental findings are retained separately from package performance. The 3.04–5.95× result is scoped to the historical update harness; package performance is unqualified. Known historical reopen result remains 16/16 losses. SQL and ORM remain later milestones.
 
-## Design direction
+## Planned design direction
 
-The [architecture visual above](#refpot) shows the proposed boundaries, not existing
-modules: direct SQL and structured ORM operations share the same execution core, storage,
-transaction rules, and recovery. The engine must remain usable without the ORM.
+The preserved [planned architecture visual above](#refpot) shows a future SQL/ORM direction, not this preview. Neither SQL nor ORM is implemented.
 
 - **Engine first.** Establish correctness and performance before building the ORM.
 - **One semantic boundary.** Direct operations must not bypass validation or constraints.
@@ -132,7 +114,7 @@ or a favorable batch does not make RefPot a faster database across the board.
 Join the [ModePot Discord](https://discord.gg/u3AANZr6RG) for design discussions,
 implementation questions, early ideas, and database use cases across the family.
 Use [GitHub Issues](https://github.com/tugrulguner/refpot/issues) for scoped proposals
-and reproducible findings. RefPot is still research-stage; there is no package to install yet.
+and reproducible findings. The source-build preview is unreleased and not yet broadly qualified.
 
 ## Contributing
 

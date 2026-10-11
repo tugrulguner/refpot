@@ -1,0 +1,51 @@
+name: Engine package
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: package-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: installed package (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.11', '3.13']
+    env:
+      PYTHON_VERSION: ${{ matrix.python }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.12.3'
+          enable-cache: false
+      - name: Locked development tests
+        run: |
+          uv sync --locked --python "$PYTHON_VERSION"
+          uv run --locked pytest tests -q
+      - name: Build source distribution and wheel
+        run: uv build --python "$PYTHON_VERSION" --out-dir "$RUNNER_TEMP/refpot-dist"
+      - name: Verify isolated installed wheel
+        run: |
+          uv venv --python "$PYTHON_VERSION" "$RUNNER_TEMP/refpot-consumer"
+          uv pip install --python "$RUNNER_TEMP/refpot-consumer/bin/python" "$RUNNER_TEMP"/refpot-dist/*.whl pytest
+          mkdir -p "$RUNNER_TEMP/refpot-check/tests"
+          cp -R examples "$RUNNER_TEMP/refpot-check/"
+          cp tests/test_database.py tests/test_package_recovery.py tests/test_state_machine.py tests/test_io_failures.py tests/test_capacity.py "$RUNNER_TEMP/refpot-check/tests/"
+          cp -R tests/native "$RUNNER_TEMP/refpot-check/tests/"
+          cd "$RUNNER_TEMP/refpot-check"
+          "$RUNNER_TEMP/refpot-consumer/bin/python" -c 'import refpot; print(refpot.__file__); assert "site-packages" in refpot.__file__'
+          "$RUNNER_TEMP/refpot-consumer/bin/python" -m pytest tests -q --basetemp "$RUNNER_TEMP/refpot-pytest"
+          "$RUNNER_TEMP/refpot-consumer/bin/python" examples/crud.py
+          "$RUNNER_TEMP/refpot-consumer/bin/python" examples/transactions.py

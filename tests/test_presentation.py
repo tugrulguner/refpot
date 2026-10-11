@@ -1,4 +1,5 @@
-"""Documentation-only presentation guards. Run: python3 -m unittest discover -s tests."""
+"""Presentation and family-contract regression guards."""
+
 import re
 import unittest
 import xml.etree.ElementTree as ET
@@ -14,9 +15,15 @@ FAMILY_FLASK = (
 
 class PresentationTests(unittest.TestCase):
     def test_refpot_identity_palette_and_canonical_geometry_parity(self):
-        sources = [ROOT / "docs/assets/refpot-lockup.svg", ROOT / "docs/assets/refpot-execution.svg"]
-        copies = [ROOT / "website/public/refpot-lockup.svg", ROOT / "website/public/refpot-execution.svg"]
-        for source, copy in zip(sources, copies):
+        sources = [
+            ROOT / "docs/assets/refpot-lockup.svg",
+            ROOT / "docs/assets/refpot-execution.svg",
+        ]
+        copies = [
+            ROOT / "website/public/refpot-lockup.svg",
+            ROOT / "website/public/refpot-execution.svg",
+        ]
+        for source, copy in zip(sources, copies, strict=True):
             self.assertEqual(source.read_bytes(), copy.read_bytes())
             text = source.read_text()
             self.assertNotRegex(text, r"(?i)#58dfb4|#39c99a")
@@ -42,32 +49,110 @@ class PresentationTests(unittest.TestCase):
         paths = [node.attrib.get("d") for node in svg.iter()]
         self.assertIn(FAMILY_FLASK, paths)
         text = " ".join(svg.itertext())
-        for label in ("MODEPOT / OPEN SOURCE", "refpot", "A custom relational engine.", "A simple Python ORM."):
+        for label in (
+            "MODEPOT / OPEN SOURCE",
+            "refpot",
+            "A custom relational engine.",
+            "A simple Python ORM.",
+        ):
             self.assertIn(label, text)
         self.assertNotIn("linearGradient", {node.tag.split("}")[-1] for node in svg.iter()})
 
-    def test_hero_hierarchy_and_community(self):
+    def test_readme_family_resources_badges_and_package_first_presentation(self):
         text = (ROOT / "README.md").read_text()
-        markers = ['refpot-lockup.png', 'Part of', 'Created by Tugrul Guner', '<strong>', 'Status-Research', 'href="#why-refpot"', 'refpot-execution.png', '> [!IMPORTANT]']
-        positions = [text.index(marker) for marker in markers]
-        self.assertEqual(positions, sorted(positions))
-        self.assertIn('width="600"', text)
-        self.assertIn('width="960"', text)
-        self.assertIn('href="https://refpot.modepot.io/"', text)
-        self.assertIn('RefPot — research and design</a>', text)
-        self.assertNotIn('launch pending', text)
-        self.assertIn('href="https://modepot.io/"', text)
-        self.assertIn('href="https://tugrul.modepot.io/"', text)
-        self.assertIn('href="#community"', text)
-        self.assertEqual(text.count("https://discord.gg/u3AANZr6RG"), 2)
-        self.assertIn("## Community", text)
-        for nonexistent_surface in ('pypi.org', 'badge/License', 'workflows/ci.yml'):
-            self.assertNotIn(nonexistent_surface, text)
+        hero = text.index('width="600"')
+        resources = text.index('Part of <a href="https://modepot.io/">ModePot')
+        promise = text.index("<strong>A custom embedded database preview")
+        ci = text.index("actions/workflows/ci.yml")
+        quick = text.index("## Quick start")
+        inline = text.index("from refpot import Database, Row", quick)
+        current_diagram = text.index("refpot-package.png")
+        status = text.index("> [!IMPORTANT]")
+        self.assertEqual(
+            [hero, resources, promise, ci, status, quick, inline, current_diagram],
+            sorted([hero, resources, promise, ci, status, quick, inline, current_diagram]),
+        )
+        for link in (
+            "https://modepot.io/",
+            "https://refpot.modepot.io/",
+            "https://tugrul.modepot.io/",
+        ):
+            self.assertIn(link, text[:1800])
+        for phrase in (
+            "Python-3.11--3.14",
+            "License-MIT",
+            "not a PyPI release",
+            "3.04–5.95×",
+            "16/16 losses",
+            "docs/package-contract.md",
+            "examples/crud.py",
+            "examples/transactions.py",
+        ):
+            self.assertIn(phrase, text)
+        self.assertNotIn("img.shields.io/pypi", text)
+        self.assertIn("docs/assets/refpot-execution.png", text)
+        self.assertIn("docs/assets/refpot-package.svg", text)
 
-    def test_planned_boundary(self):
+    def test_homepage_family_page_order_is_task_first_and_honest(self):
+        page = (ROOT / "website/src/content/docs/index.mdx").read_text()
+        markers = [
+            'class="framework-hero"',
+            "A custom embedded database for Python.",
+            'class="framework-actions"',
+            'href="/package/">Quick start',
+            'href="https://github.com/tugrulguner/refpot/tree/main/examples">Examples',
+            'href="https://github.com/tugrulguner/refpot">GitHub',
+            "Created by Tugrul Guner",
+            'class="installation-strip"',
+            "Unreleased source-build preview",
+            'class="planned-architecture"',
+            "Run the shipped CRUD and transaction examples",
+            "python examples/crud.py",
+            "Package contract and qualification",
+            "Planned architecture — not shipped",
+            "Next — Quick start",
+        ]
+        positions = [page.index(marker) for marker in markers]
+        self.assertEqual(positions, sorted(positions))
+        self.assertLess(positions[-1], page.rindex("(/package/)"))
+        self.assertIn('href="/refpot-package.svg"', page)
+        self.assertIn('href="/package-contract/"', page)
+        self.assertIn("not a PyPI release", page)
+        self.assertIn("SQL and ORM are design direction, not shipped functionality", page)
+        self.assertNotIn("<iframe", page.lower())
+        self.assertNotIn("Playground", page)
+        self.assertIn("native package; this site does not simulate database execution", page)
+
+    def test_package_route_and_agent_export_expose_actual_commands(self):
+        quick = (ROOT / "website/src/content/docs/package.md").read_text()
+        for phrase in (
+            "uv pip install .",
+            "python examples/crud.py",
+            "python examples/transactions.py",
+            "Python 3.11–3.14",
+            "C++17",
+            "not a PyPI release",
+            "Next — Reference",
+            "/package-contract/",
+        ):
+            self.assertIn(phrase, quick)
+        agent = (ROOT / "website/public/llms.txt").read_text()
+        for phrase in (
+            "uv pip install .",
+            "examples/crud.py",
+            "examples/transactions.py",
+            "not published on PyPI",
+            "signed-64-bit",
+            "31-byte UTF-8",
+            "16/16 losses",
+            "License:** MIT",
+        ):
+            self.assertIn(phrase, agent)
+
+    def test_planned_boundary_and_unreleased_design_visual(self):
         text = (ROOT / "README.md").read_text()
-        self.assertIn("not a released database", text)
-        self.assertIn("acceptance target, not an achieved guarantee", text)
+        self.assertIn("not a PyPI release", text)
+        self.assertIn("acceptance target, not an achieved package guarantee", text)
         diagram = ET.parse(ROOT / "docs/assets/refpot-execution.svg").getroot()
         labels = " ".join(diagram.itertext())
         self.assertIn("Planned architecture", labels)
@@ -76,12 +161,15 @@ class PresentationTests(unittest.TestCase):
 
     def test_relative_links_and_anchors(self):
         text = (ROOT / "README.md").read_text()
-        anchors = {re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-") for heading in re.findall(r"^#{1,6} (.+)$", text, re.M)}
+        anchors = {
+            re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
+            for heading in re.findall(r"^#{1,6} (.+)$", text, re.M)
+        }
         for pair in re.findall(r'(?:href|src)="([^"]+)"|\]\(([^)]+)\)', text):
             url = next(value for value in pair if value)
             if url.startswith("#"):
                 self.assertIn(url[1:], anchors)
-            elif not url.startswith("https://"):
+            elif not url.startswith("https://") and not url.startswith("/"):
                 self.assertTrue((ROOT / url).is_file(), url)
 
     def test_static_accessible_svg(self):
@@ -92,7 +180,9 @@ class PresentationTests(unittest.TestCase):
             self.assertTrue({"title", "desc"} <= ids)
             for node in svg.iter():
                 self.assertNotIn(node.tag.split("}")[-1], {"script", "foreignObject", "image"})
-                self.assertFalse(any(key.startswith("on") or key.endswith("href") for key in node.attrib))
+                self.assertFalse(
+                    any(key.startswith("on") or key.endswith("href") for key in node.attrib)
+                )
 
 
 if __name__ == "__main__":

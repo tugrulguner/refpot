@@ -183,13 +183,10 @@ is measured separately. “Fastest ORM” is not a claim until a defined compari
 
 ## 7. Prepare a supported release
 
-- [ ] Settle license and distribution policy before inviting package adoption.
-- [ ] Add packaging, supported-platform/interpreter CI, reproducible tests, and release
-      automation once an actual implementation exists.
-- [ ] Document storage versioning, backup/restore, migrations, operational limits, and the
-      supported failure/concurrency model.
-- [ ] Verify installation, examples, recovery, and the declared performance matrix from
-      release artifacts on the supported environments.
+- [x] Settle the license and add package metadata, supported-platform/interpreter CI, artifact verification, and tag-triggered publication automation.
+- [ ] Document storage versioning, backup/restore, migrations, operational limits, and the supported failure/concurrency model.
+- [ ] Verify installation, examples, recovery, and the declared performance matrix from release artifacts on the supported environments.
+- [ ] Complete external publisher and deployment prerequisites, then publish and independently verify the release artifacts; no tag or PyPI release exists yet.
 - [ ] Align README, reference docs, roadmap, and release notes with what actually ships.
 
 **Exit:** a supported release with honest capability boundaries, reproducible evidence,

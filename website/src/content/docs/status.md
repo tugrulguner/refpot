@@ -3,7 +3,7 @@ title: Package preview status
 description: What exists in RefPot today, what remains planned, and how to participate.
 ---
 
-RefPot has an **unreleased local source-build preview** of a custom C++ redo-and-checkpoint engine and Python CRUD/transaction interface. There is no PyPI release or supported distribution; package qualification is still in progress.
+RefPot 0.1.1 is the first **experimental alpha release candidate** of a custom C++ redo-and-checkpoint engine and Python CRUD/transaction interface. It is intended for evaluation, not production. Public-index installation has not yet been independently verified; use the locally built artifact until then. Package and platform qualification remains limited.
 
 ## Historical experimental result
 
@@ -11,7 +11,7 @@ The package behavior is detailed in the [package contract](/package-contract/). 
 
 ## Not provided or qualified
 
-No SQL, ORM, concurrent readers, multiwriter support, Windows support, existing-format compatibility, independent physical replicas, physical power-loss qualification, or PyPI release is provided. Mutation and diff-scan paths copy maps; package performance is not benchmark-fast or qualified. See the [package contract](/package-contract/).
+No SQL, ORM, concurrent readers, multiwriter support, Windows or unsupported architectures, existing-format compatibility, independent physical replicas, or physical power-loss qualification is provided. Public-index installation of 0.1.1 is pending independent verification. Mutation and diff-scan paths copy maps; package performance is not benchmark-fast or qualified. See the [package contract](/package-contract/).
 
 The **2×-over-SQLite threshold is an acceptance target, not an achieved guarantee**. Performance claims require equivalent complete operations and the declared correctness, durability, and qualification matrix.
 

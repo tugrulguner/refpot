@@ -1,15 +1,15 @@
 ---
-title: Unreleased native database package preview
-description: RefPot is an unreleased native C++ database package preview for Python with CRUD and explicit transactions.
+title: RefPot experimental alpha
+description: RefPot is an experimental alpha native C++ database package for Python with CRUD and explicit transactions.
 template: splash
 next: { label: Quick start, link: /package/ }
 ---
 
 <section class="framework-hero" aria-labelledby="refpot-title">
   <div class="framework-copy">
-    <p class="framework-eyebrow">MODEPOT · UNRELEASED PACKAGE PREVIEW</p>
+    <p class="framework-eyebrow">MODEPOT · EXPERIMENTAL ALPHA</p>
     <h1 id="refpot-title">A custom embedded database for Python.</h1>
-    <p class="framework-tagline">RefPot is a native C++ redo-and-checkpoint engine with a small Python CRUD and explicit-transaction interface. The package preview builds from source; no PyPI release is available.</p>
+    <p class="framework-tagline">RefPot 0.1.1 is the first experimental alpha: a native C++ redo-and-checkpoint engine with a small Python CRUD and explicit-transaction interface. Public-index installation is not yet verified; use the locally built release candidate.</p>
     <nav class="framework-actions" aria-label="Project actions">
       <a class="framework-action primary" href="/package/">Quick start</a>
       <a class="framework-action secondary" href="https://github.com/tugrulguner/refpot/tree/main/examples">Examples</a>
@@ -26,13 +26,13 @@ next: { label: Quick start, link: /package/ }
   <a href="/package/">Quick start guide <span aria-hidden="true">→</span></a>
 </section>
 
-<div class="research-notice"><strong>Unreleased source-build preview — not a PyPI release.</strong> Package and platform qualification remains in progress. No stable API, general performance claim, or production durability guarantee is made.</div>
+<div class="research-notice"><strong>RefPot 0.1.1 experimental alpha release candidate; public-index installation is not yet verified.</strong> Use a locally built artifact until publication is verified. Package and platform qualification remains limited. No general performance claim or production durability guarantee is made.</div>
 
 ## Current package architecture
 
 The Python `Database` and `Row` interface uses a native C++ engine for fixed-schema CRUD and explicit transactions. The illustration shows this current source-build preview; it is not the planned SQL/ORM design below.
 
-<figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Unreleased package preview architecture: Python Database and Row use a native C++ engine; duplicated checksummed redo is synchronized before in-memory publication, and checkpoint snapshot sync, rename and directory sync precede log truncation." width="1200" height="760" /></a><figcaption>Current package preview; qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
+<figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Recorded pre-release implementation architecture: Python Database and Row use a native C++ engine; duplicated checksummed redo is synchronized before in-memory publication, and checkpoint snapshot sync, rename and directory sync precede log truncation." width="1200" height="760" /></a><figcaption>Current package preview; qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
 
 ## Run the shipped CRUD and transaction examples
 

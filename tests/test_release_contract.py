@@ -35,6 +35,7 @@ class ReleaseContractTests(unittest.TestCase):
             self.assertIn(f"python: '{version}'", wheels)
         self.assertIn("ubuntu-latest, macos-latest", ci)
         self.assertIn("contents: write", release)
+        self.assertIn("--prerelease", release)
         self.assertIn("id-token: write", release)
         self.assertIn("environment: pypi", release)
         self.assertIn("uv sync --all-groups --locked", ci)
@@ -52,7 +53,10 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertIn("skip-changelog", workflow)
         self.assertIn("orphan slug collision", workflow)
         self.assertEqual(config["directory"], "changelog.d")
-        self.assertTrue((ROOT / "changelog.d/+engine-package.added.md").is_file())
+        self.assertNotIn(
+            "changelog.d/+engine-package.added.md", (ROOT / "CHANGELOG.md").read_text()
+        )
+        self.assertIn("## [0.1.1] - 2026-10-12", (ROOT / "CHANGELOG.md").read_text())
         self.assertIn("must be unique", (ROOT / "CONTRIBUTING.md").read_text())
 
     def test_release_verifier_accepts_version_and_rejects_mismatch(self) -> None:

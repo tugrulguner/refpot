@@ -7,7 +7,7 @@ const posthogScript = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'SoftwareSourceCode', name: 'RefPot', description: 'Unreleased local source-build preview of a custom embedded engine with Python CRUD and transactions; not a PyPI release.', url: 'https://refpot.modepot.io/', codeRepository: 'https://github.com/tugrulguner/refpot', programmingLanguage: 'Python', runtimePlatform: 'Python 3.11–3.14', license: 'https://spdx.org/licenses/MIT.html', isPartOf: { '@type': 'Organization', name: 'ModePot', url: 'https://modepot.io/' } },
+    { '@type': 'SoftwareSourceCode', name: 'RefPot', description: 'Experimental alpha custom embedded engine with Python CRUD and transactions; not production-qualified.', url: 'https://refpot.modepot.io/', codeRepository: 'https://github.com/tugrulguner/refpot', programmingLanguage: 'Python', runtimePlatform: 'Python 3.11–3.14', license: 'https://spdx.org/licenses/MIT.html', isPartOf: { '@type': 'Organization', name: 'ModePot', url: 'https://modepot.io/' } },
     { '@type': 'WebSite', name: 'RefPot documentation', url: 'https://refpot.modepot.io/', inLanguage: 'en' },
   ],
 };
@@ -16,7 +16,7 @@ export default defineConfig({
   vite: { preview: { strictPort: true }, server: { strictPort: true } },
   integrations: [starlight({
     title: 'RefPot',
-    description: 'Unreleased local source-build preview of a custom embedded engine with Python CRUD and transactions; not a PyPI release.',
+    description: 'Experimental alpha custom embedded engine with Python CRUD and transactions; not production-qualified.',
     favicon: '/refpot-mark.svg?v=offwhite-1',
     social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/tugrulguner/refpot' }],
     customCss: ['./src/styles/custom.css'],

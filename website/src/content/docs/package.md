@@ -1,10 +1,10 @@
 ---
 title: Package quick start
 slug: package
-description: Build RefPot's unreleased native source preview, then run real CRUD and transaction examples.
+description: Install the experimental alpha or build from source, then run real CRUD and transaction examples.
 ---
 
-**Unreleased local source-build preview — not a PyPI release or supported distribution.** RefPot contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains in progress.
+**Experimental alpha release candidate.** Public-index availability must be verified before using the PyPI install path; this is not a production-qualified database. RefPot contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains in progress.
 
 ## Prerequisites and install
 
@@ -14,7 +14,7 @@ Use Python 3.11–3.14, `uv`, and a C++17 compiler. From the repository root, wi
 uv pip install .
 ```
 
-This builds the package from the current checkout. There is no PyPI installation command; do not use `pip install refpot` as a published path.
+This builds the package from the current checkout. After public-index availability is verified, install the experimental alpha with `python -m pip install refpot==0.1.1`. Source builds require a C++17 toolchain; matching prebuilt wheels do not.
 
 ## Run the examples
 

@@ -11,9 +11,9 @@ language or isolated data structures.
 
 The roadmap distinguishes implemented foundations from open qualification and product gates. A checked item means only that bounded deliverable exists; it does not imply a supported or published release. There are no delivery dates.
 
-## Current implementation focus: qualify the unreleased source-build preview
+## Current implementation focus: qualify the 0.1.1 experimental alpha
 
-A local source-build preview provides caller-supplied signed-64-bit integer keys/values, bounded UTF-8 text, CRUD, explicit transactions, a native custom engine, and Python `Database`/`Row`. The fixed-schema API and build/release workflows exist, but this is not a PyPI release: no release has been tagged or published. See the [package contract](docs/package-contract.md) and [release checklist](docs/releasing.md). Qualification and publication remain in progress.
+Version 0.1.1 is the first experimental alpha release candidate. It is not a PyPI release until public-index installation is verified; the fixed-schema API and build/release workflows exist. See the [package contract](docs/package-contract.md) and [release checklist](docs/releasing.md). Qualification remains in progress.
 
 - [ ] Complete native CRUD/transaction/recovery failure qualification; implementation exists but qualification remains in progress.
 - [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI, artifact verification, and tag-triggered release automation. Passing installed-wheel lanes verify the tested preview behavior, not physical power-loss safety or first-publication readiness.
@@ -190,7 +190,7 @@ is measured separately. “Fastest ORM” is not a claim until a defined compari
 - [x] Add the MIT license and configure package metadata, platform/interpreter CI, artifact verification, and tag-triggered publication workflows. These are repository foundations, not a completed public release.
 - [ ] Document storage versioning, backup/restore, migrations, operational limits, and the supported failure/concurrency model.
 - [ ] Verify installation, examples, recovery, and the declared performance matrix from release artifacts on the supported environments.
-- [ ] Complete external publisher and deployment prerequisites, then publish and independently verify the release artifacts; no tag or PyPI release exists yet.
+- [ ] Complete external publisher and deployment prerequisites, then publish and independently verify the release artifacts; publication is a separate independently verified gate.
 - [ ] Align README, reference docs, roadmap, and release notes with what actually ships.
 
 **Exit:** a supported release with honest capability boundaries, reproducible evidence,

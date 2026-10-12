@@ -1,6 +1,6 @@
 # RefPot agent and contributor guidance
 
-RefPot is an experimental, unreleased source-build preview of a custom embedded native database engine. Read `README.md`, `docs/package-contract.md`, and `ROADMAP.md` before changing behavior or describing capabilities.
+RefPot is an experimental alpha custom embedded native database engine. Read `README.md`, `docs/package-contract.md`, and `ROADMAP.md` before changing behavior or describing capabilities. Version 0.1.1 is the first release candidate; do not describe it as publicly installable until verified from the index.
 
 ## Contract and claims
 
@@ -15,7 +15,7 @@ RefPot is an experimental, unreleased source-build preview of a custom embedded 
 - Add regression tests for behavior changes and a unique `changelog.d/+<slug>.<type>.md` fragment for user-visible changes unless a tracking issue supplies the numbered fragment.
 - Follow `CONTRIBUTING.md` and `docs/releasing.md` for locked development, local builds, changelog handling, and release checks.
 - Run `make check`, `make build`, and `uv run --locked twine check dist/*.whl dist/*.tar.gz` for package changes. Run the website's documented checks/build and browser tests when website files change.
-- Release tags, PyPI publication, website deployment, GitHub repository settings, and merges require explicit maintainer authorization. Workflow configuration is not proof that external credentials or policies are ready.
+- Release tags and PyPI publication require explicit maintainer authorization. Workflow configuration is not proof that external policies are ready. Current release candidate installation is pending public-index verification.
 - Keep generated/temporary build artifacts out of commits and inspect `git diff --check` plus the complete final diff before opening a PR.
 
 ## Repository skill

@@ -1,6 +1,6 @@
 # RefPot package status and next steps
 
-**Unreleased local source-build preview; no PyPI release.** The checkout now contains an early native C++ redo-and-checkpoint engine with a Python CRUD and transaction interface. It is a preview, not a supported release, and package qualification is still in progress.
+**Experimental alpha release candidate; publication is verified separately.** The checkout now contains an early native C++ redo-and-checkpoint engine with a Python CRUD and transaction interface. It is a preview, not a supported release, and package qualification is still in progress.
 
 ## What is present in this preview
 

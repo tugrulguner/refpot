@@ -10,7 +10,7 @@ class PackageDocumentationTests(unittest.TestCase):
     def test_contract_states_exact_preview_boundaries(self):
         text = (ROOT / "docs/package-contract.md").read_text()
         for phrase in (
-            "not a PyPI release",
+            "Experimental alpha",
             "signed 64-bit",
             "31 encoded bytes",
             "file, not a directory",
@@ -30,7 +30,7 @@ class PackageDocumentationTests(unittest.TestCase):
     def test_readme_package_presentation_and_scoped_benchmark(self):
         text = (ROOT / "README.md").read_text()
         self.assertIn("uv pip install .", text)
-        self.assertIn("not a PyPI release", text)
+        self.assertIn("experimental alpha", text)
         self.assertIn("3.04–5.95×", text)
         self.assertIn("historical update harness", text)
         self.assertIn("16/16 losses", text)
@@ -39,7 +39,7 @@ class PackageDocumentationTests(unittest.TestCase):
 
     def test_roadmap_does_not_claim_milestone_completion(self):
         text = (ROOT / "ROADMAP.md").read_text()
-        self.assertIn("not a PyPI release", text)
+        self.assertIn("experimental alpha", text)
         self.assertIn("A checked item means only that bounded deliverable exists", text)
         self.assertIn("- [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI", text)
         self.assertIn(
@@ -52,7 +52,7 @@ class PackageDocumentationTests(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text()
         skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
         self.assertIn("skills/refpot-database/SKILL.md", agents)
-        self.assertIn("not published on PyPI", skill)
+        self.assertIn("public-index installation is independently verified", skill)
         self.assertIn("physical power-loss", skill)
         self.assertIn("Performance is unqualified", skill)
         self.assertIn(
@@ -165,7 +165,7 @@ class PackageDocumentationTests(unittest.TestCase):
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("/refpot-package.png", homepage)
         self.assertIn("/refpot-package.svg", homepage)
-        self.assertIn("not a PyPI release", homepage)
+        self.assertIn("public-index installation is not yet verified", homepage)
 
 
 if __name__ == "__main__":

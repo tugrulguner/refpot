@@ -81,7 +81,7 @@ class PresentationTests(unittest.TestCase):
         for phrase in (
             "Python-3.11--3.14",
             "License-MIT",
-            "not a PyPI release",
+            "experimental alpha",
             "3.04–5.95×",
             "16/16 losses",
             "docs/package-contract.md",
@@ -104,7 +104,7 @@ class PresentationTests(unittest.TestCase):
             'href="https://github.com/tugrulguner/refpot">GitHub',
             "Created by Tugrul Guner",
             'class="installation-strip"',
-            "Unreleased source-build preview",
+            "release candidate; public-index installation is not yet verified",
             'class="planned-architecture"',
             "Run the shipped CRUD and transaction examples",
             "python examples/crud.py",
@@ -117,7 +117,7 @@ class PresentationTests(unittest.TestCase):
         self.assertLess(positions[-1], page.rindex("(/package/)"))
         self.assertIn('href="/refpot-package.svg"', page)
         self.assertIn('href="/package-contract/"', page)
-        self.assertIn("not a PyPI release", page)
+        self.assertIn("public-index installation is not yet verified", page)
         self.assertIn("SQL and ORM are design direction, not shipped functionality", page)
         self.assertNotIn("<iframe", page.lower())
         self.assertNotIn("Playground", page)
@@ -131,7 +131,7 @@ class PresentationTests(unittest.TestCase):
             "python examples/transactions.py",
             "Python 3.11–3.14",
             "C++17",
-            "not a PyPI release",
+            "experimental alpha",
             "Next — Reference",
             "/package-contract/",
         ):
@@ -151,7 +151,7 @@ class PresentationTests(unittest.TestCase):
 
     def test_planned_boundary_and_unreleased_design_visual(self):
         text = (ROOT / "README.md").read_text()
-        self.assertIn("not a PyPI release", text)
+        self.assertIn("experimental alpha", text)
         self.assertIn("acceptance target, not an achieved package guarantee", text)
         diagram = ET.parse(ROOT / "docs/assets/refpot-execution.svg").getroot()
         labels = " ".join(diagram.itertext())

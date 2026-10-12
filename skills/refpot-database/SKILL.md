@@ -19,7 +19,7 @@ Use when building an application with the current Python database preview or che
 
 ## Prerequisites and installation
 
-RefPot is not published on PyPI. The source-build preview requires Linux or macOS, Git, uv, Python 3.11–3.14, and a C++17 compiler toolchain. Windows and free-threaded Python are not qualified. Run these commands through your agent's command-execution tool (Hermes: `terminal`), starting in a directory where a new `refpot` checkout can be created:
+Version 0.1.1 is the first experimental alpha release candidate. Use a locally built wheel until public-index installation is independently verified. After publication is verified, install with `python -m pip install refpot==0.1.1`. The package requires Linux x86_64 or macOS arm64, Python 3.11–3.14, and a C++17 compiler toolchain. Windows, other architectures, and free-threaded Python are unsupported. Run these commands through your agent's command-execution tool (Hermes: `terminal`), starting in a directory where a new `refpot` checkout can be created:
 
 ```sh
 git clone https://github.com/tugrulguner/refpot.git

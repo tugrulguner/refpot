@@ -1,4 +1,4 @@
-"""Regression guards for truthful unreleased package documentation and exports."""
+"""Regression guards for truthful published package documentation and exports."""
 
 import unittest
 from pathlib import Path
@@ -52,7 +52,7 @@ class PackageDocumentationTests(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text()
         skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
         self.assertIn("skills/refpot-database/SKILL.md", agents)
-        self.assertIn("public-index installation is independently verified", skill)
+        self.assertIn("available on PyPI", skill)
         self.assertIn("physical power-loss", skill)
         self.assertIn("Performance is unqualified", skill)
         self.assertIn(
@@ -113,6 +113,29 @@ class PackageDocumentationTests(unittest.TestCase):
             self.assertNotIn('href="skills/', text)
             self.assertNotIn("[RefPot database skill](skills/", text)
 
+    def test_public_guides_execute_literal_examples_twice(self):
+        import re
+        import subprocess
+        import sys
+        import tempfile
+
+        guides = [ROOT / "README.md", ROOT / "website/src/content/docs/package.md"]
+        for guide in guides:
+            text = guide.read_text()
+            self.assertIn("python -m pip install refpot==0.1.1", text)
+            examples = re.findall(r"```python\n(.*?)\n```", text, re.DOTALL)
+            examples.extend(re.findall(r"python - <<'PY'\n(.*?)\nPY", text, re.DOTALL))
+            self.assertEqual(len(examples), 1, guide)
+            with tempfile.TemporaryDirectory(prefix="refpot-guide-") as directory:
+                for _ in range(2):
+                    result = subprocess.run(
+                        [sys.executable, "-c", examples[0]],
+                        cwd=directory,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 0, f"{guide}: {result.stderr}")
+
     def test_diagram_source_and_website_copy_are_identical_and_accessible(self):
         import xml.etree.ElementTree as ET
 
@@ -165,7 +188,7 @@ class PackageDocumentationTests(unittest.TestCase):
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("/refpot-package.png", homepage)
         self.assertIn("/refpot-package.svg", homepage)
-        self.assertIn("public-index installation is not yet verified", homepage)
+        self.assertIn("Available on PyPI", homepage)
 
 
 if __name__ == "__main__":

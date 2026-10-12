@@ -35,7 +35,9 @@ class ReleaseContractTests(unittest.TestCase):
             self.assertIn(f"python: '{version}'", wheels)
         self.assertIn("ubuntu-latest, macos-latest", ci)
         self.assertIn("contents: write", release)
-        self.assertIn("--prerelease", release)
+        self.assertIn("gh release create", release)
+        self.assertIn("--latest", release)
+        self.assertNotIn("--prerelease", release)
         self.assertIn("id-token: write", release)
         self.assertIn("environment: pypi", release)
         self.assertIn("uv sync --all-groups --locked", ci)
@@ -144,6 +146,42 @@ class ReleaseContractTests(unittest.TestCase):
                 )
             digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
             self.assertEqual(len(digest), 64)
+
+    def test_public_release_claims_and_install_path_are_consistent(self) -> None:
+        sources = [
+            ROOT / "README.md",
+            ROOT / "AGENTS.md",
+            ROOT / "ROADMAP.md",
+            ROOT / "docs/releasing.md",
+            ROOT / "docs/package-contract.md",
+            ROOT / "docs/package-recommendation.md",
+            ROOT / "skills/refpot-database/SKILL.md",
+            ROOT / "website/src/content/docs/index.mdx",
+            ROOT / "website/src/content/docs/package.md",
+            ROOT / "website/src/content/docs/status.md",
+            ROOT / "website/public/llms.txt",
+        ]
+        sources.extend((ROOT / "website/public/docs").glob("*.md"))
+        sources.append(ROOT / "website/src/content/docs/package-contract.md")
+        text = "\n".join(path.read_text() for path in sources)
+        for stale_claim in (
+            "release candidate",
+            "not yet verified",
+            "not published on PyPI",
+            "pending independent verification",
+            "not a PyPI release yet",
+        ):
+            self.assertNotIn(stale_claim, text)
+        self.assertIn("python -m pip install refpot==0.1.1", text)
+        self.assertIn("experimental alpha", text)
+        self.assertIn("Qualification remains in progress", text)
+        homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
+        self.assertIn("INSTALL FROM PYPI", homepage)
+        self.assertNotIn("SOURCE BUILD", homepage)
+        roadmap = (ROOT / "ROADMAP.md").read_text()
+        self.assertIn(
+            "Publish version 0.1.1 as a normal latest GitHub release and on PyPI", roadmap
+        )
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(page.locator('.framework-actions a').nth(1)).toHaveAttribute('href','https://github.com/tugrulguner/refpot/tree/main/examples');
       await expect(page.locator('.framework-actions a').nth(2)).toHaveAttribute('href','https://github.com/tugrulguner/refpot');
       await expect(page.locator('.framework-copy .creator-attribution')).toBeVisible();
-      await expect(page.locator('.installation-strip code')).toHaveText('uv pip install .');
+      await expect(page.locator('.installation-strip code')).toHaveText('python -m pip install refpot==0.1.1');
       await expect(page.locator('main h2')).toContainText(['Current package architecture','Run the shipped CRUD and transaction examples']);
       await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg');
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveCount(1);

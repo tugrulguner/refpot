@@ -40,8 +40,78 @@ class PackageDocumentationTests(unittest.TestCase):
     def test_roadmap_does_not_claim_milestone_completion(self):
         text = (ROOT / "ROADMAP.md").read_text()
         self.assertIn("not a PyPI release", text)
-        self.assertIn("All milestones below are **planned and unchecked**", text)
+        self.assertIn("A checked item means only that bounded deliverable exists", text)
+        self.assertIn("- [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI", text)
+        self.assertIn(
+            "- [x] Align README, package contract, website documentation and exports", text
+        )
+        self.assertIn("- [ ] Complete native CRUD/transaction/recovery failure qualification", text)
         self.assertIn("qualification remains in progress", text)
+
+    def test_repository_agent_guidance_stays_local_and_scoped(self):
+        agents = (ROOT / "AGENTS.md").read_text()
+        skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
+        self.assertIn("skills/refpot-database/SKILL.md", agents)
+        self.assertIn("not published on PyPI", skill)
+        self.assertIn("physical power-loss", skill)
+        self.assertIn("Performance is unqualified", skill)
+        self.assertIn(
+            "installable [RefPot database skill](https://github.com/tugrulguner/refpot/blob/main/skills/refpot-database/SKILL.md)",
+            (ROOT / "README.md").read_text(),
+        )
+        frontmatter = skill.split("---", 2)[1]
+        import yaml
+
+        metadata = yaml.safe_load(frontmatter)
+        self.assertEqual(metadata["name"], "refpot-database")
+        self.assertEqual(metadata["platforms"], ["linux", "macos"])
+
+    def test_skill_install_flow_and_exact_limits_are_self_contained(self):
+        skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
+        for command in (
+            "git clone https://github.com/tugrulguner/refpot.git",
+            "cd refpot",
+            "uv venv --python 3.11",
+            "uv pip install --python .venv/bin/python .",
+            ".venv/bin/python examples/crud.py",
+            ".venv/bin/python examples/transactions.py",
+        ):
+            self.assertIn(command, skill)
+        for boundary in ("signed 64-bit", "31 UTF-8 encoded bytes", "64 MiB", "trusted", "fork()"):
+            self.assertIn(boundary, skill)
+        self.assertIn("does not automatically install this agent skill", skill)
+
+    def test_skill_python_example_runs_twice_without_existing_data(self):
+        import re
+        import subprocess
+        import sys
+        import tempfile
+
+        skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
+        examples = re.findall(r"```python\n(.*?)\n```", skill, re.DOTALL)
+        self.assertEqual(len(examples), 1)
+        with tempfile.TemporaryDirectory(prefix="refpot-skill-test-") as directory:
+            for _ in range(2):
+                result = subprocess.run(
+                    [sys.executable, "-c", examples[0]],
+                    cwd=directory,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("Row(key=1, value=43, text='answer')", result.stdout)
+
+    def test_new_guidance_links_are_portable_in_markdown_exports(self):
+        for path in ("README.md", "website/public/docs/project-readme.md"):
+            text = (ROOT / path).read_text()
+            self.assertIn(
+                "https://github.com/tugrulguner/refpot/blob/main/skills/refpot-database/SKILL.md",
+                text,
+            )
+            self.assertIn("https://github.com/tugrulguner/refpot/blob/main/AGENTS.md", text)
+            self.assertNotIn('href="skills/', text)
+            self.assertNotIn("[RefPot database skill](skills/", text)
 
     def test_diagram_source_and_website_copy_are_identical_and_accessible(self):
         import xml.etree.ElementTree as ET

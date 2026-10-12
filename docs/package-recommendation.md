@@ -1,6 +1,6 @@
 # RefPot package status and next steps
 
-**Experimental alpha release candidate; publication is verified separately.** The checkout now contains an early native C++ redo-and-checkpoint engine with a Python CRUD and transaction interface. It is a preview, not a supported release, and package qualification is still in progress.
+**Experimental alpha release, publicly available on PyPI.** The package contains an early native C++ redo-and-checkpoint engine with a Python CRUD and transaction interface. Publication does not establish production readiness; package qualification is still in progress.
 
 ## What is present in this preview
 
@@ -10,7 +10,7 @@
 - Version-2 `RPSNAP2` snapshots and a `.wal` redo log containing two identical checksummed copies per changed-row transaction.
 - Snapshot publication via sync, atomic rename, parent-directory sync, then log truncation and sync.
 
-Install the preview from this source checkout with `uv pip install .` and a C++17 toolchain. Examples are in `examples/`. This is not a released or broadly qualified install path.
+Install with `python -m pip install refpot==0.1.1`. Prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; only source builds need a C++17 toolchain (`uv pip install .`). Examples are in `examples/`. Publication does not establish broad qualification.
 
 ## Boundaries and remaining work
 

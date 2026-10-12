@@ -153,12 +153,16 @@ class ReleaseContractTests(unittest.TestCase):
             ROOT / "AGENTS.md",
             ROOT / "ROADMAP.md",
             ROOT / "docs/releasing.md",
+            ROOT / "docs/package-contract.md",
+            ROOT / "docs/package-recommendation.md",
             ROOT / "skills/refpot-database/SKILL.md",
             ROOT / "website/src/content/docs/index.mdx",
             ROOT / "website/src/content/docs/package.md",
             ROOT / "website/src/content/docs/status.md",
             ROOT / "website/public/llms.txt",
         ]
+        sources.extend((ROOT / "website/public/docs").glob("*.md"))
+        sources.append(ROOT / "website/src/content/docs/package-contract.md")
         text = "\n".join(path.read_text() for path in sources)
         for stale_claim in (
             "release candidate",
@@ -171,6 +175,9 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertIn("python -m pip install refpot==0.1.1", text)
         self.assertIn("experimental alpha", text)
         self.assertIn("Qualification remains in progress", text)
+        homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
+        self.assertIn("INSTALL FROM PYPI", homepage)
+        self.assertNotIn("SOURCE BUILD", homepage)
         roadmap = (ROOT / "ROADMAP.md").read_text()
         self.assertIn(
             "Publish version 0.1.1 as a normal latest GitHub release and on PyPI", roadmap

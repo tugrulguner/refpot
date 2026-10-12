@@ -20,8 +20,8 @@ next: { label: Quick start, link: /package/ }
   <figure class="framework-art"><img src="/refpot-lockup.png?v=offwhite-1" alt="RefPot — a custom relational engine and simple Python ORM. The pictured SQL and ORM direction is planned, not shipped." width="600" height="450" /></figure>
 </section>
 
-<section class="installation-strip" aria-label="Source installation">
-  <div><p class="section-eyebrow">SOURCE BUILD</p><h2>Try the package preview</h2></div>
+<section class="installation-strip" aria-label="Package installation">
+  <div><p class="section-eyebrow">INSTALL FROM PYPI</p><h2>Try the experimental alpha</h2></div>
   <code>{'python -m pip install refpot==0.1.1'}</code>
   <a href="/package/">Quick start guide <span aria-hidden="true">→</span></a>
 </section>
@@ -30,7 +30,7 @@ next: { label: Quick start, link: /package/ }
 
 ## Current package architecture
 
-The Python `Database` and `Row` interface uses a native C++ engine for fixed-schema CRUD and explicit transactions. The illustration shows this current source-build preview; it is not the planned SQL/ORM design below.
+The Python `Database` and `Row` interface uses a native C++ engine for fixed-schema CRUD and explicit transactions. The illustration records the pre-release implementation (its original UNRELEASED label is historical); it is not the planned SQL/ORM design below.
 
 <figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Recorded pre-release implementation architecture: Python Database and Row use a native C++ engine; duplicated checksummed redo is synchronized before in-memory publication, and checkpoint snapshot sync, rename and directory sync precede log truncation." width="1200" height="760" /></a><figcaption>Current package preview; qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
 

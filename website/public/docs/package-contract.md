@@ -1,5 +1,5 @@
 
-**Experimental alpha release candidate.** Public-index availability must be verified before using the PyPI install path; this is not a production-qualified database. Build from this checkout with `uv pip install .` and a C++17 toolchain. The package is an early custom C++ engine with a Python `Database` / `Row` interface; package failure and platform qualification remains in progress.
+**Experimental alpha release.** Install the public package with `python -m pip install refpot==0.1.1`; this is not a production-qualified database. Prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14 and need no C++ toolchain. Source builds use `uv pip install .` and require a C++17 toolchain. The package is an early custom C++ engine with a Python `Database` / `Row` interface; package failure and platform qualification remains in progress.
 
 ## Records and operations
 

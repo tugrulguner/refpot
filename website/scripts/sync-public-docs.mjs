@@ -45,6 +45,26 @@ for (const page of guideRegistry) {
   const guideLink = `\n\n[Download this page as Markdown](/docs/${route}.md)\n`;
   await writeFile(sourcePath, `---\ntitle: ${page.title}\ndescription: ${page.source === 'usage' ? 'Practical guide to the public experimental alpha.' : 'Exact boundaries from the canonical package contract.'}\n---\n\n${content}${guideLink}`);
 }
+const manuals = [
+  { slug: 'project/benchmarks', title: 'Historical benchmark results', source: '../../benchmarks/random-updates/README.md', prefix: '../../docs/evidence.md' },
+  { slug: 'project/contributing', title: 'Contributing to RefPot', source: '../../CONTRIBUTING.md' },
+  { slug: 'reference/agent-guide', title: 'Using RefPot with a coding agent', source: '../../skills/refpot-database/SKILL.md' },
+];
+for (const manual of manuals) {
+  const source = await readFile(new URL(manual.source, import.meta.url), 'utf8');
+  let content = source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trimStart().replace(/^# [^\n]*\n/, '').trim();
+  if (manual.prefix) {
+    const prefix = await readFile(new URL(manual.prefix, import.meta.url), 'utf8');
+    content = prefix.replace(/^# [^\n]*\n/, '').trim() + '\n\n## Retained experimental report\n\n' + content;
+  }
+  content = content.replaceAll('(../../docs/assets/refpot-benchmark.png)', '(/refpot-benchmark.png)')
+    .replaceAll('(../../docs/assets/refpot-benchmark.svg)', '(/refpot-benchmark.svg)');
+  const download = manual.slug.replaceAll('/', '-') + '.md';
+  const path = new URL(`src/content/docs/${manual.slug}.md`, root);
+  await mkdir(dirname(path.pathname), { recursive: true });
+  await writeFile(path, `---\ntitle: ${manual.title}\ndescription: Canonical RefPot guidance and evidence with explicit scope.\n---\n\n${content}\n\n[Download this page as Markdown](/docs/${download})\n`);
+  await writeFile(new URL(`public/docs/${download}`, root), `${content}\n`);
+}
 const packagePage = sourceContract.replace(/^# [^\n]*\n/, '')
   .replaceAll('(package-recommendation.md)', '(/package/)')
   .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')

@@ -35,9 +35,9 @@ export default defineConfig({
     sidebar: [
       { label: 'Start', items: [{ slug: 'index', label: 'Overview' }, { slug: 'package', label: 'Quick start' }] },
       { label: 'Build', items: [{ slug: 'build/crud' }, { slug: 'build/transactions' }, { slug: 'build/persistence' }, { slug: 'build/errors' }] },
-      { label: 'Reference', items: [{ slug: 'reference/api' }, { slug: 'package-contract', label: 'Package contract' }] },
+      { label: 'Reference', items: [{ slug: 'reference/api' }, { slug: 'package-contract', label: 'Package contract' }, { slug: 'reference/agent-guide' }] },
       { label: 'Internals', items: [{ slug: 'internals/recovery' }] },
-      { label: 'Project', items: [{ slug: 'status' }, { slug: 'design' }, { slug: 'performance-method' }, { slug: 'project/roadmap', label: 'Roadmap' }] },
+      { label: 'Project', items: [{ slug: 'status' }, { slug: 'project/benchmarks' }, { slug: 'project/contributing' }, { slug: 'design' }, { slug: 'performance-method' }, { slug: 'project/roadmap', label: 'Roadmap' }] },
     ],
   })],
 });

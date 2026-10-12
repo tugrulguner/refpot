@@ -11,13 +11,13 @@
 </p>
 
 <p align="center">
-  RefPot is an unreleased native C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Build the preview from source; it is not published on PyPI or qualified for production use.
+  RefPot is an experimental alpha: a native C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Version 0.1.1 is the first release; until its public-index installation is verified, use the release-candidate artifact rather than claiming it is available from PyPI.
 </p>
 
 <p align="center">
   <a href="https://github.com/tugrulguner/refpot/actions/workflows/ci.yml"><img src="https://github.com/tugrulguner/refpot/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/Python-3.11--3.14-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11 through 3.14">
-  <img src="https://img.shields.io/badge/Status-Unreleased%20source%20preview-49515e" alt="Unreleased source-build preview">
+  <img src="https://img.shields.io/badge/Status-Experimental%20alpha-49515e" alt="Experimental alpha">
   <a href="https://github.com/tugrulguner/refpot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License"></a>
   <a href="https://discord.gg/u3AANZr6RG"><img src="https://img.shields.io/badge/Discord-Join%20ModePot-5865F2?logo=discord&amp;logoColor=white" alt="Join the ModePot Discord"></a>
   <a href="https://github.com/tugrulguner/refpot"><img src="https://img.shields.io/github/stars/tugrulguner/refpot?style=flat" alt="GitHub stars"></a>
@@ -40,7 +40,7 @@
 </p>
 
 > [!IMPORTANT]
-> This repository contains an unreleased local source-build preview, not a PyPI release or supported distribution. Package and platform qualification remain in progress. There is no general performance claim or production durability guarantee.
+> Version 0.1.1 is the first experimental alpha release candidate. It is not a PyPI release yet; install from the locally built artifact until publication is independently verified. Package and platform qualification remain limited. No general performance claim or production durability guarantee is made.
 
 ## Why RefPot
 
@@ -48,7 +48,7 @@ RefPot is an early custom embedded database engine: a native C++ redo-and-checkp
 
 ## Quick start
 
-Requires Python 3.11–3.14 and a C++17 toolchain. From the repository root, build and install the unreleased source preview, then run the complete inline example:
+Requires Python 3.11–3.14. Once public-index availability is verified, install the experimental alpha with `python -m pip install refpot==0.1.1`. Matching prebuilt wheels target Linux x86_64 and macOS arm64; other source builds require a C++17 toolchain. Before publication, build the release candidate from the repository root:
 
 ```sh
 uv pip install .
@@ -90,7 +90,7 @@ The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery 
 
 ## Current package architecture
 
-<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="Unreleased source-build preview architecture: Python Database and Row use a native C++ engine; transactions synchronize duplicated checksummed redo before memory publication; checkpoint snapshot sync, rename and directory sync precede log truncation. Limits and qualifications are listed in the accessible text above." width="960"></a></p>
+<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="Recorded pre-release implementation architecture: Python Database and Row use a native C++ engine; transactions synchronize duplicated checksummed redo before memory publication; checkpoint snapshot sync, rename and directory sync precede log truncation. Limits and qualifications are listed in the accessible text above." width="960"></a></p>
 
 [Open the full-size editable SVG](docs/assets/refpot-package.svg) · [Detailed package contract](docs/package-contract.md)
 
@@ -148,7 +148,7 @@ configuration for each workload. Package performance remains unqualified.
 Join the [ModePot Discord](https://discord.gg/u3AANZr6RG) for design discussions,
 implementation questions, early ideas, and database use cases across the family.
 Use [GitHub Issues](https://github.com/tugrulguner/refpot/issues) for scoped proposals
-and reproducible findings. The source-build preview is unreleased and not yet broadly qualified.
+and reproducible findings. The experimental alpha is not yet broadly qualified.
 
 ## Contributing
 

@@ -1,5 +1,5 @@
 
-The current unreleased source-build preview is a custom C++ engine with Python CRUD and explicit transactions. It is not a SQLite wrapper. SQL and the ORM are later planned work, not current capabilities.
+The current experimental alpha is a custom C++ engine with Python CRUD and explicit transactions. It is not a SQLite wrapper. SQL and the ORM are later planned work, not current capabilities.
 
 ## One semantic execution core
 

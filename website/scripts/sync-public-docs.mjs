@@ -10,7 +10,7 @@ const packagePage = packageContract.replace(/^# [^\n]*\n/, '')
   .replaceAll('(package-recommendation.md)', '(/package/)')
   .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')
   .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)');
-await writeFile(new URL('src/content/docs/package-contract.md', root), '---\ntitle: Package contract\nslug: package-contract\ndescription: Exact capabilities and boundaries of the unreleased RefPot source-build preview.\n---\n' + packagePage);
+await writeFile(new URL('src/content/docs/package-contract.md', root), '---\ntitle: Package contract\nslug: package-contract\ndescription: Exact capabilities and boundaries of the experimental RefPot alpha.\n---\n' + packagePage);
 const mappings = [
   ['src/content/docs/status.md', 'public/docs/status.md'],
   ['src/content/docs/design-direction.md', 'public/docs/design.md'],

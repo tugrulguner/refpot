@@ -5,8 +5,47 @@ const roadmap = await readFile(new URL('../../ROADMAP.md', import.meta.url), 'ut
 const roadmapPage = new URL('src/content/docs/project/roadmap.md', root);
 await mkdir(dirname(roadmapPage.pathname), { recursive: true });
 await writeFile(roadmapPage, '---\ntitle: Roadmap\ndescription: Canonical RefPot research milestones, generated from the repository roadmap.\n---\n\n' + roadmap.replace(/^# [^\n]*\n/, '') + '\n[Download the canonical roadmap as Markdown](/docs/project-roadmap.md).\n');
-const packageContract = await readFile(new URL('../../docs/package-contract.md', import.meta.url), 'utf8');
-const packagePage = packageContract.replace(/^# [^\n]*\n/, '')
+const sourceContract = await readFile(new URL('../../docs/package-contract.md', import.meta.url), 'utf8');
+const usage = await readFile(new URL('../../docs/usage.md', import.meta.url), 'utf8');
+const splitSections = (source) => {
+  const sections = new Map();
+  let heading = '';
+  for (const line of source.split(/\r?\n/)) {
+    if (line.startsWith('## ')) { heading = line.slice(3).trim(); sections.set(heading, []); }
+    if (heading) sections.get(heading).push(line);
+  }
+  return sections;
+};
+const sources = { contract: splitSections(sourceContract), usage: splitSections(usage) };
+const guideRegistry = [
+  { slug: 'build/crud', title: 'CRUD', source: 'usage', sections: ['CRUD'] },
+  { slug: 'build/transactions', title: 'Transactions and rollback', source: 'usage', sections: ['Transactions'] },
+  { slug: 'build/persistence', title: 'Persistence and checkpointing', source: 'usage', sections: ['Persistence'] },
+  { slug: 'build/errors', title: 'Errors and ownership', source: 'usage', sections: ['Errors and ownership'] },
+  { slug: 'reference/api', title: 'Python API reference', source: 'contract', sections: ['Records and operations', 'Python API', 'Ownership and concurrency', 'Performance and maturity'] },
+  { slug: 'internals/recovery', title: 'Storage and recovery internals', source: 'contract', sections: ['Ownership and concurrency', 'On-disk behavior', 'Performance and maturity'] },
+];
+for (const page of guideRegistry) {
+  const prerequisites = page.source === 'usage' ? usage.split('\n## ')[0].replace(/^# [^\n]*\n/, '').trim() + '\n\n' : '';
+  const content = prerequisites + page.sections.map(name => {
+    const section = sources[page.source].get(name);
+    if (!section) throw new Error(`Missing canonical section ${page.source}: ${name}`);
+    const selected = section.join('\n');
+    return page.source === 'usage' ? selected.replace(/^## [^\n]*\n/, '').replace(/^### /gm, '## ') : selected;
+  }).join('\n\n')
+    .replaceAll('(package-recommendation.md)', '(/status/)')
+    .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')
+    .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)');
+  const route = page.slug.replaceAll('/', '-');
+  const sourcePath = new URL(`src/content/docs/${page.slug}.md`, root);
+  await mkdir(dirname(sourcePath.pathname), { recursive: true });
+  const download = new URL(`public/docs/${route}.md`, root);
+  await mkdir(dirname(download.pathname), { recursive: true });
+  await writeFile(download, `${content.trimEnd()}\n`);
+  const guideLink = `\n\n[Download this page as Markdown](/docs/${route}.md)\n`;
+  await writeFile(sourcePath, `---\ntitle: ${page.title}\ndescription: ${page.source === 'usage' ? 'Practical guide to the public experimental alpha.' : 'Exact boundaries from the canonical package contract.'}\n---\n\n${content}${guideLink}`);
+}
+const packagePage = sourceContract.replace(/^# [^\n]*\n/, '')
   .replaceAll('(package-recommendation.md)', '(/package/)')
   .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')
   .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)');

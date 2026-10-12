@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root = new URL('../dist/', import.meta.url);
-const routes = ['index.html', 'package/index.html', 'package-contract/index.html', 'status/index.html', 'design/index.html', 'performance-method/index.html', 'project/roadmap/index.html', '404.html'];
+const routes = ['index.html', 'package/index.html', 'package-contract/index.html', 'build/crud/index.html', 'build/transactions/index.html', 'build/persistence/index.html', 'build/errors/index.html', 'reference/api/index.html', 'internals/recovery/index.html', 'status/index.html', 'design/index.html', 'performance-method/index.html', 'project/roadmap/index.html', '404.html'];
 for (const route of routes) {
   const html = await readFile(new URL(route, root), 'utf8');
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1, `${route}: one H1`);
@@ -42,9 +42,15 @@ assert.equal(await readFile(new URL('docs/project-roadmap.md',root),'utf8'),awai
 assert.equal(await readFile(new URL('docs/project-readme.md',root),'utf8'),await readFile(new URL('../../README.md',import.meta.url),'utf8'));
 assert.equal(await readFile(new URL('docs/package-recommendation.md',root),'utf8'),await readFile(new URL('../../docs/package-recommendation.md',import.meta.url),'utf8'));
 assert.equal(await readFile(new URL('docs/package-contract-source.md',root),'utf8'),await readFile(new URL('../../docs/package-contract.md',import.meta.url),'utf8'));
+for (const route of ['build/crud','build/transactions','build/persistence','build/errors','reference/api','internals/recovery']) {
+  const canonical = (await readFile(new URL(`../src/content/docs/${route}.md`, import.meta.url), 'utf8')).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').replace(/\n\n\[Download this page as Markdown\]\([^)]*\)\n$/, '').trimStart();
+  const filename = route.replaceAll('/', '-') + '.md';
+  assert.equal((await readFile(new URL(`docs/${filename}`, root), 'utf8')).trimEnd(), canonical.trimEnd());
+}
+
 const llms=await readFile(new URL('llms.txt',root),'utf8');
 assert.match(llms,/acceptance target only/); assert.match(llms,/publicly available on PyPI/); assert.match(llms,/package-contract/);
-console.log(`Verified ${routes.length} HTML layouts, one PostHog initialization each, canonical destinations, PNG dimensions, discovery and nine same-source Markdown exports.`);
+console.log(`Verified ${routes.length} HTML layouts, one PostHog initialization each, canonical destinations, PNG dimensions, discovery and fifteen same-source Markdown exports.`);
 
 for (const [source, copy] of [["../../docs/assets/refpot-lockup.svg","refpot-lockup.svg"],["../../docs/assets/refpot-execution.svg","refpot-execution.svg"],["../../docs/assets/refpot-package.svg","refpot-package.svg"]]) assert.equal((await readFile(new URL(source, import.meta.url))).toString(), (await readFile(new URL(copy, root))).toString());
 assert.deepEqual(await readFile(new URL('../../docs/assets/refpot-package.png', import.meta.url)), await readFile(new URL('refpot-package.png', root)));

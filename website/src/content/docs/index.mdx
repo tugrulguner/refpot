@@ -28,11 +28,37 @@ next: { label: Quick start, link: /package/ }
 
 <div class="research-notice"><strong>RefPot 0.1.1 experimental alpha release.</strong> Available on PyPI. Package and platform qualification remains limited. No general performance claim or production durability guarantee is made.</div>
 
-## Current package architecture
+## A first database
 
-The Python `Database` and `Row` interface uses a native C++ engine for fixed-schema CRUD and explicit transactions. The illustration records the pre-release implementation (its original UNRELEASED label is historical); it is not the planned SQL/ORM design below.
+Install RefPot with `python -m pip install refpot==0.1.1`, then save this complete program as `first_database.py`:
 
-<figure class="planned-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Recorded pre-release implementation architecture: Python Database and Row use a native C++ engine; duplicated checksummed redo is synchronized before in-memory publication, and checkpoint snapshot sync, rename and directory sync precede log truncation." width="1200" height="760" /></a><figcaption>Current package preview; qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
+```python
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from refpot import Database, Row
+
+with TemporaryDirectory() as directory:
+    path = Path(directory) / "notes.rp"
+    with Database(path) as db:
+        db.insert(1, 42, "answer")
+        db.update(1, value=43)
+        assert db.get(1) == Row(1, 43, "answer")
+
+    with Database(path) as db:
+        assert db.get(1) == Row(1, 43, "answer")
+```
+
+```sh
+python first_database.py
+```
+
+This is executable package behavior, not a site simulation. See the [quick start](/package/), [CRUD](/build/crud/), [transactions](/build/transactions/), [persistence](/build/persistence/), and [errors and ownership](/build/errors/) guides.
+
+## Historical package architecture
+
+This illustration records the pre-release implementation, not a current benchmark or planned execution diagram. Its original artwork label is historical.
+
+<figure class="historical-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="Recorded pre-release implementation architecture: Python Database and Row use a native C++ engine; duplicated checksummed redo is synchronized before in-memory publication, and checkpoint snapshot sync, rename and directory sync precede log truncation." width="1200" height="760" /></a><figcaption>Historical implementation record; qualification remains in progress. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
 
 ## Run the shipped CRUD and transaction examples
 

@@ -1,7 +1,7 @@
 import { gunzipSync } from 'node:zlib';
 import { test, expect } from '@playwright/test';
 import { sanitizeAnalyticsProperties } from '../../src/analytics-privacy.mjs';
-const routes = ['/', '/package/', '/package-contract/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/does-not-exist/'];
+const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/does-not-exist/'];
 const resources = ['ModePot', 'GitHub', 'Community', 'About Tugrul'];
 for (const width of [1280, 768, 390, 320]) {
   for (const theme of ['light', 'dark', 'auto']) {
@@ -22,7 +22,11 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(page.locator('.framework-actions a').nth(2)).toHaveAttribute('href','https://github.com/tugrulguner/refpot');
       await expect(page.locator('.framework-copy .creator-attribution')).toBeVisible();
       await expect(page.locator('.installation-strip code')).toHaveText('python -m pip install refpot==0.1.1');
-      await expect(page.locator('main h2')).toContainText(['Current package architecture','Run the shipped CRUD and transaction examples']);
+      const python = page.locator('pre').filter({ hasText: 'from refpot import Database, Row' }).first();
+      await expect(python).toHaveCount(1);
+      await expect(python).toContainText('db.insert(1, 42, "answer")');
+      await expect(python.locator('xpath=ancestor::figure').getByRole('button', { name: /copy to clipboard/i })).toHaveCount(1);
+      await expect(page.locator('main h2')).toContainText(['A first database','Historical package architecture','Run the shipped CRUD and transaction examples']);
       await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg');
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveCount(1);
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveAttribute('href','/package/');
@@ -65,7 +69,7 @@ test('every layout preserves desktop and compact family navigation with keyboard
         const toggle=page.getByRole('button',{name:'Menu',exact:true});
         await toggle.focus(); await page.keyboard.press('Enter');
         const menu=page.getByRole('region',{name:'Menu',exact:true});
-        for(const label of ['GitHub','Community','About Tugrul','Research status','Package preview','Package contract','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
+        for(const label of ['GitHub','Community','About Tugrul','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
         await page.keyboard.press('Escape'); await expect(menu).toBeHidden(); await expect(toggle).toBeFocused();
       }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -73,6 +77,31 @@ test('every layout preserves desktop and compact family navigation with keyboard
   }
 });
 
+test('task guides render their API examples and mobile code-copy controls work', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.setViewportSize({ width: 320, height: 600 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('region', { name: 'Menu', exact: true }).getByRole('link', { name: 'CRUD', exact: true }).click();
+  await expect(page).toHaveURL(/\/build\/crud\/$/);
+  for (const route of ['/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/']) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(route);
+    await expect(page.locator('main h1')).toHaveCount(1);
+    await expect(page.locator('main')).toContainText(/Database|transaction|snapshot|recovery/i);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.goto('/package/');
+  const code = page.locator('pre').first();
+  await expect(code).toBeVisible();
+  const figure = code.locator('xpath=ancestor::figure');
+  const copy = figure.getByRole('button', { name: /copy to clipboard/i });
+  await expect(copy).toBeVisible();
+  await copy.click();
+  await expect(copy).toHaveAttribute('data-copied', 'Copied!');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('python -m pip install refpot==0.1.1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{
   await page.emulateMedia({colorScheme:'light'}); await page.goto('/');
   await page.locator('header starlight-theme-select select').selectOption('auto');

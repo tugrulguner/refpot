@@ -8,12 +8,12 @@ test:
 	uv run --locked pytest tests/ -v
 
 lint:
-	uv run --locked ruff check src/refpot/_core.pyi tests/test_release_contract.py scripts/
-	uv run --locked ruff format --check src/refpot/_core.pyi tests/test_release_contract.py scripts/
+	uv run --locked ruff check src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py examples/quickstart.py scripts/
+	uv run --locked ruff format --check src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py examples/quickstart.py scripts/
 
 format:
-	uv run --locked ruff check --fix src/refpot/_core.pyi tests/test_release_contract.py scripts/
-	uv run --locked ruff format src/refpot/_core.pyi tests/test_release_contract.py scripts/
+	uv run --locked ruff check --fix src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py examples/quickstart.py scripts/
+	uv run --locked ruff format src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py examples/quickstart.py scripts/
 
 typecheck:
 	uv run --locked pyright src/ tests/ examples/ scripts/

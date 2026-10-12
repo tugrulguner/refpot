@@ -30,6 +30,7 @@
   <a href="https://refpot.modepot.io/">Documentation</a> ·
   <a href="https://refpot.modepot.io/package-contract/">Deep reference</a> ·
   <a href="#examples">Examples</a> ·
+  <a href="skills/refpot-database/SKILL.md">Agent skill</a> ·
   <a href="#community">Community</a> ·
   <a href="#contributing">Contributing</a>
 </p>
@@ -151,7 +152,7 @@ and reproducible findings. The source-build preview is unreleased and not yet br
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and contribution workflow. The first useful work is helping define a small, testable engine contract and qualification
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and contribution workflow. Repository-local coding-agent guidance is in [AGENTS.md](AGENTS.md), with the installable [RefPot database skill](skills/refpot-database/SKILL.md) for consumer-facing API boundaries. The first useful work is helping define a small, testable engine contract and qualification
 matrix. Correctness cases, crash and I/O-failure scenarios, reproducible benchmark methods,
 and low-ceremony usage designs are more useful now than a broad speculative API.
 

@@ -5,20 +5,19 @@ simple Python ORM on top. The engine is not SQLite underneath. Performance and s
 must both be demonstrated through complete operations, not inferred from implementation
 language or isolated data structures.
 
-All milestones below are **planned and unchecked**. Earlier scratch experiments inform the
-hypotheses; they do not complete a product milestone. This roadmap has no delivery dates.
+The roadmap distinguishes implemented foundations from open qualification and product gates. A checked item means only that bounded deliverable exists; it does not imply a supported or published release. There are no delivery dates.
 
 ## Current implementation focus: qualify the unreleased source-build preview
 
-A local source-build preview now provides caller-supplied signed-64-bit integer keys/values, bounded UTF-8 text, CRUD, explicit transactions, a native custom engine, and Python `Database`/`Row`. It is not a PyPI release. See the [package contract](docs/package-contract.md). Qualification and release gates below remain unchecked; this is not a completion claim.
+A local source-build preview provides caller-supplied signed-64-bit integer keys/values, bounded UTF-8 text, CRUD, explicit transactions, a native custom engine, and Python `Database`/`Row`. The fixed-schema API and build/release workflows exist, but this is not a PyPI release: no release has been tagged or published. See the [package contract](docs/package-contract.md) and [release checklist](docs/releasing.md). Qualification and publication remain in progress.
 
 - [ ] Complete native CRUD/transaction/recovery failure qualification; implementation exists but qualification remains in progress.
-- [ ] Verify wheel/source distribution and installed examples on declared platforms; preview install is local source-build only.
-- [ ] Execute runnable CRUD and transaction examples through the installed interface.
+- [x] Add package metadata, supported-platform/interpreter CI, artifact verification, and tag-triggered release automation. This does not establish external publisher readiness or a supported release.
+- [ ] Verify wheel/source distribution and installed examples on all declared platforms; preview installation remains source-build only until publication.
+- [ ] Execute runnable CRUD and transaction examples through the installed interface on the declared platform matrix.
 - [ ] Qualify errors, corruption, lock ownership and process-restart behavior.
-- [ ] Update README, actual architecture diagram, website and exports to verified package behavior.
-- [ ] Requalify package performance with an estimated, bounded screening matrix; do not inherit
-      the experimental update-harness ratios.
+- [x] Align README, package contract, website documentation and exports to the current preview; keep the planned architecture explicitly labeled as planned.
+- [ ] Requalify package performance with an estimated, bounded screening matrix; do not inherit the experimental update-harness ratios.
 
 ## Non-negotiable gates
 

@@ -40,8 +40,26 @@ class PackageDocumentationTests(unittest.TestCase):
     def test_roadmap_does_not_claim_milestone_completion(self):
         text = (ROOT / "ROADMAP.md").read_text()
         self.assertIn("not a PyPI release", text)
-        self.assertIn("All milestones below are **planned and unchecked**", text)
+        self.assertIn("A checked item means only that bounded deliverable exists", text)
+        self.assertIn("- [x] Add package metadata, supported-platform/interpreter CI", text)
+        self.assertIn("- [x] Align README, package contract, website documentation and exports", text)
+        self.assertIn("- [ ] Complete native CRUD/transaction/recovery failure qualification", text)
         self.assertIn("qualification remains in progress", text)
+
+    def test_repository_agent_guidance_stays_local_and_scoped(self):
+        agents = (ROOT / "AGENTS.md").read_text()
+        skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
+        self.assertIn("skills/refpot-database/SKILL.md", agents)
+        self.assertIn("not published on PyPI", skill)
+        self.assertIn("physical power-loss", skill)
+        self.assertIn("Performance is unqualified", skill)
+        self.assertIn("installable [RefPot database skill](skills/refpot-database/SKILL.md)", (ROOT / "README.md").read_text())
+        frontmatter = skill.split("---", 2)[1]
+        import yaml
+
+        metadata = yaml.safe_load(frontmatter)
+        self.assertEqual(metadata["name"], "refpot-database")
+        self.assertEqual(metadata["platforms"], ["linux", "macos"])
 
     def test_diagram_source_and_website_copy_are_identical_and_accessible(self):
         import xml.etree.ElementTree as ET

@@ -1,4 +1,4 @@
-"""Regression guards for truthful unreleased package documentation and exports."""
+"""Regression guards for truthful published package documentation and exports."""
 
 import unittest
 from pathlib import Path
@@ -52,7 +52,7 @@ class PackageDocumentationTests(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text()
         skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
         self.assertIn("skills/refpot-database/SKILL.md", agents)
-        self.assertIn("public-index installation is independently verified", skill)
+        self.assertIn("available on PyPI", skill)
         self.assertIn("physical power-loss", skill)
         self.assertIn("Performance is unqualified", skill)
         self.assertIn(
@@ -165,7 +165,7 @@ class PackageDocumentationTests(unittest.TestCase):
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("/refpot-package.png", homepage)
         self.assertIn("/refpot-package.svg", homepage)
-        self.assertIn("public-index installation is not yet verified", homepage)
+        self.assertIn("Available on PyPI", homepage)
 
 
 if __name__ == "__main__":

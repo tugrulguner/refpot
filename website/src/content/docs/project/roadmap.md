@@ -9,18 +9,19 @@ simple Python ORM on top. The engine is not SQLite underneath. Performance and s
 must both be demonstrated through complete operations, not inferred from implementation
 language or isolated data structures.
 
-The roadmap distinguishes implemented foundations from open qualification and product gates. A checked item means only that bounded deliverable exists; it does not imply a supported or published release. There are no delivery dates.
+The roadmap distinguishes implemented foundations from open qualification and product gates. A checked item means only that bounded deliverable exists; it does not imply a supported release. There are no delivery dates.
 
-## Current implementation focus: qualify the 0.1.1 experimental alpha
+## Current implementation focus: qualify the 0.1.1 experimental alpha release
 
-Version 0.1.1 is the first experimental alpha release candidate. It is not a PyPI release until public-index installation is verified; the fixed-schema API and build/release workflows exist. See the [package contract](docs/package-contract.md) and [release checklist](docs/releasing.md). Qualification remains in progress.
+Version 0.1.1 is the publicly available experimental alpha release. The fixed-schema API and build/release workflows exist; qualification remains in progress. See the [package contract](docs/package-contract.md) and [release checklist](docs/releasing.md).
 
 - [ ] Complete native CRUD/transaction/recovery failure qualification; implementation exists but qualification remains in progress.
 - [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI, artifact verification, and tag-triggered release automation. Passing installed-wheel lanes verify the tested preview behavior, not physical power-loss safety or first-publication readiness.
-- [ ] Verify wheel/source distribution and installed examples on all declared platforms; preview installation remains source-build only until publication.
+- [x] Publish version 0.1.1 as a normal latest GitHub release and on PyPI; verify the public artifact installation. This publication milestone does not complete platform, example, recovery, or performance qualification.
+- [ ] Verify wheel/source distribution and installed examples on all declared platforms.
 - [ ] Execute runnable CRUD and transaction examples through the installed interface on the declared platform matrix.
 - [ ] Qualify errors, corruption, lock ownership and process-restart behavior.
-- [x] Align README, package contract, website documentation and exports to the current preview; keep the planned architecture explicitly labeled as planned.
+- [x] Align README, package contract, website documentation and exports to the publicly available experimental alpha; keep the planned architecture explicitly labeled as planned.
 - [ ] Requalify package performance with an estimated, bounded screening matrix; do not inherit the experimental update-harness ratios.
 
 ## Non-negotiable gates

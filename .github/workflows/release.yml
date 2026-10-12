@@ -102,8 +102,8 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: python3 scripts/release_notes.py > release-notes.md
-      - name: Create GitHub prerelease from the published artifact set
+      - name: Create GitHub release from the published artifact set
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" --title "$RELEASE_TAG" --notes-file release-notes.md --verify-tag --prerelease dist/*.whl dist/*.tar.gz
+        run: gh release create "$RELEASE_TAG" --title "$RELEASE_TAG" --notes-file release-notes.md --verify-tag --latest dist/*.whl dist/*.tar.gz

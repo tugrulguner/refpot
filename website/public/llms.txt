@@ -1,12 +1,12 @@
 # RefPot
 
-RefPot 0.1.1 is the first experimental alpha release candidate of a custom C++ engine with a Python `Database`/`Row` API. Until public-index installation is independently verified, install from a local wheel; do not claim the release is available from PyPI.
+RefPot 0.1.1 is the experimental alpha release of a custom C++ engine with a Python `Database`/`Row` API, publicly available on PyPI. The `refpot==0.1.1` package is the version published at release time; README metadata on PyPI is carried in the distribution and requires a future patch release to refresh.
 
 - **Shipped preview:** `Database` / `Row`, fixed-schema CRUD, explicit transactions, checkpointing, and native package implementation.
-- **Quick start:** install from a checkout using `uv pip install .` with Python 3.11–3.14 and a C++17 toolchain; run `python examples/crud.py` and `python examples/transactions.py`.
+- **Quick start:** install with `python -m pip install refpot==0.1.1`; prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14. For a source build, use `uv pip install .` with a C++17 toolchain; run `python examples/crud.py` and `python examples/transactions.py`.
 - **Examples:** https://github.com/tugrulguner/refpot/tree/main/examples
 - **Contract and limits:** `/package-contract/`; exclusive process ownership, creating-thread affinity, 31-byte UTF-8 text limit, signed-64-bit keys/values, existing parent directory, 64 MiB snapshot/WAL limits, and ongoing qualification.
-- **Status:** `/status/`; public-index installation of 0.1.1 is not published on PyPI until independently verified; use the local wheel meanwhile. No stable API, general package performance claim, or production durability guarantee.
+- **Status:** `/status/`; experimental alpha, not production-qualified. No stable API, general package performance claim, or production durability guarantee.
 - **Design direction:** `/design/`; SQL and ORM are planned, not shipped.
 - **Performance target:** 2× over SQLite is an acceptance target only; it is not an achieved guarantee. Historical update results are not package claims; the historical reopen comparison remains 16/16 losses. See `/performance-method/`.
 - **Roadmap:** `/project/roadmap/` and https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md

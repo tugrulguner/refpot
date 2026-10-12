@@ -89,7 +89,7 @@ class PresentationTests(unittest.TestCase):
             "examples/transactions.py",
         ):
             self.assertIn(phrase, text)
-        self.assertNotIn("img.shields.io/pypi", text)
+        self.assertIn("img.shields.io/pypi/v/refpot.svg", text)
         self.assertIn("docs/assets/refpot-execution.png", text)
         self.assertIn("docs/assets/refpot-package.svg", text)
 
@@ -104,7 +104,7 @@ class PresentationTests(unittest.TestCase):
             'href="https://github.com/tugrulguner/refpot">GitHub',
             "Created by Tugrul Guner",
             'class="installation-strip"',
-            "release candidate; public-index installation is not yet verified",
+            "Available on PyPI",
             'class="planned-architecture"',
             "Run the shipped CRUD and transaction examples",
             "python examples/crud.py",
@@ -117,7 +117,7 @@ class PresentationTests(unittest.TestCase):
         self.assertLess(positions[-1], page.rindex("(/package/)"))
         self.assertIn('href="/refpot-package.svg"', page)
         self.assertIn('href="/package-contract/"', page)
-        self.assertIn("public-index installation is not yet verified", page)
+        self.assertIn("Available on PyPI", page)
         self.assertIn("SQL and ORM are design direction, not shipped functionality", page)
         self.assertNotIn("<iframe", page.lower())
         self.assertNotIn("Playground", page)
@@ -141,7 +141,7 @@ class PresentationTests(unittest.TestCase):
             "uv pip install .",
             "examples/crud.py",
             "examples/transactions.py",
-            "not published on PyPI",
+            "publicly available on PyPI",
             "signed-64-bit",
             "31-byte UTF-8",
             "16/16 losses",

@@ -33,7 +33,11 @@ export default defineConfig({
       { tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON.stringify(structuredData) },
     ],
     sidebar: [
-      { label: 'Project', items: [{ slug: 'index', label: 'Overview' }, { slug: 'package', label: 'Package preview' }, { slug: 'package-contract', label: 'Package contract' }, { slug: 'status', label: 'Package status' }, { slug: 'design' }, { slug: 'performance-method' }, { slug: 'project/roadmap', label: 'Roadmap' }] },
+      { label: 'Start', items: [{ slug: 'index', label: 'Overview' }, { slug: 'package', label: 'Quick start' }] },
+      { label: 'Build', items: [{ slug: 'build/crud' }, { slug: 'build/transactions' }, { slug: 'build/persistence' }, { slug: 'build/errors' }] },
+      { label: 'Reference', items: [{ slug: 'reference/api' }, { slug: 'package-contract', label: 'Package contract' }] },
+      { label: 'Internals', items: [{ slug: 'internals/recovery' }] },
+      { label: 'Project', items: [{ slug: 'status' }, { slug: 'design' }, { slug: 'performance-method' }, { slug: 'project/roadmap', label: 'Roadmap' }] },
     ],
   })],
 });

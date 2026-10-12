@@ -49,18 +49,22 @@ RefPot is an early custom embedded database engine: a native C++ redo-and-checkp
 
 ## Quick start
 
-Requires Python 3.11–3.14. Install the experimental alpha with `python -m pip install refpot==0.1.1`. Prebuilt wheels target Linux x86_64 and macOS arm64 for CPython 3.11–3.14; a source build requires a C++17 toolchain. To build from the repository root:
+Requires Python 3.11–3.14. Install the experimental alpha from PyPI:
 
 ```sh
-uv pip install .
-python - <<'PY'
+python -m pip install refpot==0.1.1
+```
+
+Save this complete program as `quickstart.py` and run it with `python quickstart.py`:
+
+```python
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from refpot import Database, Row
 
 with TemporaryDirectory(prefix="refpot-quickstart-") as directory:
-    path = Path(directory) / "example.rp"  # The parent directory must exist.
+    path = Path(directory) / "example.rp"  # Parent directory must already exist.
     with Database(path) as db:
         db.insert(1, 42, "answer")
         db.update(1, value=43)
@@ -75,13 +79,17 @@ with TemporaryDirectory(prefix="refpot-quickstart-") as directory:
             pass
         assert db.get(1) == Row(1, 43, "answer")
         db.delete(2)
+        db.checkpoint()
     with Database(path) as db:
         assert db.get(1) == Row(1, 43, "answer")
         print(db.get(1))
-PY
 ```
 
-The example demonstrates CRUD, transaction commit and rollback, and persisted state after close/reopen. No output is prescribed here; run it to see the actual `Row` representation. This is a local source build. Also run the shipped [CRUD example](examples/crud.py) and [transaction example](examples/transactions.py).
+```sh
+python quickstart.py
+```
+
+The complete quick start demonstrates CRUD, transaction commit and rollback, checkpointing, and persistence after close/reopen. No output is prescribed; run it to see the actual `Row` representation. The same program is available as [examples/quickstart.py](examples/quickstart.py).
 
 ## Package contract
 
@@ -96,6 +104,22 @@ The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery 
 [Open the full-size editable SVG](docs/assets/refpot-package.svg) · [Detailed package contract](docs/package-contract.md)
 
 Mutation and diff-scan paths copy maps; package performance is unqualified and this preview is not presented as benchmark-fast.
+
+## Build
+
+Task-oriented guides are available for [CRUD](https://refpot.modepot.io/build/crud/), [transactions and rollback](https://refpot.modepot.io/build/transactions/), [persistence and checkpointing](https://refpot.modepot.io/build/persistence/), [errors and ownership](https://refpot.modepot.io/build/errors/), plus the runnable [CRUD example](examples/crud.py), [transaction example](examples/transactions.py), and [complete quick-start program](examples/quickstart.py).
+
+## Reference
+
+The [package contract](docs/package-contract.md) documents the exact `Database` and `Row` API, validation, errors, ownership, capacity and unsupported behavior. Hosted guides: [API reference](https://refpot.modepot.io/reference/api/) · [package reference](https://refpot.modepot.io/package-contract/).
+
+## Internals
+
+The [historical package architecture](docs/assets/refpot-package.png) records implementation behavior, not an independently qualified guarantee. [Recovery internals](https://refpot.modepot.io/internals/recovery/) explain file ownership, snapshot/WAL behavior and current limits. The separate [planned execution diagram](docs/assets/refpot-execution.png) remains explicitly planned, not shipped.
+
+## Project
+
+See [project status](https://refpot.modepot.io/status/), [design direction](https://refpot.modepot.io/design/), [roadmap](https://refpot.modepot.io/project/roadmap/), [contributing](CONTRIBUTING.md), and [release policy](docs/releasing.md).
 
 ## Examples
 

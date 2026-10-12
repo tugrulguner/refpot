@@ -29,7 +29,7 @@ class PackageDocumentationTests(unittest.TestCase):
 
     def test_readme_package_presentation_and_scoped_benchmark(self):
         text = (ROOT / "README.md").read_text()
-        self.assertIn("uv pip install .", text)
+        self.assertIn("python -m pip install refpot==0.1.1", text)
         self.assertIn("experimental alpha", text)
         self.assertIn("3.04–5.95×", text)
         self.assertIn("historical update harness", text)

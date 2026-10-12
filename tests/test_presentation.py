@@ -65,12 +65,20 @@ class PresentationTests(unittest.TestCase):
         promise = text.index("<strong>A custom embedded database preview")
         ci = text.index("actions/workflows/ci.yml")
         quick = text.index("## Quick start")
-        inline = text.index("from refpot import Database, Row", quick)
+        install_fence = text.index("```sh", quick)
+        program = text.index("quickstart.py", install_fence)
         current_diagram = text.index("refpot-package.png")
+        self.assertLess(install_fence, program)
+        self.assertIn("python quickstart.py", text[install_fence:])
+        self.assertNotIn("python - <<'PY'", text)
+        self.assertIn("## Build", text)
+        self.assertIn("## Reference", text)
+        self.assertIn("## Internals", text)
+        self.assertIn("## Project", text)
         status = text.index("> [!IMPORTANT]")
         self.assertEqual(
-            [hero, resources, promise, ci, status, quick, inline, current_diagram],
-            sorted([hero, resources, promise, ci, status, quick, inline, current_diagram]),
+            [hero, resources, promise, ci, status, quick, install_fence, current_diagram],
+            sorted([hero, resources, promise, ci, status, quick, install_fence, current_diagram]),
         )
         for link in (
             "https://modepot.io/",
@@ -105,7 +113,9 @@ class PresentationTests(unittest.TestCase):
             "Created by Tugrul Guner",
             'class="installation-strip"',
             "Available on PyPI",
-            'class="planned-architecture"',
+            "A first database",
+            "Install RefPot with",
+            'class="historical-architecture"',
             "Run the shipped CRUD and transaction examples",
             "python examples/crud.py",
             "Package contract and qualification",
@@ -126,9 +136,8 @@ class PresentationTests(unittest.TestCase):
     def test_package_route_and_agent_export_expose_actual_commands(self):
         quick = (ROOT / "website/src/content/docs/package.md").read_text()
         for phrase in (
-            "uv pip install .",
-            "python examples/crud.py",
-            "python examples/transactions.py",
+            "python -m pip install refpot==0.1.1",
+            "python examples/quickstart.py",
             "Python 3.11–3.14",
             "C++17",
             "experimental alpha",
@@ -138,9 +147,8 @@ class PresentationTests(unittest.TestCase):
             self.assertIn(phrase, quick)
         agent = (ROOT / "website/public/llms.txt").read_text()
         for phrase in (
-            "uv pip install .",
-            "examples/crud.py",
-            "examples/transactions.py",
+            "python -m pip install refpot==0.1.1",
+            "examples/quickstart.py",
             "publicly available on PyPI",
             "signed-64-bit",
             "31-byte UTF-8",

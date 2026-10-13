@@ -1,6 +1,6 @@
 # Package performance evidence — PR20/PR21 screen
 
-This is historical **pre-release `0.1.1` wheel** evidence for the transaction-staging/recovery change. It is **not** a measurement of v0.1.2 and must not be described as one. The source revisions are pinned below. All results are a single-host, warm-cache public-Python API screen; the broader product target is not met.
+This screen used **locally built wheels carrying `0.1.1` version metadata** to compare the transaction-staging/recovery change at the source revisions pinned below. These are not measurements of the published PyPI 0.1.1 wheel or of v0.1.2 release artifacts. All results are a single-host, warm-cache public-Python API screen; the broader product target is not met.
 
 ## Recomputed result matrix
 
@@ -64,4 +64,16 @@ python benchmarks/package-performance/evidence/frozen-harness.py run \
 # Repeat with candidate1000/candidate10000 plans in the candidate wheel environment.
 ```
 
-The run command requires its adjacent `plan.sha256` sidecar. Do not change plan or harness contents and call the result the same campaign. Source identities and wheel hashes from this archived experiment are recorded in run metadata; rebuilding may produce different binaries and newly measured results. To recreate the separate recovery diagnostic, use the archived `evidence/provenance/pr-recovery-comparison.py` with an independently recreated 10,000-row checkpointed fixture and the new wheel; that produces a new diagnostic, not an exact timing replay.
+The run command requires its adjacent `plan.sha256` sidecar. Set `REFPOT_SOURCE_REVISION` to the exact engine revision used to build each installed wheel; the harness otherwise cannot infer a checkout identity from an installed binary. Do not change plan or harness contents and call the result the same campaign. Source identities and wheel hashes from this archived experiment are recorded in run metadata; rebuilding may produce different binaries and newly measured results.
+
+To repeat the recovery diagnostic, create its deterministic logical fixture with the installed candidate wheel, then run the archived probe separately with each wheel environment. Replace the output paths with new directories. `TMPDIR` must name an existing writable scratch directory. The original fixture bytes were not retained in this evidence bundle; this recreates the same row contents, not the historical artifact or timings.
+
+```sh
+python benchmarks/package-performance/recovery_fixture.py /absolute/path/to/new-fixture.rp
+python benchmarks/package-performance/evidence/provenance/pr-recovery-comparison.py \
+  --fixture /absolute/path/to/new-fixture.rp \
+  --output /absolute/path/to/new-candidate-recovery.jsonl --label candidate
+# Run the same probe with the baseline wheel, a new output path and --label baseline.
+```
+
+The frozen provenance scripts preserve their original local paths and context. Use the portable offline verifier above for the retained evidence; the old `verify-pr-evidence.py` is an archival record, not the current verification entry point.

@@ -659,6 +659,10 @@ def read_jsonl(path: Path) -> list[dict]:
 
 
 def run_plan(args: argparse.Namespace) -> None:
+    if args.require_speedup is not None and (
+        not math.isfinite(args.require_speedup) or args.require_speedup <= 0
+    ):
+        raise ValueError("required speedup must be finite and positive")
     plan_path = args.plan.resolve()
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     sidecar = plan_path.with_name("plan.sha256")
@@ -768,13 +772,23 @@ def run_plan(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
 
+def positive_finite_float(value: str) -> float:
+    try:
+        number = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a finite positive number") from exc
+    if not math.isfinite(number) or number <= 0:
+        raise argparse.ArgumentTypeError("must be a finite positive number")
+    return number
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description=__doc__)
     commands = root.add_subparsers(dest="command", required=True)
     plan = commands.add_parser("plan", help="create a frozen workload plan in a new directory")
     plan.add_argument("--output", type=Path, required=True)
     plan.add_argument("--rows", type=int, default=128)
-    plan.add_argument("--operations", type=int, default=8192)
+    plan.add_argument("--operations", type=int, default=131072)
     plan.add_argument("--seed", type=int, default=918271)
     plan.add_argument("--repeats", type=int, default=3)
     plan.add_argument(
@@ -787,7 +801,7 @@ def parser() -> argparse.ArgumentParser:
     run = commands.add_parser("run", help="execute frozen plan into a new evidence directory")
     run.add_argument("--plan", type=Path, required=True)
     run.add_argument("--output", type=Path, required=True)
-    run.add_argument("--require-speedup", type=float)
+    run.add_argument("--require-speedup", type=positive_finite_float)
     run.add_argument("--require-workload", action="append", choices=WORKLOADS)
     run.set_defaults(func=run_plan)
     return root

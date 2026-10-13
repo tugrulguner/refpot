@@ -110,6 +110,47 @@ def test_plan_and_run_refuse_existing_output_directories(tmp_path: Path) -> None
     assert list(run_output.iterdir()) == []
 
 
+@pytest.mark.parametrize("threshold", ["nan", "inf", "-inf", "0", "-0.5"])
+def test_speedup_gate_rejects_nonpositive_or_nonfinite_before_output(
+    tmp_path: Path, threshold: str
+) -> None:
+    output = tmp_path / "must-not-exist"
+    with pytest.raises(SystemExit):
+        harness.parser().parse_args(
+            [
+                "run",
+                "--plan",
+                str(tmp_path / "missing-plan.json"),
+                "--output",
+                str(output),
+                "--require-speedup",
+                threshold,
+            ]
+        )
+    assert not output.exists()
+    args = type(
+        "Args",
+        (),
+        {
+            "plan": tmp_path / "missing-plan.json",
+            "output": output,
+            "require_speedup": float(threshold),
+        },
+    )()
+    with pytest.raises(ValueError, match="finite and positive"):
+        harness.run_plan(args)
+    assert not output.exists()
+
+
+def test_speedup_gate_accepts_positive_threshold_and_plan_cap_is_usable() -> None:
+    args = harness.parser().parse_args(
+        ["run", "--plan", "plan.json", "--output", "run", "--require-speedup", "2"]
+    )
+    assert args.require_speedup == 2.0
+    plan_args = harness.parser().parse_args(["plan", "--output", "plan"])
+    assert plan_args.operations == 131072
+
+
 def test_sqlite_reopen_is_labeled_ordinary_not_pending_wal_replay(tmp_path: Path) -> None:
     result = harness.run_trial(
         tmp_path,

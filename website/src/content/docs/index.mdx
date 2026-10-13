@@ -82,6 +82,18 @@ The six-cell actual-package screen compares public Python calls with prepared SQ
 
 Read the [exact package contract](/package-contract/), [status and next steps](/status/), [design direction](/design/), [performance qualification method](/performance-method/), and [canonical roadmap](/project/roadmap/). SQL and ORM are design direction, not shipped functionality.
 
+## Historical benchmark findings
+
+<figure class="historical-benchmark"><a href="/refpot-benchmark.png"><img src="/refpot-benchmark.png" alt="Historical random-update experiment: both campaigns passed the scoped service, setup-inclusive and p99 comparison; reopen with full-state validation was slower in all 16 cells." width="960" /></a><figcaption>Historical prototype evidence, not a benchmark of the published Python package. <a href="/project/benchmarks/">Full results, fairness contract, raw evidence and reproduction</a> · <a href="/refpot-benchmark.png">Full-size chart</a> · <a href="/refpot-benchmark.svg">Editable SVG</a>.</figcaption></figure>
+
+The **3.04–5.95× service** and **2.99–5.91× setup-inclusive** results apply only to the historical existing-row update harness in a Linux ARM64 Docker/ext4 VM. This is **not a package claim**. The experiment retained 672 records across two campaigns; reopen with full-state validation remains **16/16 losses**, and earlier failed experiments are preserved. Package performance is unqualified; the broad 2×-over-SQLite objective remains an acceptance target.
+
+Read the [accessible per-cell results and audit](/project/benchmarks/) before citing a ratio. The [performance qualification method](/performance-method/) explains what a future package comparison must establish.
+
+## Contribute and use agent guidance
+
+The [contributor guide](/project/contributing/) covers native development setup, test/build commands, changelog fragments and the release boundary. The [coding-agent guide](/reference/agent-guide/) documents public API limits, repeatable examples and uncertain-write handling; installing RefPot does not automatically install that skill. Join the [ModePot community](https://discord.gg/u3AANZr6RG) for discussion or use [GitHub Issues](https://github.com/tugrulguner/refpot/issues) for scoped proposals and reproducible findings. RefPot is [MIT licensed](https://github.com/tugrulguner/refpot/blob/main/LICENSE).
+
 ## Planned architecture — not shipped
 
 <figure class="planned-architecture"><img src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: future SQL and structured ORM operations converge on one proposed execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Planned SQL/ORM direction only. The native package preview above is a separate shipped implementation.</figcaption></figure>

@@ -11,6 +11,8 @@ Research-review measurements compare source revisions in wheels labeled 0.1.1. T
 
 The repository separately retains an [audited random-update experiment](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates) with frozen experimental source, 672 raw records, and reproduction commands. Its 3.04–5.95× service result measures existing-row updates with atomic receipt tracking and equal batching in a Linux ARM64 Docker/ext4 VM, not a general database advantage. Reopen with full-state validation loses all 16 cells. These findings are not package performance results.
 
+[View the benchmark chart, complete per-cell results, raw evidence and reproduction](/project/benchmarks/). These are historical prototype measurements, not package benchmarks.
+
 ## Not provided or qualified
 
 No SQL, ORM, concurrent readers, multiwriter support, Windows or unsupported architectures, existing-format compatibility, independent physical replicas, or physical power-loss qualification is provided. The package now stages transaction effects as row-local change sets and recovery replays validated row effects without copying unrelated map entries; this does not complete broad performance or durability qualification. See the [package contract](/package-contract/).

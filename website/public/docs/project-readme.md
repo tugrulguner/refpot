@@ -137,6 +137,7 @@ The full task-first docs live at [RefPot documentation](https://refpot.modepot.i
 <p align="center"><img src="docs/assets/refpot-benchmark.png" alt="Audited random-update benchmark: both campaigns pass the scoped service/setup/p99 matrix; reopen with full-state validation loses every cell" width="960"></p>
 
 [Detailed findings, raw evidence and reproduction](benchmarks/random-updates/README.md) ·
+[Hosted historical benchmark report](https://refpot.modepot.io/project/benchmarks/) ·
 [Full-size chart](docs/assets/refpot-benchmark.png) ·
 [Next package recommendation](docs/package-recommendation.md)
 

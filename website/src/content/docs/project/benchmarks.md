@@ -28,7 +28,7 @@ From a repository checkout, the offline `verify` command below checks the retain
 
 The Docker `smoke` command executes actual native and SQLite operations with reopen checks, but its timings are not a complete comparison. The full `campaign` is an explicit expensive opt-in, around ten hours on the recorded machine; it downloads SQLite and uses Docker. Do not run it automatically as part of trying the package. New measurements with a mutable toolchain image are a new experiment, not an exact replay of the old environment.
 
-For future package measurements, use the [performance qualification method](/performance-method/). For actual supported operations and failure boundaries, read the [package contract](/package-contract/) and [errors and ownership guide](/build/errors/).
+For future package measurements, use the [performance qualification method](https://refpot.modepot.io/performance-method/). For actual supported operations and failure boundaries, read the [package contract](https://refpot.modepot.io/package-contract/) and [errors and ownership guide](https://refpot.modepot.io/build/errors/).
 
 ## Retained experimental report
 

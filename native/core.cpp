@@ -16,6 +16,39 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef REFPOT_TEST_ALLOC
+#include <atomic>
+#include <cstdlib>
+#include <new>
+namespace refpot_test_alloc {
+std::atomic<long> countdown{-1};
+std::atomic<int> countdown_phase{0};
+std::atomic<bool> publishing{false};
+std::atomic<unsigned long> post_sync_allocations{0};
+std::atomic<int> current_phase{0};
+std::atomic<int> fail_phase{0};
+struct Phase { int previous; explicit Phase(int value) : previous(current_phase.exchange(value)) {} ~Phase() { current_phase = previous; } };
+}
+void* operator new(std::size_t size) {
+    int phase = refpot_test_alloc::current_phase.load();
+    if (phase != 0) {
+        int expected = phase;
+        if (refpot_test_alloc::fail_phase.compare_exchange_strong(expected, 0)) throw std::bad_alloc();
+    }
+    long remaining = refpot_test_alloc::countdown.load();
+    while (remaining >= 0 && phase == refpot_test_alloc::countdown_phase.load()) {
+        if (refpot_test_alloc::countdown.compare_exchange_weak(remaining, remaining - 1)) {
+            if (remaining == 0) throw std::bad_alloc();
+            break;
+        }
+    }
+    if (refpot_test_alloc::publishing.load()) ++refpot_test_alloc::post_sync_allocations;
+    if (void* memory = std::malloc(size ? size : 1)) return memory;
+    throw std::bad_alloc();
+}
+void operator delete(void* memory) noexcept { std::free(memory); }
+void operator delete(void* memory, std::size_t) noexcept { std::free(memory); }
+#endif
 
 namespace py = pybind11;
 using Bytes = std::vector<unsigned char>;
@@ -105,6 +138,9 @@ class Database {
     }
     static size_t row_size(const Row& row) { return 17 + row.text.size(); }
     void stage_row(const Row& row) {
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::Phase allocation_phase(1);
+#endif
         auto old = visible(row.key);
         const bool existed = old != nullptr;
         if (old && old->value == row.value && old->text == row.text) return;
@@ -124,6 +160,9 @@ class Database {
         if (!existed) ++staged_count;
     }
     void stage_delete(int64_t key) {
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::Phase allocation_phase(1);
+#endif
         const Row* old = visible(key);
         need(old != nullptr, "missing row");
         size_t next_size = staged_size - row_size(*old);
@@ -146,6 +185,9 @@ class Database {
         }
         deletions.clear();
         encoded_size = staged_size;
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::publishing = false;
+#endif
     }
 
     void check() const {
@@ -205,13 +247,24 @@ class Database {
         if (seq > sequence) {
             need(seq == sequence + 1, "redo frontier gap");
             size_t next_size = encoded_size;
-            for (int64_t key : removals) {
-                auto found = rows.find(key);
-                if (found != rows.end()) next_size -= row_size(found->second);
-            }
             for (const auto& [key, row] : upserts) {
                 auto found = rows.find(key);
-                if (found != rows.end()) next_size -= row_size(found->second);
+                if (found != rows.end()) {
+                    size_t old_size = row_size(found->second);
+                    need(old_size <= next_size, "stored snapshot size underflow");
+                    next_size -= old_size;
+                }
+            }
+            for (int64_t key : removals) {
+                auto found = rows.find(key);
+                if (found != rows.end()) {
+                    size_t old_size = row_size(found->second);
+                    need(old_size <= next_size, "stored snapshot size underflow");
+                    next_size -= old_size;
+                }
+            }
+            for (const auto& [key, row] : upserts) {
+                (void)key;
                 size_t addition = row_size(row);
                 need(addition <= MAX_BYTES - next_size, "database snapshot capacity exceeded");
                 next_size += addition;
@@ -230,6 +283,9 @@ class Database {
         }
     }
     void recover() {
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::Phase allocation_phase(3);
+#endif
         Bytes b = read_file(path + ".wal");
         size_t at = 0; uint64_t previous = 0;
         while (at < b.size()) {
@@ -253,9 +309,15 @@ class Database {
         need(::lseek(wal, 0, SEEK_END) >= 0, "redo seek failed");
     }
     void persist() {
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::publishing = false;
+#endif
         need(sequence != UINT64_MAX, "transaction identity exhausted");
         if (changes.empty() && deletions.empty()) return;
         need(staged_size <= MAX_BYTES, "database snapshot capacity exceeded");
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::Phase allocation_phase(2);
+#endif
         Bytes body; const char magic[8] = {'R','P','R','E','D','O','2','\0'};
         body.insert(body.end(), magic, magic + 8); put(body, sequence + 1, 8);
         uint64_t count = deletions.size() + changes.size();
@@ -272,7 +334,22 @@ class Database {
         frame.insert(frame.end(), body.begin(), body.end());
         try { full_write(wal, frame); need(::fsync(wal) == 0, "redo sync failed"); }
         catch (...) { poisoned = true; throw; }
+#ifdef REFPOT_TEST_ALLOC
+        refpot_test_alloc::publishing = true;
+#endif
         ++sequence;
+    }
+    void canonicalize_changes() {
+        for (auto it = changes.begin(); it != changes.end();) {
+            auto committed = rows.find(it->first);
+            if (committed != rows.end() && committed->second.value == it->second.value &&
+                committed->second.text == it->second.text) it = changes.erase(it);
+            else ++it;
+        }
+        if (changes.empty() && deletions.empty()) {
+            staged_size = encoded_size;
+            staged_count = rows.size();
+        }
     }
 public:
     explicit Database(std::string p) : path(std::filesystem::absolute(p).lexically_normal().string()) {
@@ -297,7 +374,11 @@ public:
     }
     void commit() {
         std::lock_guard<std::recursive_mutex> g(mutex); check(); need(tx, "no transaction");
-        try { persist(); apply_changes(); tx = false; }
+        try { canonicalize_changes(); persist(); apply_changes();
+#ifdef REFPOT_TEST_ALLOC
+            refpot_test_alloc::publishing = false;
+#endif
+            tx = false; }
         catch (...) { changes.clear(); deletions.clear(); staged_size = encoded_size; staged_count = rows.size(); tx = false; throw; }
     }
     void rollback() {
@@ -355,6 +436,13 @@ public:
 };
 
 PYBIND11_MODULE(_core, m) {
+#ifdef REFPOT_TEST_ALLOC
+    m.def("_test_fail_phase_allocation", [](int phase) { refpot_test_alloc::fail_phase = phase; });
+    m.def("_test_fail_allocation_after", [](int phase, long index) { refpot_test_alloc::countdown_phase = phase; refpot_test_alloc::countdown = index; });
+    m.def("_test_clear_allocation_failure", [] { refpot_test_alloc::countdown = -1; refpot_test_alloc::countdown_phase = 0; refpot_test_alloc::fail_phase = 0; });
+    m.def("_test_post_sync_allocations", [] { return refpot_test_alloc::post_sync_allocations.load(); });
+    m.def("_test_reset_post_sync_allocations", [] { refpot_test_alloc::post_sync_allocations = 0; });
+#endif
     py::class_<Row>(m, "Row").def_readonly("key", &Row::key).def_readonly("value", &Row::value).def_readonly("text", &Row::text);
     py::class_<Database>(m, "_Database").def(py::init<std::string>())
         .def("insert", &Database::insert, py::arg("key"), py::arg("value"), py::arg("text") = "")

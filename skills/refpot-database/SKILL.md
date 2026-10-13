@@ -19,7 +19,7 @@ Use when building an application with the current Python database preview or che
 
 ## Prerequisites and installation
 
-Version 0.1.1 is the current experimental alpha release on PyPI; version 0.1.2 is in preparation and not yet published. Install the current public package with `python -m pip install refpot`. Prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; source builds require a C++17 compiler toolchain. Windows, other architectures, and free-threaded Python are unsupported. Run these commands through your agent's command-execution tool (Hermes: `terminal`), starting in a directory where a new `refpot` checkout can be created:
+RefPot is an experimental alpha. Install the latest published package with `python -m pip install refpot`. Prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; source builds require a C++17 compiler toolchain. Windows, other architectures, and free-threaded Python are unsupported. Run these commands through your agent's command-execution tool (Hermes: `terminal`), starting in a directory where a new `refpot` checkout can be created:
 
 ```sh
 git clone https://github.com/tugrulguner/refpot.git

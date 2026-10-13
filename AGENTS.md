@@ -1,6 +1,6 @@
 # RefPot agent and contributor guidance
 
-RefPot is an experimental alpha custom embedded native database engine. Read `README.md`, `docs/package-contract.md`, and `ROADMAP.md` before changing behavior or describing capabilities. Version 0.1.1 is the current public release; 0.1.2 preparation is not publication. Keep the alpha maturity and qualification boundaries clear.
+RefPot is an experimental alpha custom embedded native database engine. Read `README.md`, `docs/package-contract.md`, and `ROADMAP.md` before changing behavior or describing capabilities. Keep the alpha maturity and qualification boundaries clear; release state and preparation gates are tracked only in `docs/releasing.md`.
 
 ## Contract and claims
 

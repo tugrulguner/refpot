@@ -28,6 +28,8 @@ Three repeats per label/count (12 raw records total), same 10,000-row checkpoint
 
 ## Protocol and provenance
 
+Browse the [complete raw evidence and frozen plans](https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance/evidence), [SHA-256 manifest](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/evidence/manifest.json), and [portable offline verifier](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/verify_evidence.py). The retained files include every measured configuration, not just the winning cells.
+
 - Baseline engine: `6cc633fac687dbdbfab211507b3d87caa5ffcd82`.
 - Candidate engine: `e784db03cf797518ec852a19e73202311eabce7f`.
 - Frozen harness: `88626e10db9190b77ac0e46c1a3f05dfa5613ace`, SHA-256 `13b91cacfd57ecf53f531495a3625b60111bcfd5ff6e47bb280f63ec850d613e` (included at `evidence/frozen-harness.py`).

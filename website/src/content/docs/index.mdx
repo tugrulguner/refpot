@@ -9,7 +9,7 @@ next: { label: Quick start, link: /package/ }
   <div class="framework-copy">
     <p class="framework-eyebrow">MODEPOT · EXPERIMENTAL ALPHA</p>
     <h1 id="refpot-title">A custom embedded database for Python.</h1>
-    <p class="framework-tagline">RefPot 0.1.1 is the current public experimental alpha: a native C++ redo-and-checkpoint engine with a small Python CRUD and explicit-transaction interface. Version 0.1.2 is being prepared, not yet published; qualification remains limited.</p>
+    <p class="framework-tagline">RefPot is an experimental alpha: a native C++ redo-and-checkpoint engine with a small Python CRUD and explicit-transaction interface. Check PyPI for the latest published version; qualification remains limited.</p>
     <nav class="framework-actions" aria-label="Project actions">
       <a class="framework-action primary" href="/package/">Quick start</a>
       <a class="framework-action secondary" href="https://github.com/tugrulguner/refpot/tree/main/examples">Examples</a>
@@ -26,7 +26,7 @@ next: { label: Quick start, link: /package/ }
   <a href="/package/">Quick start guide <span aria-hidden="true">→</span></a>
 </section>
 
-<div class="research-notice"><strong>RefPot 0.1.1 is the current public experimental alpha.</strong> Version 0.1.2 is in preparation, not yet published. Package and platform qualification remains limited. No general performance claim or production durability guarantee is made.</div>
+<div class="research-notice"><strong>Experimental alpha.</strong> Package and platform qualification remains limited. No general performance claim or production durability guarantee is made.</div>
 
 ## A first database
 
@@ -54,11 +54,11 @@ python first_database.py
 
 This is executable package behavior, not a site simulation. See the [quick start](/package/), [CRUD](/build/crud/), [transactions](/build/transactions/), [persistence](/build/persistence/), and [errors and ownership](/build/errors/) guides.
 
-## Historical package architecture
+## Current package implementation
 
-This diagram shows the current experimental alpha implementation in the 0.1.2 release-preparation source. It is not a statement that 0.1.2 has been published; the public latest remains 0.1.1.
+This diagram shows the current experimental alpha package implementation. Package and platform qualification remain limited.
 
-<figure class="package-architecture"><a href="/refpot-package.svg"><img src="/refpot-package.png" alt="RefPot experimental alpha release-preparation architecture: row-local change sets are prepared before synchronized duplicated redo and nonallocating publication; recovery applies validated effects to affected rows. Checkpoint publication syncs, renames and directory-syncs a snapshot before WAL truncation." width="1200" height="820" /></a><figcaption>Experimental alpha implementation; qualification remains limited. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg">Full-size editable SVG</a>.</figcaption></figure>
+<figure class="package-architecture"><a href="/refpot-package.svg?v=alpha-implementation-2"><img src="/refpot-package.png?v=alpha-implementation-2" alt="RefPot experimental alpha architecture: row-local change sets are prepared before synchronized duplicated redo and nonallocating publication; recovery applies validated effects to affected rows. Checkpoint publication syncs, renames and directory-syncs a snapshot before WAL truncation." width="1200" height="820" /></a><figcaption>Experimental alpha implementation; qualification remains limited. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg?v=alpha-implementation-2">Full-size editable SVG</a>.</figcaption></figure>
 
 ## Run the shipped CRUD and transaction examples
 
@@ -78,7 +78,7 @@ The examples use temporary files, exercise inserts/updates/deletes and commit/ro
 
 A database is exclusively owned by one process and usable only by its creating thread. Snapshot and WAL recovery are bounded to 64 MiB each. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details do not establish broad recovery or physical power-loss qualification. SQL, ORM, concurrent readers, multiwriter operation, Windows, and existing-format compatibility are not supported.
 
-The six-cell actual-package screen compares public Python calls with prepared SQLite. Three cells remain below 2×, so the overall SQLite target remains unmet. Research-review measurements use source revisions represented by wheels labeled 0.1.1, not 0.1.2 release artifacts. See [canonical package results](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md) when integrated and the [reproduction guide](https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance). Historical update-harness ratios and reopen losses remain separate evidence.
+The six-cell actual-package screen compares public Python calls with prepared SQLite. Three cells remain below 2×, so the overall SQLite target remains unmet. Provenance identifies source revisions represented by wheels labeled 0.1.1; these are not measurements of package artifacts built from 0.1.2 metadata. See the [full package results](/project/package-performance/) and the [reproduction guide](https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance). Historical update-harness ratios and reopen losses remain separate evidence.
 
 Read the [exact package contract](/package-contract/), [status and next steps](/status/), [design direction](/design/), [performance qualification method](/performance-method/), and [canonical roadmap](/project/roadmap/). SQL and ORM are design direction, not shipped functionality.
 

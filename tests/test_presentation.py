@@ -125,10 +125,10 @@ class PresentationTests(unittest.TestCase):
         positions = [page.index(marker) for marker in markers]
         self.assertEqual(positions, sorted(positions))
         self.assertLess(positions[-1], page.rindex("(/package/)"))
-        self.assertIn('href="/refpot-package.svg"', page)
+        self.assertIn('href="/refpot-package.svg?v=alpha-implementation-2"', page)
         self.assertIn('href="/package-contract/"', page)
-        self.assertIn("current public experimental alpha", page)
-        self.assertIn("0.1.2 is in preparation", page)
+        self.assertIn("experimental alpha", page)
+        self.assertIn("Check PyPI for the latest published version", page)
         self.assertIn("SQL and ORM are design direction, not shipped functionality", page)
         self.assertNotIn("<iframe", page.lower())
         self.assertNotIn("Playground", page)
@@ -153,7 +153,7 @@ class PresentationTests(unittest.TestCase):
             "publicly available on PyPI",
             "signed-64-bit",
             "31-byte UTF-8",
-            "16/16 losses",
+            "all 16 reopen/full-state-validation cells lost",
             "License:** MIT",
         ):
             self.assertIn(phrase, agent)
@@ -192,6 +192,21 @@ class PresentationTests(unittest.TestCase):
                 self.assertFalse(
                     any(key.startswith("on") or key.endswith("href") for key in node.attrib)
                 )
+
+    def test_package_diagram_source_style_and_versioned_site_assets(self):
+        package = ET.parse(ROOT / "docs/assets/refpot-package.svg").getroot()
+        labels = " ".join(package.itertext())
+        self.assertIn("EXPERIMENTAL ALPHA", labels)
+        self.assertNotIn("RELEASE PREPARATION", labels)
+        self.assertNotIn("0.1.2", labels)
+        transaction_box = next(
+            node for node in package.iter()
+            if node.tag.endswith("rect") and node.attrib.get("x") == "56" and node.attrib.get("y") == "276"
+        )
+        self.assertEqual(transaction_box.attrib["stroke"], "#49515e")
+        page = (ROOT / "website/src/content/docs/index.mdx").read_text()
+        self.assertIn('/refpot-package.png?v=alpha-implementation-2', page)
+        self.assertIn('/refpot-package.svg?v=alpha-implementation-2', page)
 
 
 if __name__ == "__main__":

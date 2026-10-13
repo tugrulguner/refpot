@@ -1,5 +1,5 @@
 
-**Experimental alpha.** Version 0.1.1 is the current public PyPI release; version 0.1.2 is in preparation and not yet published. RefPot is not a production-qualified database. It contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains limited.
+**Experimental alpha.** RefPot is not a production-qualified database. It contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains limited.
 
 ## Prerequisites and install
 
@@ -52,7 +52,7 @@ with TemporaryDirectory() as directory:
 python quickstart.py
 ```
 
-The program uses the native package and temporary files. Version 0.1.2 is not yet available from PyPI. Also see the standalone [CRUD example](https://github.com/tugrulguner/refpot/blob/main/examples/crud.py) and [transaction example](https://github.com/tugrulguner/refpot/blob/main/examples/transactions.py).
+The program uses the native package and temporary files. Also see the standalone [CRUD example](https://github.com/tugrulguner/refpot/blob/main/examples/crud.py) and [transaction example](https://github.com/tugrulguner/refpot/blob/main/examples/transactions.py).
 
 ## Next — Reference
 

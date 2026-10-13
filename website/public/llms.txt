@@ -1,15 +1,15 @@
 # RefPot
 
-RefPot 0.1.1 is the current experimental alpha release of a custom C++ engine with a Python `Database`/`Row` API, publicly available on PyPI. Version 0.1.2 is in release preparation and is not yet published.
+RefPot is an experimental alpha custom C++ engine with a Python `Database`/`Row` API, publicly available on PyPI.
 
 - **Shipped preview:** `Database` / `Row`, fixed-schema CRUD, explicit transactions, checkpointing, and native package implementation.
-- **Quick start:** install the current public release with `python -m pip install refpot`; prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14. Run the complete program at https://github.com/tugrulguner/refpot/blob/main/examples/quickstart.py; repository source builds require a C++17 toolchain.
+- **Quick start:** install the latest published version with `python -m pip install refpot`; prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14. Run the complete program at https://github.com/tugrulguner/refpot/blob/main/examples/quickstart.py; repository source builds require a C++17 toolchain.
 - **Build guides:** https://refpot.modepot.io/build/crud/, https://refpot.modepot.io/build/transactions/, https://refpot.modepot.io/build/persistence/, and https://refpot.modepot.io/build/errors/
 - **Contract and limits:** exclusive process ownership, creating-thread affinity, signed-64-bit keys/values, 31-byte UTF-8 text limit, existing parent directory, and 64 MiB snapshot/WAL limits. Uncertain writes poison the handle; close, reopen and inspect before retrying.
 - **Reference and internals:** https://refpot.modepot.io/reference/api/, https://refpot.modepot.io/package-contract/, and https://refpot.modepot.io/internals/recovery/
 - **Status:** `/status/`; experimental alpha, not production-qualified. No stable API or production durability guarantee.
 - **Design direction:** `/design/`; SQL and ORM are planned, not shipped.
-- **Actual-package performance screen:** six Python-package/SQLite cells; three remain below 2×, so the overall target is unmet. Measurements identify source revisions in wheels labeled 0.1.1, not 0.1.2 release artifacts. See `/project/package-performance/` and `/performance-method/`.
+- **Actual-package performance screen:** six Python-package/SQLite cells; three remain below 2×, so the overall target is unmet. Provenance identifies locally built wheels carrying 0.1.1 metadata; these are neither published PyPI 0.1.1 wheels nor a 0.1.2 package artifact. See `/project/package-performance/` and `/performance-method/`.
 - **Historical evidence:** https://refpot.modepot.io/project/benchmarks/ provides the original chart, full per-cell results, baseline fairness, audit, raw records and reproduction. These are historical prototype results, not package performance; all 16 reopen/full-state-validation cells lost.
 - **Contributor and agent guidance:** https://refpot.modepot.io/project/contributing/ and https://refpot.modepot.io/reference/agent-guide/. Package installation does not install an agent skill.
 - **Roadmap:** `/project/roadmap/` and https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md

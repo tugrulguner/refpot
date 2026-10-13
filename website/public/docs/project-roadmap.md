@@ -9,14 +9,14 @@ The roadmap distinguishes implemented foundations from open qualification and pr
 
 ## Current implementation focus: qualify the experimental alpha
 
-Version 0.1.1 is the current public PyPI release. Version 0.1.2 is in preparation and has not been published. The fixed-schema API and build/release workflows exist, but release preparation does not change alpha maturity or complete broader qualification. See the [package contract](docs/package-contract.md), [package results](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md) when integrated, and [release checklist](docs/releasing.md).
+The fixed-schema API and build/release workflows exist, but they do not complete broader qualification. See the [package contract](docs/package-contract.md), [package results](benchmarks/package-performance/RESULTS.md), and [release checklist](docs/releasing.md).
 
 ### Implemented foundations
 
 - [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI, artifact verification, and tag-triggered release automation. Passing installed-wheel lanes verify only their tested behavior; they do not establish physical power-loss safety.
 - [x] Publish version 0.1.1 as a normal latest GitHub release and on PyPI; verify public artifact installation. This publication milestone does not complete platform, example, recovery, or performance qualification.
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. The change-set work preserves public API and storage framing; it is not the complete durability qualification gate.
-- [x] Run a six-cell actual-package performance comparison against prepared SQLite using wheels labeled 0.1.1 for source revisions under test. Results are screening evidence, not measurements of 0.1.2 release artifacts; three of six cells remain below 2× and the overall SQLite goal is unmet.
+- [x] Run a six-cell actual-package performance comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Results are screening evidence, not measurements of a 0.1.2 package artifact; three of six cells remain below 2× and the overall SQLite goal is unmet.
 
 ### Still-open qualification and product gates
 

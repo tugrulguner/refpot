@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
-<title id="title">RefPot 0.1.2 release-preparation architecture</title>
-<desc id="desc">Experimental alpha implementation represented by the release-preparation source, not a published 0.1.2 artifact. Python Database and Row call a native C++ engine and snapshot plus WAL files. Transactions stage row-local change sets, prepare serialized effects, synchronize two checksummed redo copies, then publish prepared changes without allocation. Recovery validates and prepares a frame before applying row-local effects. Checkpoint publication syncs a snapshot, atomically renames it, syncs the parent directory, then truncates and syncs the WAL. API and storage framing are unchanged. Qualification remains limited.</desc>
+<title id="title">RefPot experimental alpha package architecture</title>
+<desc id="desc">Python Database and Row call a native C++ engine and snapshot plus WAL files. Transactions stage row-local change sets, prepare serialized effects, synchronize two checksummed redo copies, then publish prepared changes without allocation. Recovery validates and prepares a frame before applying row-local effects. Checkpoint publication syncs a snapshot, atomically renames it, syncs the parent directory, then truncates and syncs the WAL. API and storage framing are unchanged. Qualification remains limited.</desc>
 <rect width="1200" height="820" rx="28" fill="#17191c"/>
-<text x="56" y="58" fill="#F4F2EA" font-family="Arial,sans-serif" font-size="27" font-weight="700">REFPOT · EXPERIMENTAL ALPHA · 0.1.2 RELEASE PREPARATION</text>
-<text x="56" y="96" fill="#bdc0c4" font-family="Arial,sans-serif" font-size="18">Source implementation shown; 0.1.2 is not yet published · API and storage framing unchanged</text>
+<text x="56" y="58" fill="#F4F2EA" font-family="Arial,sans-serif" font-size="27" font-weight="700">REFPOT · EXPERIMENTAL ALPHA</text>
+<text x="56" y="96" fill="#bdc0c4" font-family="Arial,sans-serif" font-size="18">Native Python package · API and storage framing unchanged</text>
 <g font-family="Arial,sans-serif" fill="#F4F2EA">
 <rect x="56" y="134" width="250" height="108" rx="15" fill="#25282d" stroke="#69717d" stroke-width="2"/>
 <text x="181" y="177" text-anchor="middle" font-size="22" font-weight="700">Python interface</text><text x="181" y="213" text-anchor="middle" font-size="18">Database · Row</text>
@@ -13,7 +13,7 @@
 <text x="1022" y="177" text-anchor="middle" font-size="22" font-weight="700">On-disk files</text><text x="1022" y="213" text-anchor="middle" font-size="18">snapshot + .wal</text>
 </g>
 <g stroke="#F4F2EA" stroke-width="3" fill="none"><path d="M306 188h166m-12-12 12 12-12 12"/><path d="M752 188h148m-12-12 12 12-12 12"/></g>
-<rect x="56" y="276" width="1088" height="235" rx="18" fill="#22252a" stroke="#ad805d" stroke-width="2"/>
+<rect x="56" y="276" width="1088" height="235" rx="18" fill="#22252a" stroke="#49515e" stroke-width="2"/>
 <text x="84" y="316" fill="#F4F2EA" font-family="Arial,sans-serif" font-size="22" font-weight="700">Transaction change-set path</text>
 <g font-family="Arial,sans-serif" fill="#F4F2EA" font-size="17">
 <rect x="84" y="345" width="235" height="82" rx="12" fill="#2b2e33" stroke="#69717d"/><text x="201" y="378" text-anchor="middle" font-weight="700">Stage row-local</text><text x="201" y="405" text-anchor="middle">effects · no map clone</text>

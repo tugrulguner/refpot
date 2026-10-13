@@ -1,11 +1,11 @@
 
-RefPot 0.1.1 is the current **experimental alpha release** of a custom C++ redo-and-checkpoint engine and Python CRUD/transaction interface, publicly available on PyPI. Version 0.1.2 is in release preparation and is not yet published. The package is intended for evaluation, not production; platform and recovery qualification remain limited.
+RefPot is an **experimental alpha** custom C++ redo-and-checkpoint engine with a Python CRUD/transaction interface. It is intended for evaluation, not production; platform and recovery qualification remain limited. Release preparation state and gates are recorded in the [release checklist on GitHub](https://github.com/tugrulguner/refpot/blob/main/docs/releasing.md).
 
 ## Actual-package performance screen
 
-The new package campaign measures the public Python API against prepared SQLite at 1,000 and 10,000 rows for point reads, singleton updates, and batch-32 updates. Across its six cells, the candidate measured 2.75×, 1.23×, and 1.20× at 1,000 rows, and 2.60×, 1.12×, and 2.20× at 10,000 rows, respectively. Three cells remain below 2×, so the overall SQLite acceptance goal is not met. Read results are essentially unchanged between the package versions under test; do not attribute read wins to the transaction change-set work. See the [canonical results](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md) when integrated and the [reproduction guide](https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance).
+The package campaign measures the public Python API against prepared SQLite at 1,000 and 10,000 rows for point reads, singleton updates, and batch-32 updates. Across its six cells, the candidate measured 2.75×, 1.23×, and 1.20× at 1,000 rows, and 2.60×, 1.12×, and 2.20× at 10,000 rows, respectively. Three cells remain below 2×, so the overall SQLite acceptance goal is not met. Read results are essentially unchanged between the package versions under test; do not attribute read wins to the transaction change-set work. See the [full results](/project/package-performance/) and the [reproduction guide](https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance).
 
-Research-review measurements compare source revisions in wheels labeled 0.1.1. They are not measurements of release artifacts built from 0.1.2 metadata, and do not establish what a published 0.1.2 wheel will deliver.
+The provenance records locally built wheels carrying 0.1.1 metadata; they are neither published PyPI 0.1.1 wheels nor measurements of a 0.1.2 package artifact.
 
 ## Historical experiment (separate)
 

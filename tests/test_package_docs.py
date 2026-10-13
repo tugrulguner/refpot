@@ -26,7 +26,7 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("The overall **2×-over-SQLite goal remains unmet**", text)
         self.assertIn("row-local effects", text)
         self.assertNotIn("Mutation and diff-scan paths copy maps", text)
-        self.assertIn("not measurements of release artifacts built from version 0.1.2 metadata", text)
+        self.assertIn("locally built wheels carrying 0.1.1 metadata", text)
 
     def test_readme_package_presentation_and_scoped_benchmark(self):
         text = (ROOT / "README.md").read_text()
@@ -53,8 +53,8 @@ class PackageDocumentationTests(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text()
         skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
         self.assertIn("skills/refpot-database/SKILL.md", agents)
-        self.assertIn("current experimental alpha release on PyPI", skill)
-        self.assertIn("physical power-loss", skill)
+        self.assertIn("latest published package", skill)
+        self.assertIn("physical power-loss", skill.lower())
         self.assertIn("initial six-cell performance screen", skill)
         self.assertIn("overall SQLite target is unmet", skill)
         self.assertIn(
@@ -151,7 +151,9 @@ class PackageDocumentationTests(unittest.TestCase):
         )
         root = ET.parse(svg).getroot()
         labels = " ".join(root.itertext())
-        self.assertIn("0.1.2 RELEASE PREPARATION", labels)
+        self.assertIn("EXPERIMENTAL ALPHA", labels)
+        self.assertNotIn("0.1.2", labels)
+        self.assertNotIn("RELEASE PREPARATION", labels)
         self.assertIn("Stage row-local", labels)
         self.assertIn("publish without alloc", labels)
         self.assertIn("row-local replay", labels)
@@ -192,8 +194,11 @@ class PackageDocumentationTests(unittest.TestCase):
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("/refpot-package.png", homepage)
         self.assertIn("/refpot-package.svg", homepage)
-        self.assertIn("current public experimental alpha", homepage)
-        self.assertIn("0.1.2 is being prepared, not yet published", homepage)
+        self.assertIn("experimental alpha", homepage)
+        self.assertIn("/project/package-performance/", homepage)
+        self.assertIn("project/package-performance", config)
+        self.assertTrue((ROOT / "website/src/content/docs/project/package-performance.md").is_file())
+        self.assertTrue((ROOT / "website/public/docs/project-package-performance.md").is_file())
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import { gunzipSync } from 'node:zlib';
 import { test, expect } from '@playwright/test';
 import { sanitizeAnalyticsProperties } from '../../src/analytics-privacy.mjs';
-const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/project/benchmarks/', '/project/contributing/', '/reference/agent-guide/', '/does-not-exist/'];
+const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/project/benchmarks/', '/project/package-performance/', '/project/contributing/', '/reference/agent-guide/', '/does-not-exist/'];
 const resources = ['ModePot', 'GitHub', 'Community', 'About Tugrul'];
 for (const width of [1280, 768, 390, 320]) {
   for (const theme of ['light', 'dark', 'auto']) {
@@ -26,8 +26,8 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(python).toHaveCount(1);
       await expect(python).toContainText('db.insert(1, 42, "answer")');
       await expect(python.locator('xpath=ancestor::figure').getByRole('button', { name: /copy to clipboard/i })).toHaveCount(1);
-      await expect(page.locator('main h2')).toContainText(['A first database','Historical package architecture','Run the shipped CRUD and transaction examples']);
-      await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg');
+      await expect(page.locator('main h2')).toContainText(['A first database','Current package implementation','Run the shipped CRUD and transaction examples']);
+      await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg?v=alpha-implementation-2');
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveCount(1);
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveAttribute('href','/package/');
       await expect(page.locator('.pagination-links a[rel="next"]')).toContainText('Quick start');
@@ -69,7 +69,7 @@ test('every layout preserves desktop and compact family navigation with keyboard
         const toggle=page.getByRole('button',{name:'Menu',exact:true});
         await toggle.focus(); await page.keyboard.press('Enter');
         const menu=page.getByRole('region',{name:'Menu',exact:true});
-        for(const label of ['GitHub','Community','About Tugrul','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Contributing','Coding-agent guide','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
+        for(const label of ['GitHub','Community','About Tugrul','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
         await page.keyboard.press('Escape'); await expect(menu).toBeHidden(); await expect(toggle).toBeFocused();
       }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -133,6 +133,27 @@ test('historical chart, caveats, full results and evidence downloads remain visi
       }
     }
   }
+});
+
+test('package performance report is complete, linked, and downloadable', async ({ page }) => {
+  await page.goto('/project/package-performance/');
+  const main = page.locator('main');
+  await expect(main).toContainText('Recomputed result matrix');
+  for (const metric of ['2.75×', '1.23×', '1.20×', '2.60×', '1.12×', '2.20×'])
+    await expect(main).toContainText(metric);
+  await expect(main).toContainText('Separate recovery diagnostic');
+  await expect(main).toContainText('Protocol and provenance');
+  await expect(main).toContainText('locally built wheels carrying 0.1.1 version metadata');
+  await expect(main).toContainText('recovery_fixture.py');
+  await expect(main).toContainText('no physical power-loss testing');
+  const download = page.getByRole('link', { name: 'Download this page as Markdown' });
+  await expect(download).toHaveAttribute('href', '/docs/project-package-performance.md');
+  const response = await page.request.get('/docs/project-package-performance.md');
+  expect(response.ok()).toBeTruthy();
+  const body = await response.text();
+  expect(body).toContain('Recomputed result matrix');
+  expect(body).toContain('recovery_fixture.py');
+  await expect(page.locator('nav').getByRole('link', { name: 'Package performance results' })).toHaveAttribute('href', '/project/package-performance/');
 });
 
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{

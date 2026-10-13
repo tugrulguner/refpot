@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  RefPot is an experimental alpha: a native C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Version 0.1.1 is the current public PyPI release; 0.1.2 is being prepared, not yet published. Package and platform qualification remain limited.
+  RefPot is an experimental alpha: a native C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Install the latest published version with `python -m pip install refpot`. Package and platform qualification remain limited.
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@
 </p>
 
 > [!IMPORTANT]
-> Version 0.1.1 is the current public experimental alpha. Version 0.1.2 is in release preparation and is not yet available from PyPI. Package and platform qualification remain limited; no general performance claim or production durability guarantee is made.
+> Experimental alpha. Package and platform qualification remain limited; no general performance claim or production durability guarantee is made.
 
 ## Why RefPot
 
@@ -99,7 +99,7 @@ The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery 
 
 ## Current package architecture
 
-<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="RefPot 0.1.2 release candidate architecture: Python Database and Row use a native C++ engine; transaction changes are prepared, duplicated redo is synchronized, then prepared row effects are published without allocation; recovery replays validated row-local effects. Checkpoint snapshot sync, rename and directory sync precede log truncation. Experimental alpha; qualification limits apply." width="960"></a></p>
+<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="RefPot experimental alpha architecture: Python Database and Row use a native C++ engine; transaction changes are prepared, duplicated redo is synchronized, then prepared row effects are published without allocation; recovery replays validated row-local effects. Checkpoint snapshot sync, rename and directory sync precede log truncation. Qualification limits apply." width="960"></a></p>
 
 [Open the full-size editable SVG](docs/assets/refpot-package.svg) · [Detailed package contract](docs/package-contract.md)
 
@@ -115,7 +115,7 @@ The [package contract](docs/package-contract.md) documents the exact `Database` 
 
 ## Internals
 
-The [historical package architecture](docs/assets/refpot-package.png) records implementation behavior, not an independently qualified guarantee. [Recovery internals](https://refpot.modepot.io/internals/recovery/) explain file ownership, snapshot/WAL behavior and current limits. The separate [planned execution diagram](docs/assets/refpot-execution.png) remains explicitly planned, not shipped.
+The [current package architecture](docs/assets/refpot-package.png) records implementation behavior, not an independently qualified guarantee. [Recovery internals](https://refpot.modepot.io/internals/recovery/) explain file ownership, snapshot/WAL behavior and current limits. The separate [planned execution diagram](docs/assets/refpot-execution.png) remains explicitly planned, not shipped.
 
 ## Project
 
@@ -141,11 +141,11 @@ The full task-first docs live at [RefPot documentation](https://refpot.modepot.i
 [Full-size chart](docs/assets/refpot-benchmark.png) ·
 [Next package recommendation](docs/package-recommendation.md)
 
-The historical findings are separate from package performance. The 3.04–5.95× result applies only to the historical update harness; its reopen result remains 16/16 losses. Package results are reported separately above.
+The historical findings are separate from package performance. The 3.04–5.95× result applies only to the historical update harness; its reopen result remains 16/16 losses. Package results are reported separately below.
 
 ## Planned design direction
 
-The preserved [planned architecture visual above](#refpot) shows a future SQL/ORM direction, not this preview. Neither SQL nor ORM is implemented.
+The preserved [planned architecture visual](#refpot) shows a future SQL/ORM direction, not this preview. Neither SQL nor ORM is implemented.
 
 - **Engine first.** Establish correctness and performance before building the ORM.
 - **One semantic boundary.** Direct operations must not bypass validation or constraints.
@@ -162,9 +162,8 @@ is not a differentiator. No SQLite SQL, file-format, or C API compatibility is p
 
 ## Package performance evidence
 
-The new actual-package campaign uses the public Python API and prepared SQLite over six workload/size cells. See the canonical [measured results](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md) when that evidence file is integrated, and the [reproduction guide](benchmarks/package-performance/README.md). Research-review measurements identify source revisions from wheels labeled 0.1.1; they are not measurements of version 0.1.2 release artifacts. The overall 2× SQLite target remains unmet: three of six measured cells are below 2× (both singleton/batch writes at 1,000 rows and singleton updates at 10,000 rows). Point reads exceed 2× in both sizes, and 10,000-row batch updates exceed 2×; these wins do not satisfy the complete target.
+The actual-package campaign uses the public Python API and prepared SQLite over six workload/size cells. See the canonical [measured results](benchmarks/package-performance/RESULTS.md) and [reproduction guide](benchmarks/package-performance/README.md). Provenance identifies locally built wheels carrying 0.1.1 metadata; these are neither published PyPI 0.1.1 wheels nor a 0.1.2 package artifact. The overall 2× SQLite target remains unmet: three of six measured cells are below 2× (both singleton/batch writes at 1,000 rows and singleton updates at 10,000 rows). Point reads exceed 2× in both sizes, and 10,000-row batch updates exceed 2×; these wins do not satisfy the complete target.
 
-The historical random-update experiment below is distinct from package performance. Its 3.04–5.95× result applies only to that audited harness; its reopen result remains 16/16 losses.
 ## Community
 
 Join the [ModePot Discord](https://discord.gg/u3AANZr6RG) for design discussions,

@@ -1,1 +1,0 @@
-Present public installation and standalone Python programs in the README and homepage, with task-led CRUD, transaction, persistence, error/ownership, API reference, and recovery documentation generated from canonical sources.

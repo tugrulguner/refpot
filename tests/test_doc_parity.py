@@ -61,3 +61,30 @@ def test_evidence_is_discoverable_without_erasing_alpha_boundaries():
     assert "Package performance is unqualified" in home
     for source in ["website/astro.config.mjs", "website/src/components/FamilyHeader.astro"]:
         assert "project/benchmarks" in (ROOT / source).read_text()
+
+
+def test_package_performance_results_are_exported_and_links_resolve():
+    source = (ROOT / "benchmarks/package-performance/RESULTS.md").read_text()
+    route = ROOT / "website/src/content/docs/project/package-performance.md"
+    download = ROOT / "website/public/docs/project-package-performance.md"
+    assert route.is_file() and download.is_file()
+    page = route.read_text()
+    assert "Recomputed result matrix" in page
+    assert "Separate recovery diagnostic" in page
+    assert "## Limits" in page
+    assert "Protocol and provenance" in page
+    assert "source revisions pinned below" in page
+    assert "/docs/project-package-performance.md" in page
+    assert "(benchmarks/package-performance/verify_evidence.py)" not in page
+    assert "(evidence/frozen-harness.py)" not in page
+    assert "python3 benchmarks/package-performance/verify_evidence.py" in page
+    assert "python benchmarks/package-performance/recovery_fixture.py" in page
+    assert "locally built wheels carrying `0.1.1` version metadata" in source
+    assert "### Limits" in source
+    contract = (ROOT / "website/src/content/docs/package-contract.md").read_text()
+    assert "](/project/package-performance/)" in contract
+    assert "(../benchmarks/package-performance/RESULTS.md)" not in contract
+    assert (
+        "(https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance)"
+        in contract
+    )

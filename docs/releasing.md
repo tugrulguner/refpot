@@ -1,6 +1,6 @@
 # Release checklist
 
-RefPot 0.1.1 is the current **experimental alpha** package release, publicly available on PyPI. Version 0.1.2 is being prepared; until its tag-triggered publication is independently verified, the public latest remains 0.1.1. It is intended for evaluation, not production use. Published prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; Windows, other architectures, free-threaded Python, and physical power-loss guarantees are unsupported. See `docs/package-contract.md` for scope and caveats.
+RefPot is an **experimental alpha**, intended for evaluation rather than production use. This change-set is not tag-ready: finish and review all release gates, then obtain explicit maintainer approval before tagging or publishing. Published prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; Windows, other architectures, free-threaded Python, and physical power-loss guarantees are unsupported. See `docs/package-contract.md` for scope and caveats.
 
 1. Confirm the intended version and update the sole editable version with `uv version X.Y.Z` (`uv version 0.1.2` for this preparation).
 2. Review `make changelog-draft`, assemble with `make changelog`, and inspect staged and unstaged changes. Confirm the generated `0.1.2` notes include every user-facing fragment.
@@ -9,7 +9,7 @@ RefPot 0.1.1 is the current **experimental alpha** package release, publicly ava
 5. Before tagging, verify that the GitHub `pypi` environment admits release tags and PyPI has the exact trusted-publisher tuple: project `refpot`, owner `tugrulguner`, repository `refpot`, workflow filename `release.yml`, environment `pypi`. No long-lived PyPI token is used.
 6. The tag-triggered workflow must complete CI, build and validate distributions, publish via OIDC, and create a normal public GitHub release marked latest with the same artifacts. Independently verify the GitHub Release and installability from the public package index before describing the package as published.
 
-Until the 0.1.2 publication is verified, the safe public install command is `python -m pip install refpot`, which resolves to the current public release. Research-review package-performance measurements use source revisions represented by wheels labeled 0.1.1; they are not results for 0.1.2 release artifacts. PyPI renders the README embedded in each uploaded distribution, so correcting the already-published 0.1.1 description requires a future patch release, not an overwrite or re-upload of 0.1.1.
+Research-review package-performance measurements use source revisions represented by wheels labeled 0.1.1; they are not results for package artifacts built from 0.1.2 metadata. PyPI renders the README embedded in each uploaded distribution, so correcting an already-published README requires a future patch release, not an overwrite or re-upload.
 
 No tag or publication is part of routine release preparation. The pending PyPI publisher has been configured; confirm the exact tuple before tagging rather than asking for credentials or changing settings.
 

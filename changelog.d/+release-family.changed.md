@@ -1,1 +1,0 @@
-Align the release workflow and publication guidance with the ModePot family pattern: normal GitHub releases are explicitly marked latest, and public installation/docs no longer describe version 0.1.1 as a prerelease candidate.

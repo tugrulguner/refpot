@@ -1,0 +1,6 @@
+{"label": "baseline", "repeat": 0, "rows": 10000, "transactions": 128, "wal_bytes": 14080, "reopen_ns": 79626208, "verified": true}
+{"label": "baseline", "repeat": 0, "rows": 10000, "transactions": 1024, "wal_bytes": 112640, "reopen_ns": 607873125, "verified": true}
+{"label": "baseline", "repeat": 1, "rows": 10000, "transactions": 1024, "wal_bytes": 112640, "reopen_ns": 621810375, "verified": true}
+{"label": "baseline", "repeat": 1, "rows": 10000, "transactions": 128, "wal_bytes": 14080, "reopen_ns": 78793667, "verified": true}
+{"label": "baseline", "repeat": 2, "rows": 10000, "transactions": 128, "wal_bytes": 14080, "reopen_ns": 78194042, "verified": true}
+{"label": "baseline", "repeat": 2, "rows": 10000, "transactions": 1024, "wal_bytes": 112640, "reopen_ns": 606720167, "verified": true}

@@ -1,0 +1,23 @@
+{
+  "plan_sha256": "c4c579af8ccf1dfbb6838ad38753e9795cdbd2274db625dccf7ee53f106c8761",
+  "environment": {
+    "harness_source_revision": "88626e10db9190b77ac0e46c1a3f05dfa5613ace",
+    "package_source_revision": "6cc633fac687dbdbfab211507b3d87caa5ffcd82",
+    "package_source_revision_source": "REFPOT_SOURCE_REVISION",
+    "package_source_dirty": null,
+    "package_source_root": null,
+    "native_source_path": null,
+    "source_hashes": {
+      "refpot_init_py": "1fc6cda5044d4e745262ea99399656ab2a1d1dab6944307c35ed29751daaaaaa",
+      "native_core_cpp": null
+    },
+    "python": "3.14.7 (main, Aug  7 2026, 02:15:30) [Clang 22.1.3 ]",
+    "sqlite": "3.53.1",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "refpot_version": "0.1.1",
+    "refpot_import_path": "/Users/tugrulguner/.hermes/cache/scratch/refpot-parent-baseline/venv/lib/python3.14/site-packages/refpot/__init__.py",
+    "native_binary_path": "/Users/tugrulguner/.hermes/cache/scratch/refpot-parent-baseline/venv/lib/python3.14/site-packages/refpot/_core.cpython-314-darwin.so",
+    "native_binary_sha256": "6ae61b66a6689bc96100204c228eb0b8fa63fbf80c29d462cf4e198b460513f5",
+    "harness_sha256": "13b91cacfd57ecf53f531495a3625b60111bcfd5ff6e47bb280f63ec850d613e"
+  }
+}

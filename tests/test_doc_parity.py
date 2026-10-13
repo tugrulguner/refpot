@@ -63,6 +63,19 @@ def test_evidence_is_discoverable_without_erasing_alpha_boundaries():
         assert "project/benchmarks" in (ROOT / source).read_text()
 
 
+def test_package_report_distinguishes_recorded_labels_from_build_provenance():
+    for relative in (
+        "benchmarks/package-performance/RESULTS.md",
+        "website/src/content/docs/project/package-performance.md",
+        "website/public/docs/project-package-performance.md",
+    ):
+        text = (ROOT / relative).read_text()
+        assert "operator-supplied" in text
+        assert "extension hashes, not wheel hashes" in text
+        assert "not a verified source-to-artifact attestation" in text
+        assert "Source identities and wheel hashes" not in text
+
+
 def test_package_performance_results_are_exported_and_links_resolve():
     source = (ROOT / "benchmarks/package-performance/RESULTS.md").read_text()
     route = ROOT / "website/src/content/docs/project/package-performance.md"

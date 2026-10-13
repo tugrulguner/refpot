@@ -18,7 +18,7 @@ class ReleaseContractTests(unittest.TestCase):
     def test_metadata_has_single_version_and_honest_platform_bounds(self) -> None:
         data = tomllib.loads((ROOT / "pyproject.toml").read_text())
         project = data["project"]
-        self.assertEqual(project["version"], "0.1.1")
+        self.assertEqual(project["version"], "0.1.2")
         self.assertEqual(project["requires-python"], ">=3.11,<3.15")
         self.assertEqual(project["license"], "MIT")
         self.assertIn("LICENSE", project["license-files"])
@@ -58,7 +58,7 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertNotIn(
             "changelog.d/+engine-package.added.md", (ROOT / "CHANGELOG.md").read_text()
         )
-        self.assertIn("## [0.1.1] - 2026-10-12", (ROOT / "CHANGELOG.md").read_text())
+        self.assertIn("## [0.1.2] - 2026-10-12", (ROOT / "CHANGELOG.md").read_text())
         self.assertIn("must be unique", (ROOT / "CONTRIBUTING.md").read_text())
 
     def test_release_verifier_accepts_version_and_rejects_mismatch(self) -> None:
@@ -66,9 +66,9 @@ class ReleaseContractTests(unittest.TestCase):
             root = Path(temporary)
             (root / "pyproject.toml").write_text((ROOT / "pyproject.toml").read_text())
             (root / "CHANGELOG.md").write_text(
-                "# Changelog\n\n## [0.1.1] - 2026-01-01\n\n- Released.\n"
+                "# Changelog\n\n## [0.1.2] - 2026-10-12\n\n- Prepared.\n"
             )
-            env = dict(os.environ, RELEASE_TAG="v0.1.1")
+            env = dict(os.environ, RELEASE_TAG="v0.1.2")
             good = subprocess.run(
                 [sys.executable, str(ROOT / "scripts/verify_release.py")],
                 cwd=root,
@@ -164,17 +164,12 @@ class ReleaseContractTests(unittest.TestCase):
         sources.extend((ROOT / "website/public/docs").glob("*.md"))
         sources.append(ROOT / "website/src/content/docs/package-contract.md")
         text = "\n".join(path.read_text() for path in sources)
-        for stale_claim in (
-            "release candidate",
-            "not yet verified",
-            "not published on PyPI",
-            "pending independent verification",
-            "not a PyPI release yet",
-        ):
-            self.assertNotIn(stale_claim, text)
-        self.assertIn("python -m pip install refpot==0.1.1", text)
+        self.assertNotIn("not published on PyPI", text)
+        self.assertIn("python -m pip install refpot", text)
+        self.assertIn("Version 0.1.1 is the current public", text)
+        self.assertIn("0.1.2 is in preparation", text)
         self.assertIn("experimental alpha", text)
-        self.assertIn("Qualification remains in progress", text)
+        self.assertIn("Qualification remains limited", text)
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("INSTALL FROM PYPI", homepage)
         self.assertNotIn("SOURCE BUILD", homepage)

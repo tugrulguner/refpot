@@ -3,7 +3,7 @@ title: Transactions and rollback
 description: Practical guide to the public experimental alpha.
 ---
 
-These guides exercise the public experimental alpha. Install with `python -m pip install refpot==0.1.1` on CPython 3.11–3.14. Prebuilt wheels cover Linux x86_64 and macOS arm64; only source builds need a C++17 toolchain. The API and storage format are not stable. Do not use these examples as performance or physical power-loss qualification.
+These guides exercise the public experimental alpha. Version 0.1.1 is the current PyPI release; 0.1.2 is being prepared, not yet published. Install the available release with `python -m pip install refpot` on CPython 3.11–3.14. Prebuilt wheels cover Linux x86_64 and macOS arm64; only source builds need a C++17 toolchain. The API and storage format are not stable. Do not use these examples as performance or physical power-loss qualification.
 
 
 ## Commit a group or roll it back

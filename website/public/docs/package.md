@@ -1,12 +1,12 @@
 
-**Experimental alpha release.** RefPot is available on PyPI but is not a production-qualified database. It contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains in progress.
+**Experimental alpha.** Version 0.1.1 is the current public PyPI release; version 0.1.2 is in preparation and not yet published. RefPot is not a production-qualified database. It contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains limited.
 
 ## Prerequisites and install
 
-Use Python 3.11–3.14. Install the published experimental alpha with:
+Use Python 3.11–3.14. Install the currently published experimental alpha with:
 
 ```sh
-python -m pip install refpot==0.1.1
+python -m pip install refpot
 ```
 
 Prebuilt wheels are available for Linux x86_64 and macOS arm64 on CPython 3.11–3.14. A C++17 compiler is required only when building from source. From a checkout root, use `uv`:
@@ -52,7 +52,7 @@ with TemporaryDirectory() as directory:
 python quickstart.py
 ```
 
-The program uses the native package and temporary files. Also see the standalone [CRUD example](https://github.com/tugrulguner/refpot/blob/main/examples/crud.py) and [transaction example](https://github.com/tugrulguner/refpot/blob/main/examples/transactions.py).
+The program uses the native package and temporary files. Version 0.1.2 is not yet available from PyPI. Also see the standalone [CRUD example](https://github.com/tugrulguner/refpot/blob/main/examples/crud.py) and [transaction example](https://github.com/tugrulguner/refpot/blob/main/examples/transactions.py).
 
 ## Next — Reference
 

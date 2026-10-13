@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  RefPot is an experimental alpha: a native C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Version 0.1.1 is publicly available on PyPI; package and platform qualification remain limited.
+  RefPot is an experimental alpha: a native C++ redo-and-checkpoint engine with Python CRUD and explicit transactions. Version 0.1.1 is the current public PyPI release; 0.1.2 is being prepared, not yet published. Package and platform qualification remain limited.
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@
 </p>
 
 > [!IMPORTANT]
-> Version 0.1.1 is the experimental alpha release. Package and platform qualification remain limited. No general performance claim or production durability guarantee is made.
+> Version 0.1.1 is the current public experimental alpha. Version 0.1.2 is in release preparation and is not yet available from PyPI. Package and platform qualification remain limited; no general performance claim or production durability guarantee is made.
 
 ## Why RefPot
 
@@ -52,7 +52,7 @@ RefPot is an early custom embedded database engine: a native C++ redo-and-checkp
 Requires Python 3.11–3.14. Install the experimental alpha from PyPI:
 
 ```sh
-python -m pip install refpot==0.1.1
+python -m pip install refpot
 ```
 
 Save this complete program as `quickstart.py` and run it with `python quickstart.py`:
@@ -99,11 +99,11 @@ The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery 
 
 ## Current package architecture
 
-<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="Recorded pre-release implementation architecture: Python Database and Row use a native C++ engine; transactions synchronize duplicated checksummed redo before memory publication; checkpoint snapshot sync, rename and directory sync precede log truncation. Limits and qualifications are listed in the accessible text above." width="960"></a></p>
+<p align="center"><a href="docs/assets/refpot-package.svg"><img src="docs/assets/refpot-package.png" alt="RefPot 0.1.2 release candidate architecture: Python Database and Row use a native C++ engine; transaction changes are prepared, duplicated redo is synchronized, then prepared row effects are published without allocation; recovery replays validated row-local effects. Checkpoint snapshot sync, rename and directory sync precede log truncation. Experimental alpha; qualification limits apply." width="960"></a></p>
 
 [Open the full-size editable SVG](docs/assets/refpot-package.svg) · [Detailed package contract](docs/package-contract.md)
 
-Mutation and diff-scan paths copy maps; package performance is unqualified and this preview is not presented as benchmark-fast.
+Transactions stage per-row changes without full-map copies. Commit preparation serializes the final change set before WAL I/O; only after both checksummed redo copies are synchronized does nonallocating publication update committed memory. Recovery validates/prepares a frame before applying row-local changes. These mechanisms preserve the API and storage framing, and do not by themselves establish package performance or broader qualification.
 
 ## Build
 
@@ -140,7 +140,7 @@ The full task-first docs live at [RefPot documentation](https://refpot.modepot.i
 [Full-size chart](docs/assets/refpot-benchmark.png) ·
 [Next package recommendation](docs/package-recommendation.md)
 
-The experimental findings are separate from package performance. The 3.04–5.95× result applies only to the historical update harness; it is not a package claim. The historical reopen result remains 16/16 losses. No performance ratio is asserted for this package.
+The historical findings are separate from package performance. The 3.04–5.95× result applies only to the historical update harness; its reopen result remains 16/16 losses. Package results are reported separately above.
 
 ## Planned design direction
 
@@ -159,15 +159,11 @@ Language, storage format, index structure, isolation model, and SQL compatibilit
 remain decisions to earn through coherent experiments. A native-language rewrite alone
 is not a differentiator. No SQLite SQL, file-format, or C API compatibility is promised.
 
-## Performance target
+## Package performance evidence
 
-**At least 2× improvement over SQLite is an acceptance target, not an achieved package guarantee.**
+The new actual-package campaign uses the public Python API and prepared SQLite over six workload/size cells. See the canonical [measured results](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md) when that evidence file is integrated, and the [reproduction guide](benchmarks/package-performance/README.md). Research-review measurements identify source revisions from wheels labeled 0.1.1; they are not measurements of version 0.1.2 release artifacts. The overall 2× SQLite target remains unmet: three of six measured cells are below 2× (both singleton/batch writes at 1,000 rows and singleton updates at 10,000 rows). Point reads exceed 2× in both sizes, and 10,000-row batch updates exceed 2×; these wins do not satisfy the complete target.
 
-Before claiming it, define and publish a workload matrix, then retain every passing and
-failing cell. Compare equivalent operations, returned values, transaction boundaries,
-constraints, and durability acknowledgments against prepared SQLite and its best-tested
-configuration for each workload. Package performance remains unqualified.
-
+The historical random-update experiment below is distinct from package performance. Its 3.04–5.95× result applies only to that audited harness; its reopen result remains 16/16 losses.
 ## Community
 
 Join the [ModePot Discord](https://discord.gg/u3AANZr6RG) for design discussions,

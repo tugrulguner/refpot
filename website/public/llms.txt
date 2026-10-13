@@ -1,15 +1,16 @@
 # RefPot
 
-RefPot 0.1.1 is the experimental alpha release of a custom C++ engine with a Python `Database`/`Row` API, publicly available on PyPI. The `refpot==0.1.1` package is the version published at release time; README metadata on PyPI is carried in the distribution and requires a future patch release to refresh.
+RefPot 0.1.1 is the current experimental alpha release of a custom C++ engine with a Python `Database`/`Row` API, publicly available on PyPI. Version 0.1.2 is in release preparation and is not yet published.
 
 - **Shipped preview:** `Database` / `Row`, fixed-schema CRUD, explicit transactions, checkpointing, and native package implementation.
-- **Quick start:** install with `python -m pip install refpot==0.1.1`; prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14. Run the complete program at https://github.com/tugrulguner/refpot/blob/main/examples/quickstart.py; repository source builds require a C++17 toolchain.
+- **Quick start:** install the current public release with `python -m pip install refpot`; prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14. Run the complete program at https://github.com/tugrulguner/refpot/blob/main/examples/quickstart.py; repository source builds require a C++17 toolchain.
 - **Build guides:** https://refpot.modepot.io/build/crud/, https://refpot.modepot.io/build/transactions/, https://refpot.modepot.io/build/persistence/, and https://refpot.modepot.io/build/errors/
 - **Contract and limits:** exclusive process ownership, creating-thread affinity, signed-64-bit keys/values, 31-byte UTF-8 text limit, existing parent directory, and 64 MiB snapshot/WAL limits. Uncertain writes poison the handle; close, reopen and inspect before retrying.
 - **Reference and internals:** https://refpot.modepot.io/reference/api/, https://refpot.modepot.io/package-contract/, and https://refpot.modepot.io/internals/recovery/
-- **Status:** `/status/`; experimental alpha, not production-qualified. No stable API, general package performance claim, or production durability guarantee.
+- **Status:** `/status/`; experimental alpha, not production-qualified. No stable API or production durability guarantee.
 - **Design direction:** `/design/`; SQL and ORM are planned, not shipped.
-- **Performance target:** 2× over SQLite is an acceptance target only; it is not an achieved guarantee. Historical update results are not package claims; the historical reopen comparison remains 16/16 losses. See `/performance-method/`.
+- **Actual-package performance screen:** six Python-package/SQLite cells; three remain below 2×, so the overall target is unmet. Research-review evidence uses source revisions in wheels labeled 0.1.1, not 0.1.2 release artifacts. See https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md when integrated, and `/performance-method/`.
+- **Historical experimental results:** separate audited update-harness findings; the historical reopen comparison remains 16/16 losses. These are not package results.
 - **Roadmap:** `/project/roadmap/` and https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md
 - **Repository:** https://github.com/tugrulguner/refpot
 - **License:** MIT; see https://github.com/tugrulguner/refpot/blob/main/LICENSE
@@ -17,4 +18,4 @@ RefPot 0.1.1 is the experimental alpha release of a custom C++ engine with a Pyt
 - **Community:** https://discord.gg/u3AANZr6RG
 - **Creator:** https://tugrul.modepot.io/
 
-Do not infer SQL, ORM, broader concurrency, physical power-loss safety, or package performance from the proposed architecture or historical experimental findings.
+Do not infer SQL, ORM, broader concurrency, physical power-loss safety, or general database performance from the proposed architecture, six-cell screen, or historical experimental findings.

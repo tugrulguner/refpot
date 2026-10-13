@@ -21,9 +21,13 @@ These mechanisms are implementation behavior, not broad recovery qualification. 
 
 ## Performance and maturity
 
-The historical **3.04–5.95×** result belongs only to the audited experimental update harness, not this Python package. Package performance has not been qualified. The known reopen result remains **16/16 losses** in the historical comparison. Mutation and diff-scan paths copy maps; this is not presented as benchmark-fast, and CPU optimization is future work.
+The source change-set implementation stages row-local effects instead of cloning the full map. Commit preparation encodes the final effects before durable I/O; after the duplicated redo is synchronized, publication applies the prepared changes without allocation. Recovery validates and prepares each frame, then replays only its row effects rather than copying unrelated rows. The API and on-disk framing are unchanged. These mechanisms improve the shape of transaction staging and replay; they do not establish general performance or production readiness.
 
-There is no stable API, general performance claim, or production durability guarantee. See the [recommendation](/status/), [roadmap](/project/roadmap/), and [experimental methodology](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates).
+The new package-performance campaign compares the actual Python package with prepared SQLite across six cells. Its canonical measured results and limitations will be published in [`https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md`](../https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md) when integrated. Evidence currently available from the research review used source revisions represented by wheels labeled 0.1.1; it is not measurement of release artifacts built from version 0.1.2 metadata. Do not attribute those results to a published 0.1.2 package. The overall **2×-over-SQLite goal remains unmet**: the 1,000-row singleton-update, 1,000-row batch-update, and 10,000-row singleton-update cells are below 2×. The 10,000-row batch cell exceeds 2×, and the two point-read cells exceed 2×, but those scoped wins do not satisfy the overall gate.
+
+Historical random-update results are separate: the **3.04–5.95×** result belongs only to its audited experimental harness, not the Python package, and its reopen comparison remains **16/16 losses**. See the [recommendation](/status/), [roadmap](/project/roadmap/), [historical methodology](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates), and [package-performance guide](../benchmarks/package-performance/README.md).
+
+The API and storage format are experimental. There is no production durability guarantee; physical power-loss safety, broad cross-platform behavior, concurrent readers, multiwriter use, Windows, SQL, ORM, and SQLite SQL/file/C API compatibility are unsupported.
 
 
 [Download this page as Markdown](/docs/internals-recovery.md)

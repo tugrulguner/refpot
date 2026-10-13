@@ -21,7 +21,7 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(page.locator('.framework-actions a').nth(1)).toHaveAttribute('href','https://github.com/tugrulguner/refpot/tree/main/examples');
       await expect(page.locator('.framework-actions a').nth(2)).toHaveAttribute('href','https://github.com/tugrulguner/refpot');
       await expect(page.locator('.framework-copy .creator-attribution')).toBeVisible();
-      await expect(page.locator('.installation-strip code')).toHaveText('python -m pip install refpot==0.1.1');
+      await expect(page.locator('.installation-strip code')).toHaveText('python -m pip install refpot');
       const python = page.locator('pre').filter({ hasText: 'from refpot import Database, Row' }).first();
       await expect(python).toHaveCount(1);
       await expect(python).toContainText('db.insert(1, 42, "answer")');
@@ -99,7 +99,7 @@ test('task guides render their API examples and mobile code-copy controls work',
   await expect(copy).toBeVisible();
   await copy.click();
   await expect(copy).toHaveAttribute('data-copied', 'Copied!');
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('python -m pip install refpot==0.1.1');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('python -m pip install refpot');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{

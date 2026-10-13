@@ -1,6 +1,6 @@
 # Package-core performance screening
 
-This is a reproducible, public-API screening harness for the installable RefPot package. It runs real `refpot.Database` CRUD calls against SQLite's prepared statements; it does not reimplement RefPot's package core or reuse the historical fixed-schema random-update benchmark. It is a Python/package comparison, not a native-engine, physical-power-loss, or production-qualification claim.
+This is a reproducible, public-API screening harness for the installable RefPot package. It runs real `refpot.Database` CRUD calls against SQLite's prepared statements; it does not reimplement RefPot's package core or reuse the historical fixed-schema random-update benchmark. It is a Python/package comparison, not a native-engine, physical-power-loss, or production-qualification claim. The canonical measured six-cell results and caveats belong in [`RESULTS.md`](https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/RESULTS.md); the research-review wheel labels are 0.1.1 even though the source revisions under test are the changed candidates, so these are not measurements of version 0.1.2 release artifacts.
 
 ## Run the same frozen plan on baseline and candidate
 
@@ -52,4 +52,4 @@ python benchmarks/package-performance/harness.py run \
   --output /path/to/scratch/refpot-screen-baseline
 ```
 
-This produces 15 trials (three workloads x five candidates) and is a smoke screen only. No benchmark output is checked into this directory; preserve measured evidence outside the checkout and retain unsuccessful results.
+This produces 15 trials (three workloads x five candidates) and is a smoke screen only. The smoke command does not produce or replace the canonical measured campaign in `RESULTS.md`; preserve all raw evidence and retain unsuccessful results.

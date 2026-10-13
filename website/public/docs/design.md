@@ -21,6 +21,6 @@ Candidate mechanisms include cache-aware separated key/value layouts, occupancy-
 
 ## Preview and roadmap
 
-The package preview implements CRUD, transactions and snapshot/WAL persistence. It is not a supported release; recovery qualification remains in progress and no package performance claims are established. See the [roadmap](/project/roadmap/) for current unchecked milestones and the [performance method](/performance-method/) for evidence requirements.
+The package preview implements CRUD, transactions and snapshot/WAL persistence, with row-local change sets for staging, nonallocating publication after redo synchronization, and row-local replay. Recovery qualification remains in progress. A six-cell actual-package screen exists, but three cells remain below 2× and the overall SQLite goal is unmet; its source revisions are represented by wheels labeled 0.1.1, not release artifacts built from 0.1.2 metadata. See the [roadmap](/project/roadmap/) for open qualification gates and the [performance method](/performance-method/) for evidence requirements.
 
 <a class="next-link" href="/performance-method/">Next — Performance qualification method →</a>

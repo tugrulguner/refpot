@@ -1,1 +1,1 @@
-Replace full transaction-state copies and commit-time state scans with staged row effects and encoded-size accounting. Recovery applies validated frame effects without copying the recovered map.
+Replace full transaction-state copies and commit-time state scans with staged row effects and encoded-size accounting. Prepare the final effects before WAL I/O; after duplicated redo synchronization, publish prepared changes without allocation. Recovery applies validated row-local frame effects without copying unrelated rows.

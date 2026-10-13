@@ -31,7 +31,7 @@ jobs:
       - run: uv build --sdist
       - run: uv run --locked python scripts/verify_artifacts.py dist/
       - run: (cd dist && shasum -a 256 -- ./*.tar.gz > SOURCE-SHA256SUMS)
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: source-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -132,7 +132,7 @@ jobs:
           cp -R "$SOURCE_ROOT"/tests/native "$RUNNER_TEMP/refpot-consumer/tests/"
           cd "$RUNNER_TEMP/refpot-consumer"
           "$install" -m pytest tests -q
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheel-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.platform }}-cp${{ matrix.python }}
           path: wheelhouse/*.whl

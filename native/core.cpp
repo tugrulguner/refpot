@@ -6,7 +6,9 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <set>
 #include <mutex>
+#include <type_traits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -18,7 +20,8 @@
 namespace py = pybind11;
 using Bytes = std::vector<unsigned char>;
 struct Row { int64_t key, value; std::string text; };
-using Rows = std::map<int64_t, Row>;
+struct KeyLess { bool operator()(int64_t left, int64_t right) const noexcept { return left < right; } };
+using Rows = std::map<int64_t, Row, KeyLess>;
 constexpr size_t MAX_BYTES = 64 * 1024 * 1024;
 
 static uint32_t crc(const unsigned char* p, size_t n) {
@@ -86,8 +89,64 @@ class Database {
     pid_t owner = ::getpid();
     bool closed = false, poisoned = false, tx = false;
     uint64_t sequence = 0;
-    Rows rows, staged;
+    Rows rows, changes;
+    std::set<int64_t, KeyLess> deletions;
+    size_t encoded_size = 32;
+    size_t staged_size = 32;
+    size_t staged_count = 0;
     std::recursive_mutex mutex;
+
+    const Row* visible(int64_t key) const {
+        auto changed = changes.find(key);
+        if (tx && changed != changes.end()) return &changed->second;
+        if (tx && deletions.count(key)) return nullptr;
+        auto found = rows.find(key);
+        return found == rows.end() ? nullptr : &found->second;
+    }
+    static size_t row_size(const Row& row) { return 17 + row.text.size(); }
+    void stage_row(const Row& row) {
+        auto old = visible(row.key);
+        const bool existed = old != nullptr;
+        if (old && old->value == row.value && old->text == row.text) return;
+        size_t next_size = staged_size;
+        if (existed) next_size -= row_size(*old);
+        size_t addition = row_size(row);
+        if (addition > MAX_BYTES - next_size)
+            throw std::invalid_argument("database snapshot capacity exceeded");
+        next_size += addition;
+        // Construct before changing the effects so allocation failure is operation-atomic.
+        Row prepared = row;
+        auto found = changes.find(row.key);
+        if (found == changes.end()) changes.emplace(row.key, std::move(prepared));
+        else found->second = std::move(prepared);
+        deletions.erase(row.key);
+        staged_size = next_size;
+        if (!existed) ++staged_count;
+    }
+    void stage_delete(int64_t key) {
+        const Row* old = visible(key);
+        need(old != nullptr, "missing row");
+        size_t next_size = staged_size - row_size(*old);
+        auto removed = changes.find(key);
+        if (rows.find(key) != rows.end()) deletions.insert(key);
+        else deletions.erase(key);
+        if (removed != changes.end()) changes.erase(removed);
+        staged_size = next_size;
+        --staged_count;
+    }
+    void apply_changes() noexcept {
+        static_assert(std::is_nothrow_move_assignable_v<Row>);
+        static_assert(noexcept(KeyLess{}(int64_t{}, int64_t{})));
+        for (int64_t key : deletions) rows.erase(key);
+        while (!changes.empty()) {
+            auto node = changes.extract(changes.begin());
+            auto found = rows.find(node.key());
+            if (found == rows.end()) rows.insert(std::move(node));
+            else found->second = std::move(node.mapped());
+        }
+        deletions.clear();
+        encoded_size = staged_size;
+    }
 
     void check() const {
         need(::getpid() == owner, "database is not usable after fork");
@@ -115,6 +174,7 @@ class Database {
         for (uint64_t i = 0; i < count; ++i) {
             Row r = parse_row(b, at, b.size() - 4);
             need(rows.emplace(r.key, r).second, "duplicate stored key");
+            encoded_size += row_size(r);
         }
         need(at == b.size() - 4, "snapshot trailing bytes");
     }
@@ -127,24 +187,46 @@ class Database {
         need(seq > 0 && (previous == 0 || seq == previous + 1), "redo sequence gap");
         previous = seq;
         need(count <= (frame.size() - 28) / 9, "redo operation count");
-        size_t at = 24;
-        Rows next = rows;
+        size_t at = 24; Rows upserts; std::set<int64_t, KeyLess> removals;
         for (uint64_t i = 0; i < count; ++i) {
             need(at < frame.size() - 4, "truncated redo operation");
             unsigned char kind = frame[at++];
             if (kind == 0) {
                 need(frame.size() - 4 - at >= 8, "truncated delete");
                 int64_t key = int64_t(number(frame.data() + at, 8)); at += 8;
-                if (seq > sequence) next.erase(key);
+                upserts.erase(key); removals.insert(key);
             } else {
                 need(kind == 1, "redo operation kind");
-                Row r = parse_row(frame, at, frame.size() - 4);
-                if (seq > sequence) next[r.key] = r;
+                Row row = parse_row(frame, at, frame.size() - 4);
+                removals.erase(row.key); upserts.insert_or_assign(row.key, std::move(row));
             }
         }
         need(at == frame.size() - 4, "redo trailing bytes");
         if (seq > sequence) {
-            need(seq == sequence + 1, "redo frontier gap"); rows.swap(next); sequence = seq;
+            need(seq == sequence + 1, "redo frontier gap");
+            size_t next_size = encoded_size;
+            for (int64_t key : removals) {
+                auto found = rows.find(key);
+                if (found != rows.end()) next_size -= row_size(found->second);
+            }
+            for (const auto& [key, row] : upserts) {
+                auto found = rows.find(key);
+                if (found != rows.end()) next_size -= row_size(found->second);
+                size_t addition = row_size(row);
+                need(addition <= MAX_BYTES - next_size, "database snapshot capacity exceeded");
+                next_size += addition;
+            }
+            for (int64_t key : removals) {
+                auto found = rows.find(key);
+                if (found != rows.end()) { encoded_size -= row_size(found->second); rows.erase(found); }
+            }
+            while (!upserts.empty()) {
+                auto node = upserts.extract(upserts.begin());
+                auto found = rows.find(node.key());
+                if (found == rows.end()) { encoded_size += row_size(node.mapped()); rows.insert(std::move(node)); }
+                else { encoded_size -= row_size(found->second); encoded_size += row_size(node.mapped()); found->second = std::move(node.mapped()); }
+            }
+            sequence = seq;
         }
     }
     void recover() {
@@ -170,26 +252,16 @@ class Database {
         }
         need(::lseek(wal, 0, SEEK_END) >= 0, "redo seek failed");
     }
-    void persist(const Rows& next) {
+    void persist() {
         need(sequence != UINT64_MAX, "transaction identity exhausted");
-        size_t snapshot_size = 32;
-        for (const auto& [key, row] : next) {
-            size_t encoded = 17 + row.text.size();
-            if (encoded > MAX_BYTES - snapshot_size)
-                throw std::invalid_argument("database snapshot capacity exceeded");
-            snapshot_size += encoded;
-        }
+        if (changes.empty() && deletions.empty()) return;
+        need(staged_size <= MAX_BYTES, "database snapshot capacity exceeded");
         Bytes body; const char magic[8] = {'R','P','R','E','D','O','2','\0'};
         body.insert(body.end(), magic, magic + 8); put(body, sequence + 1, 8);
-        uint64_t count = 0; Bytes ops;
-        for (auto& [key, old] : rows) if (!next.count(key)) { ops.push_back(0); put(ops, uint64_t(key), 8); ++count; }
-        for (auto& [key, r] : next) {
-            auto old = rows.find(key);
-            if (old == rows.end() || old->second.value != r.value || old->second.text != r.text) {
-                ops.push_back(1); row_bytes(ops, r); ++count;
-            }
-        }
-        if (count == 0) return;
+        uint64_t count = deletions.size() + changes.size();
+        Bytes ops; ops.reserve(size_t(count) * 9);
+        for (int64_t key : deletions) { ops.push_back(0); put(ops, uint64_t(key), 8); }
+        for (const auto& [key, row] : changes) { ops.push_back(1); row_bytes(ops, row); }
         put(body, count, 8); body.insert(body.end(), ops.begin(), ops.end());
         put(body, crc(body.data(), body.size()), 4);
         if (body.size() > (MAX_BYTES - 8) / 2)
@@ -200,7 +272,7 @@ class Database {
         frame.insert(frame.end(), body.begin(), body.end());
         try { full_write(wal, frame); need(::fsync(wal) == 0, "redo sync failed"); }
         catch (...) { poisoned = true; throw; }
-        ++sequence; // caller publishes prepared in-memory map using nonthrowing swap
+        ++sequence;
     }
 public:
     explicit Database(std::string p) : path(std::filesystem::absolute(p).lexically_normal().string()) {
@@ -219,33 +291,50 @@ public:
         } catch (...) { release(); throw; }
     }
     ~Database() { release(); }
-    void begin() { std::lock_guard<std::recursive_mutex> g(mutex); check(); need(!tx, "nested transaction"); staged = rows; tx = true; }
+    void begin() {
+        std::lock_guard<std::recursive_mutex> g(mutex); check(); need(!tx, "nested transaction");
+        changes.clear(); deletions.clear(); staged_size = encoded_size; staged_count = rows.size(); tx = true;
+    }
     void commit() {
         std::lock_guard<std::recursive_mutex> g(mutex); check(); need(tx, "no transaction");
-        try { persist(staged); rows.swap(staged); staged.clear(); tx = false; }
-        catch (...) { staged.clear(); tx = false; throw; }
+        try { persist(); apply_changes(); tx = false; }
+        catch (...) { changes.clear(); deletions.clear(); staged_size = encoded_size; staged_count = rows.size(); tx = false; throw; }
     }
-    void rollback() { std::lock_guard<std::recursive_mutex> g(mutex); check(); staged.clear(); tx = false; }
+    void rollback() {
+        std::lock_guard<std::recursive_mutex> g(mutex); check(); changes.clear(); deletions.clear();
+        staged_size = encoded_size; staged_count = rows.size(); tx = false;
+    }
     void insert(int64_t key, int64_t value, std::string text) {
         std::lock_guard<std::recursive_mutex> g(mutex); check();
         if (text.size() > 31) throw std::invalid_argument("text exceeds 31 UTF-8 bytes");
-        auto& m = tx ? staged : rows;
-        if (m.count(key)) throw std::invalid_argument("duplicate key");
-        Rows next = m; next.emplace(key, Row{key, value, text});
-        if (!tx) persist(next); m.swap(next);
+        if (visible(key)) throw std::invalid_argument("duplicate key");
+        if (!tx) { changes.clear(); deletions.clear(); staged_size = encoded_size; staged_count = rows.size(); }
+        stage_row(Row{key, value, std::move(text)});
+        if (!tx) { try { persist(); apply_changes(); } catch (...) { changes.clear(); deletions.clear(); staged_size = encoded_size; throw; } }
     }
-    Row fetch(int64_t key) { std::lock_guard<std::recursive_mutex> g(mutex); check(); auto& m = tx ? staged : rows; auto it = m.find(key); if (it == m.end()) throw py::key_error("key not found"); return it->second; }
+    Row fetch(int64_t key) {
+        std::lock_guard<std::recursive_mutex> g(mutex); check();
+        const Row* row = visible(key); if (!row) throw py::key_error("key not found"); return *row;
+    }
     void update(int64_t key, py::object value, py::object text) {
-        std::lock_guard<std::recursive_mutex> g(mutex); check(); auto& m = tx ? staged : rows;
-        auto it = m.find(key); if (it == m.end()) throw py::key_error("key not found");
-        Row r = it->second;
-        if (!value.is_none()) r.value = value.cast<int64_t>();
-        if (!text.is_none()) r.text = text.cast<std::string>();
-        if (r.text.size() > 31) throw std::invalid_argument("text exceeds 31 UTF-8 bytes");
-        Rows next = m; next[key] = r; if (!tx) persist(next); m.swap(next);
+        std::lock_guard<std::recursive_mutex> g(mutex); check();
+        const Row* found = visible(key); if (!found) throw py::key_error("key not found");
+        Row row = *found;
+        if (!value.is_none()) row.value = value.cast<int64_t>();
+        if (!text.is_none()) row.text = text.cast<std::string>();
+        if (row.text.size() > 31) throw std::invalid_argument("text exceeds 31 UTF-8 bytes");
+        if (!tx) { changes.clear(); deletions.clear(); staged_size = encoded_size; staged_count = rows.size(); }
+        stage_row(row);
+        if (!tx) { try { persist(); apply_changes(); } catch (...) { changes.clear(); deletions.clear(); staged_size = encoded_size; throw; } }
     }
-    void erase(int64_t key) { std::lock_guard<std::recursive_mutex> g(mutex); check(); auto& m = tx ? staged : rows; if (!m.count(key)) throw py::key_error("key not found"); Rows next = m; next.erase(key); if (!tx) persist(next); m.swap(next); }
-    size_t size() { std::lock_guard<std::recursive_mutex> g(mutex); check(); return (tx ? staged : rows).size(); }
+    void erase(int64_t key) {
+        std::lock_guard<std::recursive_mutex> g(mutex); check();
+        if (!visible(key)) throw py::key_error("key not found");
+        if (!tx) { changes.clear(); deletions.clear(); staged_size = encoded_size; staged_count = rows.size(); }
+        stage_delete(key);
+        if (!tx) { try { persist(); apply_changes(); } catch (...) { changes.clear(); deletions.clear(); staged_size = encoded_size; throw; } }
+    }
+    size_t size() { std::lock_guard<std::recursive_mutex> g(mutex); check(); return tx ? staged_count : rows.size(); }
     void checkpoint() {
         std::lock_guard<std::recursive_mutex> g(mutex); check();
         // Automatic checkpoint may happen while a prepared transaction is pending; only committed rows are published.
@@ -262,7 +351,7 @@ public:
             need(::lseek(wal, 0, SEEK_END) >= 0, "redo reset failed");
         } catch (...) { if (fd >= 0) ::close(fd); poisoned = true; throw; }
     }
-    void close() { std::lock_guard<std::recursive_mutex> g(mutex); need(::getpid() == owner, "database is not usable after fork"); staged.clear(); tx = false; closed = true; release(); }
+    void close() { std::lock_guard<std::recursive_mutex> g(mutex); need(::getpid() == owner, "database is not usable after fork"); changes.clear(); deletions.clear(); tx = false; closed = true; release(); }
 };
 
 PYBIND11_MODULE(_core, m) {

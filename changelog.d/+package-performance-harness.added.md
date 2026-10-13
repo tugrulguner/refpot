@@ -1,0 +1,1 @@
+Adds an independently runnable, public-package performance screening harness with frozen plans, paired SQLite configurations, incremental raw records, and regression tests. It does not alter or replace historical benchmark evidence.

@@ -47,6 +47,6 @@ These mechanisms are implementation behavior, not broad recovery qualification. 
 
 ## Performance and maturity
 
-The historical **3.04–5.95×** result belongs only to the audited experimental update harness, not this Python package. Package performance has not been qualified. The known reopen result remains **16/16 losses** in the historical comparison. Mutation and diff-scan paths copy maps; this is not presented as benchmark-fast, and CPU optimization is future work.
+The historical **3.04–5.95×** result belongs only to the audited experimental update harness, not this Python package. Package performance has not been qualified. The known reopen result remains **16/16 losses** in the historical comparison. The transaction change set and checked encoded-size accounting avoid full-map copies during staging and commit preparation. This is not presented as benchmark-fast, and CPU optimization is future work.
 
 There is no stable API, general performance claim, or production durability guarantee. See the [recommendation](/package/), [roadmap](/project/roadmap/), and [experimental methodology](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates).

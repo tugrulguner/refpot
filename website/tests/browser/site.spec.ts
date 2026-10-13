@@ -1,7 +1,7 @@
 import { gunzipSync } from 'node:zlib';
 import { test, expect } from '@playwright/test';
 import { sanitizeAnalyticsProperties } from '../../src/analytics-privacy.mjs';
-const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/does-not-exist/'];
+const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/project/benchmarks/', '/project/contributing/', '/reference/agent-guide/', '/does-not-exist/'];
 const resources = ['ModePot', 'GitHub', 'Community', 'About Tugrul'];
 for (const width of [1280, 768, 390, 320]) {
   for (const theme of ['light', 'dark', 'auto']) {
@@ -69,7 +69,7 @@ test('every layout preserves desktop and compact family navigation with keyboard
         const toggle=page.getByRole('button',{name:'Menu',exact:true});
         await toggle.focus(); await page.keyboard.press('Enter');
         const menu=page.getByRole('region',{name:'Menu',exact:true});
-        for(const label of ['GitHub','Community','About Tugrul','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
+        for(const label of ['GitHub','Community','About Tugrul','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Contributing','Coding-agent guide','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
         await page.keyboard.press('Escape'); await expect(menu).toBeHidden(); await expect(toggle).toBeFocused();
       }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -102,6 +102,39 @@ test('task guides render their API examples and mobile code-copy controls work',
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('python -m pip install refpot==0.1.1');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+test('historical chart, caveats, full results and evidence downloads remain visible', async ({ page }, testInfo) => {
+  for (const width of [1280, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ['light', 'dark', 'auto']) {
+      for (const route of ['/', '/performance-method/', '/project/benchmarks/']) {
+        await page.goto(route);
+        await page.locator('header starlight-theme-select select').selectOption(theme);
+        const chart = page.locator('main img[src="/refpot-benchmark.png"]');
+        await expect(chart).toHaveCount(1);
+        await chart.scrollIntoViewIfNeeded();
+        await expect.poll(() => chart.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+        await chart.evaluate((image: HTMLImageElement) => image.decode());
+        const box = await chart.boundingBox();
+        expect(box!.width).toBeGreaterThan(0);
+        expect(box!.x).toBeGreaterThanOrEqual(0);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+        await expect(page.locator('main')).toContainText(/historical|experimental/i);
+        await expect(page.locator('main')).toContainText(/16\/16 losses|slower for native in all 16 cells/);
+        if (route === '/project/benchmarks/') {
+          await expect(page.locator('main')).toContainText('not an ordinary update-only SQLite baseline');
+          await expect(page.locator('main')).toContainText('about 10 hours');
+          await expect(page.locator('main a[href*="data/raw-records.tar.gz"]')).toHaveCount(1);
+          const download = await page.request.get('/docs/project-benchmarks.md');
+          expect(download.ok()).toBe(true);
+          expect(await download.text()).toContain('reproduce.py verify');
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await page.screenshot({ path: testInfo.outputPath(`evidence-${width}-${theme}-${route.replaceAll('/', '_')}.png`), fullPage: false });
+      }
+    }
+  }
+});
+
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{
   await page.emulateMedia({colorScheme:'light'}); await page.goto('/');
   await page.locator('header starlight-theme-select select').selectOption('auto');

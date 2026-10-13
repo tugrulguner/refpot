@@ -9,6 +9,8 @@ RefPot 0.1.1 is the experimental alpha release of a custom C++ engine with a Pyt
 - **Reference and internals:** https://refpot.modepot.io/reference/api/, https://refpot.modepot.io/package-contract/, and https://refpot.modepot.io/internals/recovery/
 - **Status:** `/status/`; experimental alpha, not production-qualified. No stable API, general package performance claim, or production durability guarantee.
 - **Design direction:** `/design/`; SQL and ORM are planned, not shipped.
+- **Historical evidence:** https://refpot.modepot.io/project/benchmarks/ provides the original chart, full per-cell results, baseline fairness, audit, raw records and reproduction. These are historical prototype results, not package performance; all 16 reopen/full-state-validation cells lost.
+- **Contributor and agent guidance:** https://refpot.modepot.io/project/contributing/ and https://refpot.modepot.io/reference/agent-guide/. Package installation does not install an agent skill.
 - **Performance target:** 2× over SQLite is an acceptance target only; it is not an achieved guarantee. Historical update results are not package claims; the historical reopen comparison remains 16/16 losses. See `/performance-method/`.
 - **Roadmap:** `/project/roadmap/` and https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md
 - **Repository:** https://github.com/tugrulguner/refpot

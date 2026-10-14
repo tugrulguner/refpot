@@ -112,10 +112,10 @@ class PresentationTests(unittest.TestCase):
             'href="https://github.com/tugrulguner/refpot">GitHub',
             "Created by Tugrul Guner",
             'class="installation-strip"',
-            "Available on PyPI",
+            "Try the experimental alpha",
             "A first database",
             "Install RefPot with",
-            'class="historical-architecture"',
+            'class="package-architecture"',
             "Run the shipped CRUD and transaction examples",
             "python examples/crud.py",
             "Package contract and qualification",
@@ -125,9 +125,10 @@ class PresentationTests(unittest.TestCase):
         positions = [page.index(marker) for marker in markers]
         self.assertEqual(positions, sorted(positions))
         self.assertLess(positions[-1], page.rindex("(/package/)"))
-        self.assertIn('href="/refpot-package.svg"', page)
+        self.assertIn('href="/refpot-package.svg?v=alpha-implementation-2"', page)
         self.assertIn('href="/package-contract/"', page)
-        self.assertIn("Available on PyPI", page)
+        self.assertIn("experimental alpha", page)
+        self.assertIn("Check PyPI for the latest published version", page)
         self.assertIn("SQL and ORM are design direction, not shipped functionality", page)
         self.assertNotIn("<iframe", page.lower())
         self.assertNotIn("Playground", page)
@@ -136,7 +137,7 @@ class PresentationTests(unittest.TestCase):
     def test_package_route_and_agent_export_expose_actual_commands(self):
         quick = (ROOT / "website/src/content/docs/package.md").read_text()
         for phrase in (
-            "python -m pip install refpot==0.1.1",
+            "python -m pip install refpot",
             "python examples/quickstart.py",
             "Python 3.11–3.14",
             "C++17",
@@ -147,12 +148,12 @@ class PresentationTests(unittest.TestCase):
             self.assertIn(phrase, quick)
         agent = (ROOT / "website/public/llms.txt").read_text()
         for phrase in (
-            "python -m pip install refpot==0.1.1",
+            "python -m pip install refpot",
             "examples/quickstart.py",
             "publicly available on PyPI",
             "signed-64-bit",
             "31-byte UTF-8",
-            "16/16 losses",
+            "all 16 reopen/full-state-validation cells lost",
             "License:** MIT",
         ):
             self.assertIn(phrase, agent)
@@ -160,7 +161,7 @@ class PresentationTests(unittest.TestCase):
     def test_planned_boundary_and_unreleased_design_visual(self):
         text = (ROOT / "README.md").read_text()
         self.assertIn("experimental alpha", text)
-        self.assertIn("acceptance target, not an achieved package guarantee", text)
+        self.assertIn("overall 2× SQLite target remains unmet", text)
         diagram = ET.parse(ROOT / "docs/assets/refpot-execution.svg").getroot()
         labels = " ".join(diagram.itertext())
         self.assertIn("Planned architecture", labels)
@@ -191,6 +192,21 @@ class PresentationTests(unittest.TestCase):
                 self.assertFalse(
                     any(key.startswith("on") or key.endswith("href") for key in node.attrib)
                 )
+
+    def test_package_diagram_source_style_and_versioned_site_assets(self):
+        package = ET.parse(ROOT / "docs/assets/refpot-package.svg").getroot()
+        labels = " ".join(package.itertext())
+        self.assertIn("EXPERIMENTAL ALPHA", labels)
+        self.assertNotIn("RELEASE PREPARATION", labels)
+        self.assertNotIn("0.1.2", labels)
+        transaction_box = next(
+            node for node in package.iter()
+            if node.tag.endswith("rect") and node.attrib.get("x") == "56" and node.attrib.get("y") == "276"
+        )
+        self.assertEqual(transaction_box.attrib["stroke"], "#49515e")
+        page = (ROOT / "website/src/content/docs/index.mdx").read_text()
+        self.assertIn('/refpot-package.png?v=alpha-implementation-2', page)
+        self.assertIn('/refpot-package.svg?v=alpha-implementation-2', page)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+{"label": "candidate", "repeat": 0, "rows": 10000, "transactions": 128, "wal_bytes": 14080, "reopen_ns": 4577250, "verified": true}
+{"label": "candidate", "repeat": 0, "rows": 10000, "transactions": 1024, "wal_bytes": 112640, "reopen_ns": 5694042, "verified": true}
+{"label": "candidate", "repeat": 1, "rows": 10000, "transactions": 1024, "wal_bytes": 112640, "reopen_ns": 5709250, "verified": true}
+{"label": "candidate", "repeat": 1, "rows": 10000, "transactions": 128, "wal_bytes": 14080, "reopen_ns": 4464208, "verified": true}
+{"label": "candidate", "repeat": 2, "rows": 10000, "transactions": 128, "wal_bytes": 14080, "reopen_ns": 4545750, "verified": true}
+{"label": "candidate", "repeat": 2, "rows": 10000, "transactions": 1024, "wal_bytes": 112640, "reopen_ns": 5602083, "verified": true}

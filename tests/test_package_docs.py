@@ -22,14 +22,15 @@ class PackageDocumentationTests(unittest.TestCase):
             "physical power-loss safety",
         ):
             self.assertIn(phrase, text)
-        self.assertNotIn(
-            "broad recovery qualification",
-            text.lower().replace("not broad recovery qualification", ""),
-        )
+        self.assertIn("below 2×", text)
+        self.assertIn("The overall **2×-over-SQLite goal remains unmet**", text)
+        self.assertIn("row-local effects", text)
+        self.assertNotIn("Mutation and diff-scan paths copy maps", text)
+        self.assertIn("locally built wheels carrying 0.1.1 metadata", text)
 
     def test_readme_package_presentation_and_scoped_benchmark(self):
         text = (ROOT / "README.md").read_text()
-        self.assertIn("python -m pip install refpot==0.1.1", text)
+        self.assertIn("python -m pip install refpot", text)
         self.assertIn("experimental alpha", text)
         self.assertIn("3.04–5.95×", text)
         self.assertIn("historical update harness", text)
@@ -42,19 +43,20 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("experimental alpha", text)
         self.assertIn("A checked item means only that bounded deliverable exists", text)
         self.assertIn("- [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI", text)
-        self.assertIn(
-            "- [x] Align README, package contract, website documentation and exports", text
-        )
+        self.assertIn("Implemented foundations", text)
+        self.assertIn("Still-open qualification and product gates", text)
+        self.assertIn("- [x] Implement fixed-schema CRUD, explicit transactions", text)
         self.assertIn("- [ ] Complete native CRUD/transaction/recovery failure qualification", text)
-        self.assertIn("qualification remains in progress", text)
+        self.assertIn("overall SQLite goal is unmet", text)
 
     def test_repository_agent_guidance_stays_local_and_scoped(self):
         agents = (ROOT / "AGENTS.md").read_text()
         skill = (ROOT / "skills/refpot-database/SKILL.md").read_text()
         self.assertIn("skills/refpot-database/SKILL.md", agents)
-        self.assertIn("available on PyPI", skill)
-        self.assertIn("physical power-loss", skill)
-        self.assertIn("Performance is unqualified", skill)
+        self.assertIn("latest published package", skill)
+        self.assertIn("physical power-loss", skill.lower())
+        self.assertIn("initial six-cell performance screen", skill)
+        self.assertIn("overall SQLite target is unmet", skill)
         self.assertIn(
             "installable [RefPot database skill](https://github.com/tugrulguner/refpot/blob/main/skills/refpot-database/SKILL.md)",
             (ROOT / "README.md").read_text(),
@@ -122,7 +124,7 @@ class PackageDocumentationTests(unittest.TestCase):
         guides = [ROOT / "README.md", ROOT / "website/src/content/docs/package.md"]
         for guide in guides:
             text = guide.read_text()
-            self.assertIn("python -m pip install refpot==0.1.1", text)
+            self.assertIn("python -m pip install refpot", text)
             examples = re.findall(r"```python\n(.*?)\n```", text, re.DOTALL)
             examples.extend(re.findall(r"python - <<'PY'\n(.*?)\nPY", text, re.DOTALL))
             self.assertEqual(len(examples), 1, guide)
@@ -149,9 +151,13 @@ class PackageDocumentationTests(unittest.TestCase):
         )
         root = ET.parse(svg).getroot()
         labels = " ".join(root.itertext())
-        self.assertIn("UNRELEASED SOURCE-BUILD PREVIEW", labels)
-        self.assertIn("Not independent physical replicas", labels)
-        self.assertIn("qualification in progress", labels)
+        self.assertIn("EXPERIMENTAL ALPHA", labels)
+        self.assertNotIn("0.1.2", labels)
+        self.assertNotIn("RELEASE PREPARATION", labels)
+        self.assertIn("Stage row-local", labels)
+        self.assertIn("publish without alloc", labels)
+        self.assertIn("row-local replay", labels)
+        self.assertIn("qualification limited", labels)
         self.assertEqual(root.attrib["aria-labelledby"], "title desc")
 
     def test_public_api_and_capacity_errors_are_documented(self):
@@ -188,7 +194,11 @@ class PackageDocumentationTests(unittest.TestCase):
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("/refpot-package.png", homepage)
         self.assertIn("/refpot-package.svg", homepage)
-        self.assertIn("Available on PyPI", homepage)
+        self.assertIn("experimental alpha", homepage)
+        self.assertIn("/project/package-performance/", homepage)
+        self.assertIn("project/package-performance", config)
+        self.assertTrue((ROOT / "website/src/content/docs/project/package-performance.md").is_file())
+        self.assertTrue((ROOT / "website/public/docs/project-package-performance.md").is_file())
 
 
 if __name__ == "__main__":

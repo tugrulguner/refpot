@@ -1,1 +1,0 @@
-Replace full transaction-state copies and commit-time state scans with staged row effects and encoded-size accounting. Recovery applies validated frame effects without copying the recovered map.

@@ -7,18 +7,25 @@ language or isolated data structures.
 
 The roadmap distinguishes implemented foundations from open qualification and product gates. A checked item means only that bounded deliverable exists; it does not imply a supported release. There are no delivery dates.
 
-## Current implementation focus: qualify the 0.1.1 experimental alpha release
+## Current implementation focus: qualify the experimental alpha
 
-Version 0.1.1 is the publicly available experimental alpha release. The fixed-schema API and build/release workflows exist; qualification remains in progress. See the [package contract](docs/package-contract.md) and [release checklist](docs/releasing.md).
+The fixed-schema API and build/release workflows exist, but they do not complete broader qualification. See the [package contract](docs/package-contract.md), [package results](benchmarks/package-performance/RESULTS.md), and [release checklist](docs/releasing.md).
+
+### Implemented foundations
+
+- [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI, artifact verification, and tag-triggered release automation. Passing installed-wheel lanes verify only their tested behavior; they do not establish physical power-loss safety.
+- [x] Publish version 0.1.1 as a normal latest GitHub release and on PyPI; verify public artifact installation. This publication milestone does not complete platform, example, recovery, or performance qualification.
+- [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. The change-set work preserves public API and storage framing; it is not the complete durability qualification gate.
+- [x] Run a six-cell actual-package performance comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Results are screening evidence, not measurements of a 0.1.2 package artifact; three of six cells remain below 2× and the overall SQLite goal is unmet.
+
+### Still-open qualification and product gates
 
 - [ ] Complete native CRUD/transaction/recovery failure qualification; implementation exists but qualification remains in progress.
-- [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI, artifact verification, and tag-triggered release automation. Passing installed-wheel lanes verify the tested preview behavior, not physical power-loss safety or first-publication readiness.
-- [x] Publish version 0.1.1 as a normal latest GitHub release and on PyPI; verify the public artifact installation. This publication milestone does not complete platform, example, recovery, or performance qualification.
 - [ ] Verify wheel/source distribution and installed examples on all declared platforms.
 - [ ] Execute runnable CRUD and transaction examples through the installed interface on the declared platform matrix.
 - [ ] Qualify errors, corruption, lock ownership and process-restart behavior.
-- [x] Align README, package contract, website documentation and exports to the publicly available experimental alpha; keep the planned architecture explicitly labeled as planned.
-- [ ] Requalify package performance with an estimated, bounded screening matrix; do not inherit the experimental update-harness ratios.
+- [ ] Establish durability limits beyond process/fault tests; no physical power-loss guarantee is claimed.
+- [ ] Expand package performance beyond the six-cell screen: sustained maintenance/checkpoint behavior, mixed/insert/delete workloads, larger-than-memory cases, concurrency, cross-platform runs, and qualification of release artifacts remain open.
 
 ## Non-negotiable gates
 
@@ -184,11 +191,18 @@ is measured separately. “Fastest ORM” is not a claim until a defined compari
 
 ## 7. Prepare a supported release
 
-- [x] Add the MIT license and configure package metadata, platform/interpreter CI, artifact verification, and tag-triggered publication workflows. These are repository foundations, not a completed public release.
-- [ ] Document storage versioning, backup/restore, migrations, operational limits, and the supported failure/concurrency model.
+### Implemented release foundations
+
+- [x] Add the MIT license and configure package metadata, platform/interpreter CI, artifact verification, and tag-triggered publication workflows. These are repository foundations, not a supported release.
+- [x] Publish 0.1.1 as the experimental alpha and independently verify public availability.
+- [x] Prepare 0.1.2 documentation, metadata, changelog, and artifact presentation. Preparation alone does not publish or qualify the release.
+
+### Still-open release gates
+
+- [ ] Document and qualify storage versioning, backup/restore, migrations, operational limits, and the supported failure/concurrency model.
 - [ ] Verify installation, examples, recovery, and the declared performance matrix from release artifacts on the supported environments.
-- [ ] Complete external publisher and deployment prerequisites, then publish and independently verify the release artifacts; publication is a separate independently verified gate.
-- [ ] Align README, reference docs, roadmap, and release notes with what actually ships.
+- [ ] Complete external publisher and deployment prerequisites, then publish and independently verify release artifacts; publication is a separate approval and verification gate.
+- [ ] Expand package performance beyond the initial six-cell screen and achieve the agreed acceptance matrix before claiming the SQLite goal.
 
 **Exit:** a supported release with honest capability boundaries, reproducible evidence,
 and no unsupported performance or durability guarantees.

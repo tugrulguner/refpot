@@ -9,7 +9,7 @@ Use when building an application with the current Python database preview or che
 
 ## Prerequisites and installation
 
-Version 0.1.1 is the experimental alpha release, available on PyPI. Install with `python -m pip install refpot==0.1.1`. Prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; source builds require a C++17 compiler toolchain. Windows, other architectures, and free-threaded Python are unsupported. Run these commands through your agent's command-execution tool (Hermes: `terminal`), starting in a directory where a new `refpot` checkout can be created:
+RefPot is an experimental alpha. Install the latest published package with `python -m pip install refpot`. Prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; source builds require a C++17 compiler toolchain. Windows, other architectures, and free-threaded Python are unsupported. Run these commands through your agent's command-execution tool (Hermes: `terminal`), starting in a directory where a new `refpot` checkout can be created:
 
 ```sh
 git clone https://github.com/tugrulguner/refpot.git
@@ -74,7 +74,7 @@ with TemporaryDirectory(prefix="refpot-skill-") as directory:
 
 Require both shipped examples and the repeatable example to exit successfully. Confirm reopening preserves the committed row and rollback preserves its previous value. These checks exercise the package; they do not benchmark performance or simulate physical power loss.
 
-Performance is unqualified, and physical power-loss safety remains unqualified. Historical speed ratios describe a separate experiment. Concurrent readers, multiwriter use, SQL, ORM, joins, public index APIs, and SQLite file/API compatibility are unsupported. Do not use the preview for important data without an independently suitable backup and failure policy.
+The package has an initial six-cell performance screen against prepared SQLite; it is limited evidence, not a general performance claim or full qualification. Research-review measurements use source revisions in wheels labeled 0.1.1, not release artifacts built from version 0.1.2 metadata. Three of six cells remain below 2×, so the overall SQLite target is unmet. Historical speed ratios describe a separate experiment. Physical power-loss safety remains unqualified. Concurrent readers, multiwriter use, SQL, ORM, joins, public index APIs, and SQLite file/API compatibility are unsupported. Do not use the preview for important data without an independently suitable backup and failure policy.
 
 Use the [package contract](https://github.com/tugrulguner/refpot/blob/main/docs/package-contract.md) for complete method semantics and the [roadmap](https://github.com/tugrulguner/refpot/blob/main/ROADMAP.md) for future work. For repository changes, follow [AGENTS.md](https://github.com/tugrulguner/refpot/blob/main/AGENTS.md) and [CONTRIBUTING.md](https://github.com/tugrulguner/refpot/blob/main/CONTRIBUTING.md). Never invent APIs to satisfy an unsupported request.
 

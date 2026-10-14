@@ -1,0 +1,120 @@
+{
+  "baseline": "6cc633fac687dbdbfab211507b3d87caa5ffcd82",
+  "candidate": "e784db03cf797518ec852a19e73202311eabce7f",
+  "harness": "88626e10db9190b77ac0e46c1a3f05dfa5613ace",
+  "measured_records": 300,
+  "recovery_records": 12,
+  "summary": [
+    {
+      "rows": 1000,
+      "workload": "point_read",
+      "operations": 16384,
+      "baseline_ms": 21.599708,
+      "candidate_ms": 21.985458,
+      "improvement_over_baseline": 0.9824543113907384,
+      "best_sqlite": "sqlite1000_exclusive",
+      "sqlite_ms": 60.393166,
+      "sqlite_relative_speedup": 2.7469596494191753,
+      "paired_sqlite_speedup_range": [
+        2.5595337628506765,
+        2.781190837705382
+      ]
+    },
+    {
+      "rows": 1000,
+      "workload": "update_single",
+      "operations": 1024,
+      "baseline_ms": 141.795583,
+      "candidate_ms": 30.116792,
+      "improvement_over_baseline": 4.708190135257434,
+      "best_sqlite": "sqlite64_exclusive",
+      "sqlite_ms": 37.151042,
+      "sqlite_relative_speedup": 1.2335657131078237,
+      "paired_sqlite_speedup_range": [
+        1.025484329385092,
+        1.2951484654277066
+      ]
+    },
+    {
+      "rows": 1000,
+      "workload": "update_batch32",
+      "operations": 16384,
+      "baseline_ms": 957.276041,
+      "candidate_ms": 39.697875,
+      "improvement_over_baseline": 24.11403736346089,
+      "best_sqlite": "sqlite64_exclusive",
+      "sqlite_ms": 47.717749,
+      "sqlite_relative_speedup": 1.2020227531070617,
+      "paired_sqlite_speedup_range": [
+        1.1219299455074885,
+        1.228186812615133
+      ]
+    },
+    {
+      "rows": 10000,
+      "workload": "point_read",
+      "operations": 16384,
+      "baseline_ms": 24.085916,
+      "candidate_ms": 23.963708,
+      "improvement_over_baseline": 1.0050997116139122,
+      "best_sqlite": "sqlite1000_exclusive",
+      "sqlite_ms": 62.328583,
+      "sqlite_relative_speedup": 2.600957372707095,
+      "paired_sqlite_speedup_range": [
+        2.4778246017237553,
+        2.655101361472372
+      ]
+    },
+    {
+      "rows": 10000,
+      "workload": "update_single",
+      "operations": 1024,
+      "baseline_ms": 1722.641916,
+      "candidate_ms": 32.277167,
+      "improvement_over_baseline": 53.37029473497473,
+      "best_sqlite": "sqlite64_exclusive",
+      "sqlite_ms": 36.077792,
+      "sqlite_relative_speedup": 1.1177496463676628,
+      "paired_sqlite_speedup_range": [
+        1.0634925070890218,
+        1.9087075357652175
+      ]
+    },
+    {
+      "rows": 10000,
+      "workload": "update_batch32",
+      "operations": 8192,
+      "baseline_ms": 5133.725084,
+      "candidate_ms": 24.840166,
+      "improvement_over_baseline": 206.670321124263,
+      "best_sqlite": "sqlite1000_exclusive",
+      "sqlite_ms": 54.729458,
+      "sqlite_relative_speedup": 2.2032645836585796,
+      "paired_sqlite_speedup_range": [
+        2.100570008653211,
+        2.2803163169732303
+      ]
+    }
+  ],
+  "recovery": [
+    {
+      "transactions": 128,
+      "rows": 10000,
+      "median_ms": {
+        "baseline": 78.793667,
+        "candidate": 4.54575
+      },
+      "improvement": 17.333480063795854
+    },
+    {
+      "transactions": 1024,
+      "rows": 10000,
+      "median_ms": {
+        "baseline": 607.873125,
+        "candidate": 5.694042
+      },
+      "improvement": 106.75599600424444
+    }
+  ],
+  "qualified_global_2x": false
+}

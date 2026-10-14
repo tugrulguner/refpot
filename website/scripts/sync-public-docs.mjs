@@ -47,6 +47,7 @@ for (const page of guideRegistry) {
 }
 const manuals = [
   { slug: 'project/benchmarks', title: 'Historical benchmark results', source: '../../benchmarks/random-updates/README.md', prefix: '../../docs/evidence.md' },
+  { slug: 'project/package-performance', title: 'Package performance results', source: '../../benchmarks/package-performance/RESULTS.md' },
   { slug: 'project/contributing', title: 'Contributing to RefPot', source: '../../CONTRIBUTING.md' },
   { slug: 'reference/agent-guide', title: 'Using RefPot with a coding agent', source: '../../skills/refpot-database/SKILL.md' },
 ];
@@ -58,7 +59,15 @@ for (const manual of manuals) {
     content = prefix.replace(/^# [^\n]*\n/, '').trim() + '\n\n## Retained experimental report\n\n' + content;
   }
   content = content.replaceAll('(../../docs/assets/refpot-benchmark.png)', '(/refpot-benchmark.png)')
-    .replaceAll('(../../docs/assets/refpot-benchmark.svg)', '(/refpot-benchmark.svg)');
+    .replaceAll('(../../docs/assets/refpot-benchmark.svg)', '(/refpot-benchmark.svg)')
+    .replaceAll('(benchmarks/package-performance/verify_evidence.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/verify_evidence.py)')
+    .replaceAll('(benchmarks/package-performance/evidence/frozen-harness.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/evidence/frozen-harness.py)')
+    .replaceAll('(benchmarks/package-performance/recovery_fixture.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/recovery_fixture.py)')
+    .replaceAll('(evidence/frozen-harness.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/evidence/frozen-harness.py)')
+    .replaceAll('(evidence/manifest.json)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/evidence/manifest.json)')
+    .replaceAll('(AUDIT.md)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/AUDIT.md)')
+    .replaceAll('(reproduce.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/reproduce.py)')
+    .replaceAll('(data/raw-records.tar.gz)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates/data)');
   const download = manual.slug.replaceAll('/', '-') + '.md';
   const path = new URL(`src/content/docs/${manual.slug}.md`, root);
   await mkdir(dirname(path.pathname), { recursive: true });
@@ -68,7 +77,9 @@ for (const manual of manuals) {
 const packagePage = sourceContract.replace(/^# [^\n]*\n/, '')
   .replaceAll('(package-recommendation.md)', '(/package/)')
   .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')
-  .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)');
+  .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)')
+  .replaceAll('(../benchmarks/package-performance/RESULTS.md)', '(/project/package-performance/)')
+  .replaceAll('(../benchmarks/package-performance/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance)');
 await writeFile(new URL('src/content/docs/package-contract.md', root), '---\ntitle: Package contract\nslug: package-contract\ndescription: Exact capabilities and boundaries of the experimental RefPot alpha.\n---\n' + packagePage);
 const mappings = [
   ['src/content/docs/status.md', 'public/docs/status.md'],

@@ -1,0 +1,51 @@
+{
+  "records": 75,
+  "summary": [
+    {
+      "rows": 10000,
+      "workload": "point_read",
+      "service_median_ns": {
+        "refpot": 24085916,
+        "sqlite64_normal": 61631875,
+        "sqlite1000_normal": 61067250,
+        "sqlite64_exclusive": 62126916,
+        "sqlite1000_exclusive": 60919041
+      },
+      "best_tested_sqlite": "sqlite1000_exclusive",
+      "refpot_speedup": 2.5292391204885045,
+      "sqlite_relative_to_refpot": 2.5292391204885045,
+      "regression_pct_vs_best_sqlite": 0.0
+    },
+    {
+      "rows": 10000,
+      "workload": "update_single",
+      "service_median_ns": {
+        "refpot": 1722641916,
+        "sqlite64_normal": 41205624,
+        "sqlite1000_normal": 68239291,
+        "sqlite64_exclusive": 37216042,
+        "sqlite1000_exclusive": 60830291
+      },
+      "best_tested_sqlite": "sqlite64_exclusive",
+      "refpot_speedup": 0.02160404995044832,
+      "sqlite_relative_to_refpot": 0.02160404995044832,
+      "regression_pct_vs_best_sqlite": 4528.761747420642
+    },
+    {
+      "rows": 10000,
+      "workload": "update_batch32",
+      "service_median_ns": {
+        "refpot": 5133725084,
+        "sqlite64_normal": 69534250,
+        "sqlite1000_normal": 55503417,
+        "sqlite64_exclusive": 67467083,
+        "sqlite1000_exclusive": 54721583
+      },
+      "best_tested_sqlite": "sqlite1000_exclusive",
+      "refpot_speedup": 0.010659235176139011,
+      "sqlite_relative_to_refpot": 0.010659235176139011,
+      "regression_pct_vs_best_sqlite": 9281.53613721299
+    }
+  ],
+  "all_verified": true
+}

@@ -1,1 +1,0 @@
-Expose the retained benchmark chart, full results and reproduction evidence on the website; add canonical contributor and coding-agent guides and regression coverage for README-to-site illustration parity.

@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_every_readme_supporting_image_has_a_homepage_consumer():
     readme = (ROOT / "README.md").read_text()
     homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
-    illustrations = re.findall(r'src="docs/assets/(refpot-[^"]+\.png)"', readme)
+    illustrations = re.findall(r'src="docs/assets/(refpot-[^"?]+\.png)(?:\?[^"]*)?"', readme)
     assert set(illustrations) == {
         "refpot-lockup.png",
         "refpot-execution.png",

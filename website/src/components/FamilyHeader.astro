@@ -1,8 +1,9 @@
 ---
 import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import Search from '@astrojs/starlight/components/Search.astro';
-import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
 import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+const { siteTitleHref } = (Astro.locals as App.Locals & { starlightRoute: StarlightRouteData }).starlightRoute;
 const resources = [
   { label: 'ModePot', href: 'https://modepot.io/' },
   { label: 'GitHub', href: 'https://github.com/tugrulguner/refpot' },
@@ -11,7 +12,7 @@ const resources = [
 ];
 ---
 <div class="header">
-  <div class="title-wrapper sl-flex"><img class="refpot-mark" src="/refpot-mark.svg?v=offwhite-1" alt="" width="20" height="20" /><SiteTitle /></div>
+  <div class="title-wrapper sl-flex"><img class="refpot-mark" src="/refpot-mark.svg?v=offwhite-1" alt="" width="20" height="20" /><a href={siteTitleHref} class="site-title sl-flex"><span translate="no">Ref<span class="wordmark-pot">Pot</span></span></a></div>
   <div class="sl-flex print:hidden"><Search /></div>
   <div class="sl-flex right-group print:hidden">
     <nav class="family-resources" aria-label="Family resources">
@@ -68,6 +69,9 @@ const resources = [
   });
 </script>
 <style>
+  .site-title { align-items:center; gap:var(--sl-nav-gap); font-size:var(--sl-text-h4); font-weight:600; color:var(--sl-color-text-accent); text-decoration:none; white-space:nowrap; min-width:0; }
+  .wordmark-pot { color:#875000; }
+  :global([data-theme='dark']) .wordmark-pot { color:#F2B84B; }
   .header { display:flex; gap:var(--sl-nav-gap); justify-content:space-between; align-items:center; height:100%; }
   :global(header.header) { position:relative; }
   .family-resources { display:flex; align-items:center; gap:.25rem; }

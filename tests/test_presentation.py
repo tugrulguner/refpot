@@ -4,6 +4,7 @@ import re
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 FAMILY_FLASK = (
@@ -14,6 +15,26 @@ FAMILY_FLASK = (
 
 
 class PresentationTests(unittest.TestCase):
+    def test_wordmark_name_is_white_and_pot_is_orange(self):
+        for path in (
+            "docs/assets/refpot-lockup.svg",
+            "website/public/refpot-lockup.svg",
+            "website/public/social-card.svg",
+        ):
+            root = ET.parse(ROOT / path).getroot()
+            wordmark = next(
+                n
+                for n in root.iter()
+                if n.tag.endswith("}text") and "".join(n.itertext()) == "refpot"
+            )
+            self.assertEqual(wordmark.text, "ref")
+            self.assertEqual(wordmark.attrib["fill"].upper(), "#F4F2EA")
+            suffix = next(iter(wordmark))
+            self.assertEqual(suffix.text, "pot")
+            self.assertEqual(suffix.attrib["fill"], "#F2B84B")
+        header = (ROOT / "website/src/components/FamilyHeader.astro").read_text()
+        self.assertIn('class="wordmark-pot">Pot</span>', header)
+
     def test_refpot_identity_palette_and_canonical_geometry_parity(self):
         sources = [
             ROOT / "docs/assets/refpot-lockup.svg",
@@ -48,7 +69,9 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(svg.attrib["viewBox"], "0 0 1200 900")
         paths = [node.attrib.get("d") for node in svg.iter()]
         self.assertIn(FAMILY_FLASK, paths)
-        text = " ".join(svg.itertext())
+        text = " ".join(
+            "".join(node.itertext()) for node in svg.iter() if node.tag.endswith("}text")
+        )
         for label in (
             "MODEPOT / OPEN SOURCE",
             "refpot",
@@ -179,7 +202,7 @@ class PresentationTests(unittest.TestCase):
             if url.startswith("#"):
                 self.assertIn(url[1:], anchors)
             elif not url.startswith("https://") and not url.startswith("/"):
-                self.assertTrue((ROOT / url).is_file(), url)
+                self.assertTrue((ROOT / urlsplit(url).path).is_file(), url)
 
     def test_static_accessible_svg(self):
         for path in (ROOT / "docs/assets").glob("*.svg"):
@@ -200,13 +223,16 @@ class PresentationTests(unittest.TestCase):
         self.assertNotIn("RELEASE PREPARATION", labels)
         self.assertNotIn("0.1.2", labels)
         transaction_box = next(
-            node for node in package.iter()
-            if node.tag.endswith("rect") and node.attrib.get("x") == "56" and node.attrib.get("y") == "276"
+            node
+            for node in package.iter()
+            if node.tag.endswith("rect")
+            and node.attrib.get("x") == "56"
+            and node.attrib.get("y") == "276"
         )
         self.assertEqual(transaction_box.attrib["stroke"], "#49515e")
         page = (ROOT / "website/src/content/docs/index.mdx").read_text()
-        self.assertIn('/refpot-package.png?v=alpha-implementation-2', page)
-        self.assertIn('/refpot-package.svg?v=alpha-implementation-2', page)
+        self.assertIn("/refpot-package.png?v=alpha-implementation-2", page)
+        self.assertIn("/refpot-package.svg?v=alpha-implementation-2", page)
 
 
 if __name__ == "__main__":

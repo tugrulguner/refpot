@@ -9,7 +9,7 @@ for (const route of routes) {
   assert.equal((html.match(/posthog\.init\(/g) ?? []).length, 1, `${route}: one PostHog initialization`);
   for (const setting of ["api_host:'https://us.i.posthog.com'", "person_profiles:'identified_only'", 'capture_pageview:true', 'capture_pageleave:true', 'disable_session_recording:true', 'save_referrer:false', 'save_campaign_params:false', 'advanced_disable_flags:true', 'sanitize_properties:function sanitizeAnalyticsProperties(properties)', "dom_event_allowlist:['click']", "element_allowlist:['a','button']"]) assert.ok(html.includes(setting), `${route}: ${setting}`);
   assert.ok(html.includes('rel="alternate" type="text/plain" href="/llms.txt"'));
-  assert.ok(html.includes('https://refpot.modepot.io/social-card.png?v=offwhite-1'));
+  assert.ok(html.includes('https://refpot.modepot.io/social-card.png?v=wordmark-2'));
   const blocks = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
   assert.equal(blocks.length, 1);
   const data = JSON.parse(blocks[0][1]);
@@ -54,4 +54,4 @@ console.log(`Verified ${routes.length} HTML layouts, one PostHog initialization 
 
 for (const [source, copy] of [["../../docs/assets/refpot-lockup.svg","refpot-lockup.svg"],["../../docs/assets/refpot-execution.svg","refpot-execution.svg"],["../../docs/assets/refpot-package.svg","refpot-package.svg"]]) assert.equal((await readFile(new URL(source, import.meta.url))).toString(), (await readFile(new URL(copy, root))).toString());
 assert.deepEqual(await readFile(new URL('../../docs/assets/refpot-package.png', import.meta.url)), await readFile(new URL('refpot-package.png', root)));
-for (const route of routes) { const html=await readFile(new URL(route,root),"utf8"); assert.ok(html.includes("/refpot-mark.svg?v=offwhite-1")); assert.ok(html.includes("social-card.png?v=offwhite-1")); if(route==="index.html") { assert.ok(html.includes("/refpot-lockup.png?v=offwhite-1")); assert.ok(html.includes("/refpot-execution.png?v=offwhite-1")); } }
+for (const route of routes) { const html=await readFile(new URL(route,root),"utf8"); assert.ok(html.includes("/refpot-mark.svg?v=offwhite-1")); assert.ok(html.includes("social-card.png?v=wordmark-2")); if(route==="index.html") { assert.ok(html.includes("/refpot-lockup.png?v=wordmark-2")); assert.ok(html.includes("/refpot-execution.png?v=offwhite-1")); } }

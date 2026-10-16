@@ -1,1 +1,1 @@
-Render the joined RefPot wordmark in off-white on dark artwork and dark ink on light site headers.
+Correct the RefPot wordmark to keep the name white and the pot suffix orange across README, website, and social artwork.

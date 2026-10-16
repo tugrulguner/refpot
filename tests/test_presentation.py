@@ -15,7 +15,7 @@ FAMILY_FLASK = (
 
 
 class PresentationTests(unittest.TestCase):
-    def test_wordmark_name_is_white_and_pot_is_orange(self):
+    def test_wordmark_name_and_pot_are_monochrome_offwhite(self):
         for path in (
             "docs/assets/refpot-lockup.svg",
             "website/public/refpot-lockup.svg",
@@ -31,9 +31,11 @@ class PresentationTests(unittest.TestCase):
             self.assertEqual(wordmark.attrib["fill"].upper(), "#F4F2EA")
             suffix = next(iter(wordmark))
             self.assertEqual(suffix.text, "pot")
-            self.assertEqual(suffix.attrib["fill"], "#F2B84B")
+            self.assertEqual(suffix.attrib["fill"], "#F4F2EA")
         header = (ROOT / "website/src/components/FamilyHeader.astro").read_text()
         self.assertIn('class="wordmark-pot">Pot</span>', header)
+        self.assertIn(".wordmark-pot { color:#25282d; }", header)
+        self.assertIn(":global([data-theme='dark']) .wordmark-pot { color:#F4F2EA; }", header)
 
     def test_refpot_identity_palette_and_canonical_geometry_parity(self):
         sources = [

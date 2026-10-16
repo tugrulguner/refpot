@@ -42,7 +42,7 @@ for (const width of [1280, 768, 390, 320]) {
       const isDark = theme === 'dark';
       await expect(page.locator('header .site-title')).toHaveText('RefPot');
       await expect(page.locator('header .site-title')).toHaveAttribute('href', '/');
-      await expect(page.locator('header .wordmark-pot')).toHaveCSS('color', isDark ? 'rgb(242, 184, 75)' : 'rgb(135, 80, 0)');
+      await expect(page.locator('header .wordmark-pot')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(37, 40, 45)');
       await expect(page.locator('header .refpot-mark')).toHaveCSS('filter', isDark ? 'none' : 'brightness(0.31)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('color', isDark ? 'rgb(24, 26, 29)' : 'rgb(255, 255, 255)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('background-color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');

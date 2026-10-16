@@ -1,7 +1,7 @@
 # refpot
 
 <p align="center">
-  <img src="docs/assets/refpot-lockup.png?v=wordmark-2" alt="RefPot — embedded, relational, simple" width="600">
+  <img src="docs/assets/refpot-lockup.png?v=wordmark-accent-1" alt="RefPot — embedded, relational, simple" width="600">
 </p>
 
 <p align="center">Part of <a href="https://modepot.io/">ModePot</a>. &nbsp; <a href="https://refpot.modepot.io/">Project website</a> &nbsp; <a href="https://tugrul.modepot.io/">Created by Tugrul Guner</a></p>

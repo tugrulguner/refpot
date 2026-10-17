@@ -24,12 +24,12 @@ export default defineConfig({
     head: [
       { tag: 'script', attrs: {}, content: posthogScript },
       { tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', href: '/llms.txt', title: 'RefPot summary for AI agents' } },
-      { tag: 'meta', attrs: { property: 'og:image', content: 'https://refpot.modepot.io/social-card.png?v=wordmark-2' } },
+      { tag: 'meta', attrs: { property: 'og:image', content: 'https://refpot.modepot.io/social-card.png?v=wordmark-accent-1' } },
       { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
       { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
       { tag: 'meta', attrs: { property: 'og:image:alt', content: 'RefPot: research and design for a custom embedded relational database engine' } },
       { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
-      { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://refpot.modepot.io/social-card.png?v=wordmark-2' } },
+      { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://refpot.modepot.io/social-card.png?v=wordmark-accent-1' } },
       { tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON.stringify(structuredData) },
     ],
     sidebar: [

@@ -77,8 +77,8 @@ class PresentationTests(unittest.TestCase):
         for label in (
             "MODEPOT / OPEN SOURCE",
             "refpot",
-            "A custom relational engine.",
-            "A simple Python ORM.",
+            "Native C++ database · alpha.",
+            "Python CRUD. Explicit transactions.",
         ):
             self.assertIn(label, text)
         self.assertNotIn("linearGradient", {node.tag.split("}")[-1] for node in svg.iter()})

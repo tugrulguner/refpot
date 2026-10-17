@@ -7,7 +7,7 @@ const posthogScript = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'SoftwareSourceCode', name: 'RefPot', description: 'Experimental alpha custom embedded engine with Python CRUD and transactions; not production-qualified.', url: 'https://refpot.modepot.io/', codeRepository: 'https://github.com/tugrulguner/refpot', programmingLanguage: 'Python', runtimePlatform: 'Python 3.11–3.14', license: 'https://spdx.org/licenses/MIT.html', isPartOf: { '@type': 'Organization', name: 'ModePot', url: 'https://modepot.io/' } },
+    { '@type': 'SoftwareSourceCode', name: 'RefPot', description: 'Experimental alpha custom embedded engine with Python CRUD and transactions; not production-qualified.', url: 'https://refpot.modepot.io/', codeRepository: 'https://github.com/tugrulguner/refpot', programmingLanguage: ['C++', 'Python'], runtimePlatform: 'CPython 3.11–3.14 on Linux x86_64 and macOS arm64', license: 'https://spdx.org/licenses/MIT.html', isPartOf: { '@type': 'Organization', name: 'ModePot', url: 'https://modepot.io/' } },
     { '@type': 'WebSite', name: 'RefPot documentation', url: 'https://refpot.modepot.io/', inLanguage: 'en' },
   ],
 };
@@ -24,12 +24,12 @@ export default defineConfig({
     head: [
       { tag: 'script', attrs: {}, content: posthogScript },
       { tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', href: '/llms.txt', title: 'RefPot summary for AI agents' } },
-      { tag: 'meta', attrs: { property: 'og:image', content: 'https://refpot.modepot.io/social-card.png?v=wordmark-accent-1' } },
+      { tag: 'meta', attrs: { property: 'og:image', content: 'https://refpot.modepot.io/social-card.png?v=public-info-1' } },
       { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
       { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
-      { tag: 'meta', attrs: { property: 'og:image:alt', content: 'RefPot: research and design for a custom embedded relational database engine' } },
+      { tag: 'meta', attrs: { property: 'og:image:alt', content: 'RefPot experimental alpha: embedded native C++ database with Python CRUD and explicit transactions' } },
       { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
-      { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://refpot.modepot.io/social-card.png?v=wordmark-accent-1' } },
+      { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://refpot.modepot.io/social-card.png?v=public-info-1' } },
       { tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON.stringify(structuredData) },
     ],
     sidebar: [

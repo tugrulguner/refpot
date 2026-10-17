@@ -13,4 +13,5 @@ try {
     await page.locator('svg').screenshot({ path: new URL(target, import.meta.url).pathname });
   }
   await writeFile(new URL('../public/refpot-lockup.png', import.meta.url), await readFile(new URL('../../docs/assets/refpot-lockup.png', import.meta.url)));
+  await writeFile(new URL('../public/refpot-lockup.svg', import.meta.url), await readFile(new URL('../../docs/assets/refpot-lockup.svg', import.meta.url)));
 } finally { await browser.close(); }

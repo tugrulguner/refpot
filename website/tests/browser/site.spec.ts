@@ -68,15 +68,39 @@ test('every layout preserves desktop and compact family navigation with keyboard
         await expect(page.locator('.family-resources a')).toHaveText(resources);
         for(const link of await page.locator('.family-resources a').all()) await expect(link).toBeVisible();
       } else {
-        await expect(page.getByRole('link',{name:'ModePot',exact:true})).toBeVisible();
+        const feedback=page.locator('header .modepot-compact');
+        await expect(feedback).toBeVisible();
+        await expect(feedback).toHaveText('Feedback');
+        await expect(feedback).toHaveAttribute('href',/^https:\/\/github\.com\/tugrulguner\/refpot\/issues\/new\?/);
+        await expect(feedback).toHaveAttribute('target','_blank');
+        await expect(feedback).toHaveAttribute('rel','noopener noreferrer');
+        await expect(feedback).toHaveClass(/ph-no-autocapture/);
+        const feedbackHref=await feedback.getAttribute('href'); expect(feedbackHref).not.toBeNull();
+        const feedbackUrl=new URL(feedbackHref!);
+        const expectedPath=page.url().includes('does-not-exist')?'/404/':new URL(page.url()).pathname;
+        expect(feedbackUrl.searchParams.get('body')).toBe(`Page: https://refpot.modepot.io${expectedPath}\n\nPlease describe the issue. Do not include private data.`);
+        expect(feedbackUrl.searchParams.get('body')).not.toMatch(/[?#]|input|email|token|secret/i);
+        const feedbackBox=await feedback.boundingBox(); expect(feedbackBox!.height).toBeGreaterThanOrEqual(44);
         const toggle=page.getByRole('button',{name:'Menu',exact:true});
         await toggle.focus(); await page.keyboard.press('Enter');
         const menu=page.getByRole('region',{name:'Menu',exact:true});
-        for(const label of ['GitHub','Community','About Tugrul','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
+        for(const label of ['ModePot','GitHub','Community','About Tugrul','Feedback / issue (opens in a new tab)','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
         await page.keyboard.press('Escape'); await expect(menu).toBeHidden(); await expect(toggle).toBeFocused();
       }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     }
+  }
+});
+
+test('Feedback header visual evidence at required widths and themes', async ({ page }) => {
+  const evidence=process.env.FEEDBACK_EVIDENCE_DIR;
+  test.skip(!evidence, 'evidence capture is opt-in');
+  const { mkdirSync }=await import('node:fs'); const { join }=await import('node:path'); mkdirSync(evidence!,{recursive:true});
+  for(const width of [1280,390,320]) for(const theme of ['light','dark']) {
+    await page.setViewportSize({width,height:850}); await page.goto('/');
+    await page.locator('header starlight-theme-select select').selectOption(theme);
+    const feedback=width>=768?page.locator('header .family-feedback-links .feedback-link'):page.locator('header .modepot-compact');
+    await expect(feedback).toBeVisible(); await feedback.screenshot({path:join(evidence!,`header-feedback-${width}-${theme}.png`)});
   }
 });
 

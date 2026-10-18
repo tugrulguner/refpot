@@ -146,3 +146,7 @@ main:has(.framework-hero) > .content-panel:first-child { display:none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Personal social links belong beside the existing creator attribution. */
+.framework-copy .creator-row { display:flex;flex-wrap:wrap;align-items:center;column-gap:12px;row-gap:0;margin-top:12px;font-size:15px;line-height:1.5; }
+.framework-copy .creator-row .creator-attribution { margin:0;padding:0;font:inherit; }

@@ -10,6 +10,7 @@ const resources = [
   { label: 'Community', href: 'https://discord.gg/u3AANZr6RG' },
   { label: 'About Tugrul', href: 'https://tugrul.modepot.io/' },
 ];
+const feedbackUrl = "https://github.com/tugrulguner/refpot/issues/new?" + new URLSearchParams({ title: "Website feedback", body: `Page: https://refpot.modepot.io${Astro.url.pathname}\n\nPlease describe the issue. Do not include private data.` }).toString();
 ---
 <div class="header">
   <div class="title-wrapper sl-flex"><img class="refpot-mark" src="/refpot-mark.svg?v=offwhite-1" alt="" width="20" height="20" /><a href={siteTitleHref} class="site-title sl-flex"><span translate="no">Ref<span class="wordmark-pot">Pot</span></span></a></div>
@@ -20,16 +21,16 @@ const resources = [
 
     </nav>
     <nav class="family-feedback-links" aria-label="Social and feedback">
-      <a class="feedback-link" href="https://github.com/tugrulguner/refpot/issues/new?title=Refpot%20website%20feedback&body=Page%3A%20https%3A%2F%2Frefpot.modepot.io%2F" target="_blank" rel="noopener noreferrer">Feedback / issue ↗</a>
+      <a class="feedback-link feedback-entry ph-no-autocapture" href="https://github.com/tugrulguner/refpot/issues/new?title=Refpot%20website%20feedback&body=Page%3A%20https%3A%2F%2Frefpot.modepot.io%2F" target="_blank" rel="noopener noreferrer">Feedback / issue ↗</a>
     </nav>
-    <a class="modepot-compact" href="https://modepot.io/">ModePot</a>
+    <a class="modepot-compact feedback-entry ph-no-autocapture" href={feedbackUrl} target="_blank" rel="noopener noreferrer" aria-label="Feedback / report an issue (opens GitHub in a new tab)">Feedback</a>
     <button class="family-menu-toggle" type="button" aria-expanded="false" aria-controls="family-menu-panel">Menu</button>
     <ThemeSelect />
     <LanguageSelect />
   </div>
   <div id="family-menu-panel" class="family-menu-panel" role="region" aria-label="Menu" hidden>
     <nav aria-label="Family resources">
-      {resources.slice(1).map((resource) => <a href={resource.href}>{resource.label}</a>)}
+      {resources.map((resource) => <a href={resource.href}>{resource.label}</a>)}
       <a href="https://github.com/tugrulguner/refpot/issues/new?title=Refpot%20website%20feedback&body=Page%3A%20https%3A%2F%2Frefpot.modepot.io%2F" target="_blank" rel="noopener noreferrer">Feedback / issue (opens in a new tab)</a>
     </nav>
     <nav aria-label="RefPot documentation">
@@ -74,6 +75,7 @@ const resources = [
   });
 </script>
 <style>
+  .feedback-entry { border:1px solid currentColor; border-radius:4px; font-size:14px !important; font-weight:600; text-decoration:none; }
   .site-title { align-items:center; gap:var(--sl-nav-gap); font-size:var(--sl-text-h4); font-weight:600; color:var(--sl-color-text-accent); text-decoration:none; white-space:nowrap; min-width:0; }
   .wordmark-pot { color:#25282d; }
   :global([data-theme='dark']) .wordmark-pot { color:#F4F2EA; }

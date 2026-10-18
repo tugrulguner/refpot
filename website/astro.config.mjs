@@ -20,7 +20,7 @@ export default defineConfig({
     favicon: '/refpot-mark.svg?v=offwhite-1',
     social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/tugrulguner/refpot' }],
     customCss: ['./src/styles/custom.css'],
-    components: { Header: './src/components/FamilyHeader.astro', PageTitle: './src/components/ProjectPageTitle.astro' },
+    components: { Header: './src/components/FamilyHeader.astro', Footer: './src/components/Footer.astro', PageTitle: './src/components/ProjectPageTitle.astro' },
     head: [
       { tag: 'script', attrs: {}, content: posthogScript },
       { tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', href: '/llms.txt', title: 'RefPot summary for AI agents' } },

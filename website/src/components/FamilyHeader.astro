@@ -17,6 +17,12 @@ const resources = [
   <div class="sl-flex right-group print:hidden">
     <nav class="family-resources" aria-label="Family resources">
       {resources.map((resource) => <a href={resource.href}>{resource.label}</a>)}
+
+    </nav>
+    <nav class="social-resources" aria-label="Social and feedback">
+      <a class="social-link" href="https://www.linkedin.com/in/tugrulguner/" aria-label="LinkedIn (opens in a new tab)" target="_blank" rel="noopener noreferrer">in</a>
+      <a class="social-link" href="https://x.com/Tugrul_Guner" aria-label="X (opens in a new tab)" target="_blank" rel="noopener noreferrer">𝕏</a>
+      <a class="feedback-link" href="https://github.com/tugrulguner/refpot/issues/new?title=Refpot%20website%20feedback&body=Page%3A%20https%3A%2F%2Frefpot.modepot.io%2F" target="_blank" rel="noopener noreferrer">Feedback / issue ↗</a>
     </nav>
     <a class="modepot-compact" href="https://modepot.io/">ModePot</a>
     <button class="family-menu-toggle" type="button" aria-expanded="false" aria-controls="family-menu-panel">Menu</button>
@@ -26,6 +32,9 @@ const resources = [
   <div id="family-menu-panel" class="family-menu-panel" role="region" aria-label="Menu" hidden>
     <nav aria-label="Family resources">
       {resources.slice(1).map((resource) => <a href={resource.href}>{resource.label}</a>)}
+      <a href="https://github.com/tugrulguner/refpot/issues/new?title=Refpot%20website%20feedback&body=Page%3A%20https%3A%2F%2Frefpot.modepot.io%2F" target="_blank" rel="noopener noreferrer">Feedback / issue (opens in a new tab)</a>
+      <a class="social-link" href="https://www.linkedin.com/in/tugrulguner/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn (opens in a new tab)">in</a>
+      <a class="social-link" href="https://x.com/Tugrul_Guner" target="_blank" rel="noopener noreferrer" aria-label="X (opens in a new tab)">𝕏</a>
     </nav>
     <nav aria-label="RefPot documentation">
       <a href="/">Overview</a>
@@ -74,11 +83,11 @@ const resources = [
   :global([data-theme='dark']) .wordmark-pot { color:#F4F2EA; }
   .header { display:flex; gap:var(--sl-nav-gap); justify-content:space-between; align-items:center; height:100%; }
   :global(header.header) { position:relative; }
-  .family-resources { display:flex; align-items:center; gap:.25rem; }
-  .family-resources a, .modepot-compact, .family-menu-toggle, .family-menu-panel a { box-sizing:border-box; display:inline-flex; min-width:44px; min-height:44px; padding:0 .5rem; align-items:center; justify-content:center; border-radius:6px; color:var(--sl-color-text); text-decoration:none; }
+  .family-resources,.social-resources { display:flex; align-items:center; gap:.25rem; }
+  .family-resources a, .social-resources a, .modepot-compact, .family-menu-toggle, .family-menu-panel a { box-sizing:border-box; display:inline-flex; min-width:44px; min-height:44px; padding:0 .5rem; align-items:center; justify-content:center; border-radius:6px; color:var(--sl-color-text); text-decoration:none; }
   .modepot-compact { display:none; }
-  .family-resources a:hover, .family-menu-panel a:hover { background:var(--sl-color-gray-6); }
-  .family-resources a:focus-visible, .modepot-compact:focus-visible, .family-menu-toggle:focus-visible, .family-menu-panel a:focus-visible { outline:2px solid var(--sl-color-accent); outline-offset:2px; }
+  .family-resources a:hover, .social-resources a:hover, .family-menu-panel a:hover { background:var(--sl-color-gray-6); }
+  .family-resources a:focus-visible, .social-resources a:focus-visible, .modepot-compact:focus-visible, .family-menu-toggle:focus-visible, .family-menu-panel a:focus-visible { outline:2px solid var(--sl-color-accent); outline-offset:2px; }
   .family-menu-toggle { display:none; border:1px solid var(--sl-color-gray-5); background:var(--sl-color-bg); font:inherit; cursor:pointer; }
   .family-menu-panel { position:absolute; z-index:20; inset-inline:1rem; top:calc(100% + .25rem); display:grid; gap:.25rem; padding:.75rem; border:1px solid var(--sl-color-gray-5); border-radius:6px; background:var(--sl-color-bg); box-shadow:0 8px 24px rgb(0 0 0 / 15%); }
   .family-menu-panel nav { display:grid; gap:.25rem; }
@@ -91,6 +100,8 @@ const resources = [
   :global(:root[data-theme='dark']) .refpot-mark { filter:none; }
   .title-wrapper :global(a) { box-sizing:border-box; min-width:44px; min-height:44px; display:inline-flex; align-items:center; }
   .header :global(button) { box-sizing:border-box; min-width:44px; min-height:44px; }
+  .social-link { font:700 22px/1 Arial,sans-serif; }
+  .feedback-link { font-size:14px; font-weight:600; white-space:nowrap; }
   .social-icons :global(a) { box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; }
   .right-group :global(starlight-theme-select select) { box-sizing:border-box; min-height:44px; }
   .right-group,.social-icons { gap:1rem; align-items:center; }
@@ -99,7 +110,7 @@ const resources = [
     .header { gap:.25rem; }
     .title-wrapper { flex:0 0 auto; }
     .right-group { gap:.25rem; }
-    .family-resources { display:none; }
+    .family-resources,.social-resources { display:none; }
     .modepot-compact { display:inline-flex; }
     .family-menu-toggle { display:inline-flex; }
     :global(.sl-menu-button) { display:none !important; }

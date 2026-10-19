@@ -17,6 +17,16 @@ test('rendered roadmap does not retain repository-relative destinations',async()
  assert.ok(text.includes('(/package-contract/)'));
  assert.match(text,/https:\/\/github\.com\/tugrulguner\/refpot\/blob\/[a-f0-9]{40}\/docs\/releasing\.md/);
 });
+test('published evidence uses existing pinned source objects, not mutable main links',async()=>{
+ const destinations=new Set();
+ for(const name of ['project/benchmarks','project/package-performance','internals/recovery','reference/api']){
+  const text=await readFile(new URL(`src/content/docs/${name}.md`,root),'utf8');
+  assert.doesNotMatch(text,/\]\(https:\/\/github\.com\/tugrulguner\/refpot\/(?:blob|tree)\/main\//);
+  for(const match of text.matchAll(/https:\/\/github\.com\/tugrulguner\/refpot\/(?:blob|tree)\/([a-f0-9]{40})\/([^\s)#?]+)/g)) destinations.add(`${match[1]}:${decodeURIComponent(match[2])}`);
+ }
+ assert.ok(destinations.size>0);
+ for(const object of destinations) execFileSync('git',['cat-file','-e',object],{cwd:new URL('../',root)});
+});
 test('different practical guides have topic-specific metadata',async()=>{
  const descriptions=[];
  for(const name of ['crud','transactions','persistence','errors']){

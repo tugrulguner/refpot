@@ -13,14 +13,14 @@ All 16 service/setup/p99 cells passed in this experiment, but reopen and full-st
 
 ## Evidence index
 
-- [Frozen experimental source and original report](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)
-- [Independent read-only audit](https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/AUDIT.md)
-- [Raw records archive](https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/data/raw-records.tar.gz)
-- [Source and evidence hash manifest](https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/manifest.json)
-- [Complete analyzer output](https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/summary.json)
-- [All reopen comparisons](https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/recovery-comparison.json)
-- [Prior failed experiments](https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates/prior-results)
-- [Reproduction tool](https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/reproduce.py)
+- [Frozen experimental source and original report](https://github.com/tugrulguner/refpot/tree/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates)
+- [Independent read-only audit](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/AUDIT.md)
+- [Raw records archive](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/data/raw-records.tar.gz)
+- [Source and evidence hash manifest](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/manifest.json)
+- [Complete analyzer output](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/summary.json)
+- [All reopen comparisons](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/recovery-comparison.json)
+- [Prior failed experiments](https://github.com/tugrulguner/refpot/tree/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/prior-results)
+- [Reproduction tool](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/benchmarks/random-updates/reproduce.py)
 
 ## Verify evidence versus rerunning measurements
 

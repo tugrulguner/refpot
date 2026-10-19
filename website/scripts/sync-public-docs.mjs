@@ -2,11 +2,15 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { publishSourceLinks } from './publish-source-links.mjs';
+import { publishSourceLinks, mapMarkdownProse } from './publish-source-links.mjs';
 const root = new URL('../', import.meta.url);
 const repositoryRoot = new URL('../../', import.meta.url);
-const revision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repositoryRoot, encoding: 'utf8' }).trim();
+// Pin canonical source history, so website-only commits do not churn derived docs.
+const revision = execFileSync('git', ['log', '-1', '--format=%H', '--', 'README.md', 'ROADMAP.md', 'docs', 'benchmarks', 'skills', 'CONTRIBUTING.md'], { cwd: repositoryRoot, encoding: 'utf8' }).trim();
 const publish = (content, source) => publishSourceLinks(content, source, revision);
+const rewriteProse = (content, rewrite) => mapMarkdownProse(content, prose => rewrite(prose)
+  .replaceAll('https://github.com/tugrulguner/refpot/blob/main/', `https://github.com/tugrulguner/refpot/blob/${revision}/`)
+  .replaceAll('https://github.com/tugrulguner/refpot/tree/main/', `https://github.com/tugrulguner/refpot/tree/${revision}/`));
 const roadmap = await readFile(new URL('../../ROADMAP.md', import.meta.url), 'utf8');
 const roadmapPage = new URL('src/content/docs/project/roadmap.md', root);
 await mkdir(dirname(roadmapPage.pathname), { recursive: true });
@@ -33,15 +37,15 @@ const guideRegistry = [
 ];
 for (const page of guideRegistry) {
   const prerequisites = page.source === 'usage' ? usage.split('\n## ')[0].replace(/^# [^\n]*\n/, '').trim() + '\n\n' : '';
-  const selectedContent = prerequisites + page.sections.map(name => {
+  const selectedContent = rewriteProse(prerequisites + page.sections.map(name => {
     const section = sources[page.source].get(name);
     if (!section) throw new Error(`Missing canonical section ${page.source}: ${name}`);
     const selected = section.join('\n');
     return page.source === 'usage' ? selected.replace(/^## [^\n]*\n/, '').replace(/^### /gm, '## ') : selected;
-  }).join('\n\n')
+  }).join('\n\n'), prose => prose
     .replaceAll('(package-recommendation.md)', '(/status/)')
     .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')
-    .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)');
+    .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)'));
   const content = publish(selectedContent, page.source === 'usage' ? 'docs/usage.md' : 'docs/package-contract.md');
   const route = page.slug.replaceAll('/', '-');
   const sourcePath = new URL(`src/content/docs/${page.slug}.md`, root);
@@ -65,7 +69,7 @@ for (const manual of manuals) {
     const prefix = await readFile(new URL(manual.prefix, import.meta.url), 'utf8');
     content = publish(prefix.replace(/^# [^\n]*\n/, '').trim(), relative(fileURLToPath(repositoryRoot), fileURLToPath(new URL(manual.prefix, import.meta.url)))) + '\n\n## Retained experimental report\n\n' + content;
   }
-  content = content.replaceAll('(../../docs/assets/refpot-benchmark.png)', '(/refpot-benchmark.png)')
+  content = rewriteProse(content, prose => prose.replaceAll('(../../docs/assets/refpot-benchmark.png)', '(/refpot-benchmark.png)')
     .replaceAll('(../../docs/assets/refpot-benchmark.svg)', '(/refpot-benchmark.svg)')
     .replaceAll('(benchmarks/package-performance/verify_evidence.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/verify_evidence.py)')
     .replaceAll('(benchmarks/package-performance/evidence/frozen-harness.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/evidence/frozen-harness.py)')
@@ -74,7 +78,7 @@ for (const manual of manuals) {
     .replaceAll('(evidence/manifest.json)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/package-performance/evidence/manifest.json)')
     .replaceAll('(AUDIT.md)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/AUDIT.md)')
     .replaceAll('(reproduce.py)', '(https://github.com/tugrulguner/refpot/blob/main/benchmarks/random-updates/reproduce.py)')
-    .replaceAll('(data/raw-records.tar.gz)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates/data)');
+    .replaceAll('(data/raw-records.tar.gz)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates/data)'));
   content = publish(content, relative(fileURLToPath(repositoryRoot), fileURLToPath(new URL(manual.source, import.meta.url))));
   const download = manual.slug.replaceAll('/', '-') + '.md';
   const path = new URL(`src/content/docs/${manual.slug}.md`, root);
@@ -82,12 +86,12 @@ for (const manual of manuals) {
   await writeFile(path, `---\ntitle: ${manual.title}\ndescription: Canonical RefPot guidance and evidence with explicit scope.\n---\n\n${content}\n\n[Download this page as Markdown](/docs/${download})\n`);
   await writeFile(new URL(`public/docs/${download}`, root), `${content}\n`);
 }
-const packagePage = sourceContract.replace(/^# [^\n]*\n/, '')
+const packagePage = rewriteProse(sourceContract.replace(/^# [^\n]*\n/, ''), prose => prose
   .replaceAll('(package-recommendation.md)', '(/package/)')
   .replaceAll('(../ROADMAP.md)', '(/project/roadmap/)')
   .replaceAll('(../benchmarks/random-updates/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/random-updates)')
   .replaceAll('(../benchmarks/package-performance/RESULTS.md)', '(/project/package-performance/)')
-  .replaceAll('(../benchmarks/package-performance/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance)');
+  .replaceAll('(../benchmarks/package-performance/README.md)', '(https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance)'));
 await writeFile(new URL('src/content/docs/package-contract.md', root), '---\ntitle: Package contract\nslug: package-contract\ndescription: Exact capabilities and boundaries of the experimental RefPot alpha.\n---\n' + packagePage);
 const mappings = [
   ['src/content/docs/status.md', 'public/docs/status.md'],

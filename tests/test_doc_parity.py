@@ -97,7 +97,11 @@ def test_package_performance_results_are_exported_and_links_resolve():
     contract = (ROOT / "website/src/content/docs/package-contract.md").read_text()
     assert "](/project/package-performance/)" in contract
     assert "(../benchmarks/package-performance/RESULTS.md)" not in contract
+    assert re.search(
+        r"\(https://github\.com/tugrulguner/refpot/tree/[a-f0-9]{40}/benchmarks/package-performance\)",
+        contract,
+    )
     assert (
-        "(https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance)"
-        in contract
+        "https://github.com/tugrulguner/refpot/tree/main/benchmarks/package-performance"
+        not in contract
     )

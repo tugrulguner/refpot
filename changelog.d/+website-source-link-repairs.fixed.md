@@ -1,0 +1,1 @@
+Repair generated website documentation links, preserve literal code examples during publication, restore the homepage keyboard skip target, and give practical guides topic-specific descriptions. Pin published evidence links to their canonical source revision.

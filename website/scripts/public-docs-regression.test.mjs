@@ -1,0 +1,27 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+const root=new URL('../',import.meta.url);
+execFileSync(process.execPath,['scripts/sync-public-docs.mjs'],{cwd:root});
+test('generated recovery and API evidence links resolve to real public destinations',async()=>{
+ for(const name of ['internals/recovery','reference/api']){
+  const text=await readFile(new URL(`src/content/docs/${name}.md`,root),'utf8');
+  assert.ok(text.includes('(/project/package-performance/)'),'measured results must use their published page');
+  assert.doesNotMatch(text,/\]\(\.\.\/benchmarks\/package-performance\//);
+ }
+});
+test('rendered roadmap does not retain repository-relative destinations',async()=>{
+ const text=await readFile(new URL('src/content/docs/project/roadmap.md',root),'utf8');
+ assert.doesNotMatch(text,/\]\((?:docs\/|benchmarks\/)/);
+ assert.ok(text.includes('(/package-contract/)'));
+ assert.match(text,/https:\/\/github\.com\/tugrulguner\/refpot\/blob\/[a-f0-9]{40}\/docs\/releasing\.md/);
+});
+test('different practical guides have topic-specific metadata',async()=>{
+ const descriptions=[];
+ for(const name of ['crud','transactions','persistence','errors']){
+  const text=await readFile(new URL(`src/content/docs/build/${name}.md`,root),'utf8');
+  descriptions.push(/^description: (.+)$/m.exec(text)?.[1]);
+ }
+ assert.equal(new Set(descriptions).size,4);
+});

@@ -1,6 +1,6 @@
 ---
 title: Transactions and rollback
-description: Practical guide to the public experimental alpha.
+description: "Use explicit RefPot transactions and verify rollback behavior in the experimental alpha."
 ---
 
 These guides exercise the experimental alpha. Install the latest published version with `python -m pip install refpot` on CPython 3.11–3.14. Prebuilt wheels cover Linux x86_64 and macOS arm64; only source builds need a C++17 toolchain. The API and storage format are not stable. Do not use these examples as performance or physical power-loss qualification.

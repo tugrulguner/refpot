@@ -6,7 +6,8 @@
   "scripts": {
     "predev": "node scripts/sync-public-docs.mjs",
     "precheck": "node scripts/sync-public-docs.mjs",
-    "prebuild": "node scripts/sync-public-docs.mjs",
+    "prebuild": "npm run test:docs",
+    "test:docs": "node --test scripts/public-docs-regression.test.mjs scripts/publish-source-links.test.mjs",
     "render:assets": "node scripts/render-social.mjs",
     "dev": "astro dev",
     "build": "astro build && node scripts/verify-rendered-output.mjs && playwright test",

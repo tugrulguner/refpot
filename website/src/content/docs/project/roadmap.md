@@ -13,7 +13,7 @@ The roadmap distinguishes implemented foundations from open qualification and pr
 
 ## Current implementation focus: qualify the experimental alpha
 
-The fixed-schema API and build/release workflows exist, but they do not complete broader qualification. See the [package contract](docs/package-contract.md), [package results](benchmarks/package-performance/RESULTS.md), and [release checklist](docs/releasing.md).
+The fixed-schema API and build/release workflows exist, but they do not complete broader qualification. See the [package contract](/package-contract/), [package results](/project/package-performance/), and [release checklist](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/docs/releasing.md).
 
 ### Implemented foundations
 

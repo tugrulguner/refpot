@@ -36,3 +36,13 @@ for(const width of [1280,390,320]) for(const theme of ['light','dark'] as const)
   await page.screenshot({path:info.outputPath(`refpot-${width}-${theme}.png`)});
  });
 }
+
+test('deep homepage diagrams defer requests and decode after scrolling',async({page})=>{
+ await page.setViewportSize({width:320,height:850}); await page.goto('/');
+ const deep=['/refpot-package.png','/refpot-benchmark.png','/refpot-execution.png'];
+ for(const path of deep){const img=page.locator(`main img[src^="${path}"]`); await expect(img).toHaveAttribute('loading','lazy'); await expect(img).toHaveAttribute('width',/\d+/); await expect(img).toHaveAttribute('height',/\d+/);}
+ const imageStates=await page.locator('main img').evaluateAll(images=>images.map(element=>{const image=element as HTMLImageElement;return {src:image.currentSrc,loading:image.loading,complete:image.complete}}));
+ expect(imageStates.filter(image=>deep.some(path=>image.src.endsWith(path) || image.src.includes(path+'?'))).every(image=>image.loading==='lazy')).toBe(true);
+ expect(imageStates.filter(image=>image.src.includes('/refpot-execution.png')).every(image=>!image.complete)).toBe(true);
+ for(const path of deep){const img=page.locator(`main img[src^="${path}"]`); await img.scrollIntoViewIfNeeded(); await expect.poll(()=>img.evaluate(el=>{const image=el as HTMLImageElement; return image.complete&&image.naturalWidth>0})).toBe(true);}
+});

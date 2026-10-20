@@ -12,7 +12,7 @@ for (const width of [1280, 768, 390, 320]) {
       await page.goto('/');
       await page.locator('header starlight-theme-select select').selectOption(theme);
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme === 'auto' ? 'light' : theme);
-      await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(img => img.decode())); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+      await page.evaluate(async () => { await document.fonts.ready; for (const img of [...document.images]) { if (img.loading === 'lazy' && img.getBoundingClientRect().top >= innerHeight) { img.scrollIntoView(); await new Promise(resolve => requestAnimationFrame(resolve)); } await img.decode(); } window.scrollTo(0,0); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
       await expect(page.locator('main h1')).toHaveCount(1);
       await expect(page.locator('main h1')).toHaveText('A custom embedded database for Python.');
       await expect(page.locator('.research-notice')).toBeVisible();

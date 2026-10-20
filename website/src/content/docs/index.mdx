@@ -60,7 +60,7 @@ This is executable package behavior, not a site simulation. See the [quick start
 
 This diagram shows the current experimental alpha package implementation. Package and platform qualification remain limited.
 
-<figure class="package-architecture"><a href="/refpot-package.svg?v=alpha-implementation-2"><img src="/refpot-package.png?v=alpha-implementation-2" alt="RefPot experimental alpha architecture: row-local change sets are prepared before synchronized duplicated redo and nonallocating publication; recovery applies validated effects to affected rows. Checkpoint publication syncs, renames and directory-syncs a snapshot before WAL truncation." width="1200" height="820" /></a><figcaption>Experimental alpha implementation; qualification remains limited. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg?v=alpha-implementation-2">Full-size editable SVG</a>.</figcaption></figure>
+<figure class="package-architecture"><a href="/refpot-package.svg?v=alpha-implementation-2"><img loading="lazy" decoding="async" src="/refpot-package.png?v=alpha-implementation-2" alt="RefPot experimental alpha architecture: row-local change sets are prepared before synchronized duplicated redo and nonallocating publication; recovery applies validated effects to affected rows. Checkpoint publication syncs, renames and directory-syncs a snapshot before WAL truncation." width="1200" height="820" /></a><figcaption>Experimental alpha implementation; qualification remains limited. <a href="/package-contract/">Full package contract</a> · <a href="/refpot-package.svg?v=alpha-implementation-2">Full-size editable SVG</a>.</figcaption></figure>
 
 ## Run the shipped CRUD and transaction examples
 
@@ -86,7 +86,7 @@ Read the [exact package contract](/package-contract/), [status and next steps](/
 
 ## Historical benchmark findings
 
-<figure class="historical-benchmark"><a href="/refpot-benchmark.png"><img src="/refpot-benchmark.png" alt="Historical random-update experiment: both campaigns passed the scoped service, setup-inclusive and p99 comparison; reopen with full-state validation was slower in all 16 cells." width="960" /></a><figcaption>Historical prototype evidence, not a benchmark of the published Python package. <a href="/project/benchmarks/">Full results, fairness contract, raw evidence and reproduction</a> · <a href="/refpot-benchmark.png">Full-size chart</a> · <a href="/refpot-benchmark.svg">Editable SVG</a>.</figcaption></figure>
+<figure class="historical-benchmark"><a href="/refpot-benchmark.png"><img loading="lazy" decoding="async" src="/refpot-benchmark.png" alt="Historical random-update experiment: both campaigns passed the scoped service, setup-inclusive and p99 comparison; reopen with full-state validation was slower in all 16 cells." width="960" height="660" /></a><figcaption>Historical prototype evidence, not a benchmark of the published Python package. <a href="/project/benchmarks/">Full results, fairness contract, raw evidence and reproduction</a> · <a href="/refpot-benchmark.png">Full-size chart</a> · <a href="/refpot-benchmark.svg">Editable SVG</a>.</figcaption></figure>
 
 The **3.04–5.95× service** and **2.99–5.91× setup-inclusive** results apply only to the historical existing-row update harness in a Linux ARM64 Docker/ext4 VM. This is **not a package claim**. The experiment retained 672 records across two campaigns; reopen with full-state validation remains **16/16 losses**, and earlier failed experiments are preserved. Package performance is unqualified; the broad 2×-over-SQLite objective remains an acceptance target.
 
@@ -98,7 +98,7 @@ The [contributor guide](/project/contributing/) covers native development setup,
 
 ## Planned architecture — not shipped
 
-<figure class="planned-architecture"><img src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: future SQL and structured ORM operations converge on one proposed execution core, validation, transaction guarantees, storage, and recovery." width="960" height="720" /><figcaption>Planned SQL/ORM direction only. The native package preview above is a separate shipped implementation.</figcaption></figure>
+<figure class="planned-architecture"><img loading="lazy" decoding="async" src="/refpot-execution.png?v=offwhite-1" alt="Planned RefPot architecture, not shipped: future SQL and structured ORM operations converge on one proposed execution core, validation, transaction guarantees, storage, and recovery." width="960" height="540" /><figcaption>Planned SQL/ORM direction only. The native package preview above is a separate shipped implementation.</figcaption></figure>
 
 ## Next — Quick start
 

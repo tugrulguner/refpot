@@ -1,0 +1,1 @@
+Add an experimental volatile native transactional relational model slice with reservation and pricing examples, independent recomputation and SQLite-view controls, and allocation-failure/correctness tests. This research slice does not change the installed Database/Row API or storage format and provides no durability, concurrency or optimization agent.

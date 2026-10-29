@@ -27,8 +27,8 @@ jobs:
         with:
           version: '0.12.3'
       - run: uv sync --all-groups --locked
-      - run: uv run --locked ruff check src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py tests/test_doc_parity.py examples/quickstart.py scripts/
-      - run: uv run --locked ruff format --check src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py tests/test_doc_parity.py examples/quickstart.py scripts/
+      - run: uv run --locked ruff check src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py tests/test_doc_parity.py examples/quickstart.py scripts/ research/application-model/ tests/test_application_model.py examples/experimental_model.py
+      - run: uv run --locked ruff format --check src/refpot/_core.pyi tests/test_release_contract.py tests/test_developer_docs.py tests/test_doc_parity.py examples/quickstart.py scripts/ research/application-model/ tests/test_application_model.py examples/experimental_model.py
       - run: uv run --locked actionlint .github/workflows/*.yml
 
   typecheck:
@@ -43,7 +43,7 @@ jobs:
         with:
           version: '0.12.3'
       - run: uv sync --all-groups --locked
-      - run: uv run --locked pyright src/ tests/ examples/ scripts/
+      - run: uv run --locked pyright src/ tests/ examples/ scripts/ research/application-model/
 
   test:
     name: test (${{ matrix.os }}, py${{ matrix.python-version }})

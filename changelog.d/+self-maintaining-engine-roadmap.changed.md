@@ -1,0 +1,1 @@
+Refocus the roadmap on a self-maintaining relational engine and optional, verified internal agent specialization; withdraw the fixed SQLite speed multiplier while preserving historical evidence and alpha qualification boundaries.

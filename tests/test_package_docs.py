@@ -47,7 +47,43 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("Still-open qualification and product gates", text)
         self.assertIn("- [x] Implement fixed-schema CRUD, explicit transactions", text)
         self.assertIn("- [ ] Complete native CRUD/transaction/recovery failure qualification", text)
-        self.assertIn("overall SQLite goal is unmet", text)
+        self.assertIn("fixed **2× SQLite target is withdrawn**", text)
+        self.assertIn("historical screening results", text)
+
+    def test_roadmap_separates_planned_engine_agents_from_shipped_capabilities(self):
+        import re
+
+        text = (ROOT / "ROADMAP.md").read_text()
+        milestones = re.findall(r"^## (M\d+)\. (.+)$", text, re.MULTILINE)
+        self.assertEqual([key for key, _ in milestones], [f"M{i}" for i in range(8)])
+        planned = text.split("## M0.", 1)[1]
+        self.assertNotIn("- [x]", planned)
+        for phrase in (
+            "self-maintaining embedded relational database",
+            "Derived relations, internal optimization agents, SQL, ORM",
+            "not a backend package",
+            "same candidate language",
+            "Recovery must not call inference",
+            "free-threaded CPython",
+            "agent cannot approve or publish its own proposal",
+        ):
+            self.assertIn(phrase, text)
+        self.assertNotIn("Require reproducible 2×", text)
+        self.assertNotIn("Require at least 2×", text)
+
+    def test_exported_roadmap_preserves_canonical_content_and_milestones(self):
+        import re
+
+        canonical = (ROOT / "ROADMAP.md").read_text()
+        exported = (ROOT / "website/public/docs/project-roadmap.md").read_text()
+        self.assertEqual(exported, canonical)
+        page = (ROOT / "website/src/content/docs/project/roadmap.md").read_text()
+        self.assertEqual(
+            re.findall(r"^## M\d+\..+$", page, re.MULTILINE),
+            re.findall(r"^## M\d+\..+$", canonical, re.MULTILINE),
+        )
+        self.assertIn("fixed **2× SQLite target is withdrawn**", page)
+        self.assertNotIn("- [x]", page.split("## M0.", 1)[1])
 
     def test_repository_agent_guidance_stays_local_and_scoped(self):
         agents = (ROOT / "AGENTS.md").read_text()

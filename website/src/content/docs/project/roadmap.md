@@ -4,217 +4,302 @@ description: Canonical RefPot research milestones, generated from the repository
 ---
 
 
-RefPot's goal is a custom embedded relational database engine, usable directly, with a
-simple Python ORM on top. The engine is not SQLite underneath. Performance and simplicity
-must both be demonstrated through complete operations, not inferred from implementation
-language or isolated data structures.
+RefPot's direction is a **self-maintaining embedded relational database for Python**,
+with an optional internal agent that designs workload-specific execution structures.
+RefPot owns its native storage and execution engine; it is not a SQLite wrapper.
 
-The roadmap distinguishes implemented foundations from open qualification and product gates. A checked item means only that bounded deliverable exists; it does not imply a supported release. There are no delivery dates.
+Developers define source tables, derived relations and rules. The planned engine maintains
+that model transactionally. Its optimization agent investigates **how to compute and
+maintain the model**, never what the application's rules or answers should mean.
 
-## Current implementation focus: qualify the experimental alpha
+This is the development direction, not a description of shipped capabilities. A checked item means only that bounded deliverable exists; it does not imply a supported release. All new milestones below are planned and unchecked. There are no delivery dates.
 
-The fixed-schema API and build/release workflows exist, but they do not complete broader qualification. See the [package contract](/package-contract/), [package results](/project/package-performance/), and [release checklist](https://github.com/tugrulguner/refpot/blob/4741eb4aa5e02b39d34657f855e432a85d0e71e5/docs/releasing.md).
+The fixed **2× SQLite target is withdrawn**. Preserve achieved improvements, raw results
+and unfavorable comparisons, but do not use a speed multiplier as the product thesis or
+release gate. Older reports and target wording elsewhere describe the historical campaign;
+this roadmap defines the current objective, without changing those measurements.
+
+## Current implementation: experimental alpha
+
+The fixed-schema Python `Database` / `Row` API supports CRUD, explicit transactions and
+snapshot/WAL persistence. It is thread-affine and exclusively owned by one process.
+Derived relations, internal optimization agents, SQL, ORM and concurrent access are **not
+shipped**. See the [package contract](/package-contract/),
+[package results](/project/package-performance/), and
+[release checklist](https://github.com/tugrulguner/refpot/blob/0f880f5ef2b17405bc1b6f3c4f43c050d99878b6/docs/releasing.md).
 
 ### Implemented foundations
 
 - [x] Configure package metadata, Python 3.11–3.14 Linux/macOS CI, artifact verification, and tag-triggered release automation. Passing installed-wheel lanes verify only their tested behavior; they do not establish physical power-loss safety.
 - [x] Publish version 0.1.1 as a normal latest GitHub release and on PyPI; verify public artifact installation. This publication milestone does not complete platform, example, recovery, or performance qualification.
-- [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. The change-set work preserves public API and storage framing; it is not the complete durability qualification gate.
-- [x] Run a six-cell actual-package performance comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Results are screening evidence, not measurements of a 0.1.2 package artifact; three of six cells remain below 2× and the overall SQLite goal is unmet.
+- [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
+- [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
+- [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
 
 ### Still-open qualification and product gates
 
 - [ ] Complete native CRUD/transaction/recovery failure qualification; implementation exists but qualification remains in progress.
-- [ ] Verify wheel/source distribution and installed examples on all declared platforms.
-- [ ] Execute runnable CRUD and transaction examples through the installed interface on the declared platform matrix.
-- [ ] Qualify errors, corruption, lock ownership and process-restart behavior.
-- [ ] Establish durability limits beyond process/fault tests; no physical power-loss guarantee is claimed.
-- [ ] Expand package performance beyond the six-cell screen: sustained maintenance/checkpoint behavior, mixed/insert/delete workloads, larger-than-memory cases, concurrency, cross-platform runs, and qualification of release artifacts remain open.
+- [ ] Verify wheel/source distributions and execute installed CRUD/transaction examples on all declared platforms.
+- [ ] Qualify errors, corruption, lock ownership and process-restart behavior; retain explicit filesystem assumptions and limits beyond process/fault tests.
+- [ ] Expand package measurements to sustained maintenance/checkpoints, mixed/insert/delete workloads, dataset scaling and release artifacts. Add concurrency measurements only when that capability exists.
+
+Retain these obligations while developing the new model. Existing package behavior and
+storage compatibility must not change without an explicit migration contract. Observation,
+MVCC and dependency-tracking experiments may supply requalified components; scratch tests
+and native-relative speedups do not establish shipped functionality or SQLite superiority.
+
+## Product boundary and intended advantage
+
+The first application model is resource allocation:
+
+`reservations → usage totals → available capacity → eligibility`
+
+A transaction changes reservations, propagates affected results, checks capacity and team
+limits against the complete proposed state, then commits everything or rejects everything.
+Readers must not see new reservations with old availability. Restart must restore one
+coherent source/derived/model version.
+
+For supported definitions, applications should not need manually maintained derived-table
+writes, cache-invalidation handlers, refresh workers or derived-state reconciliation scripts.
+Domain rules remain developer-owned. Dense changes can still require substantial work;
+there is no universal constant-time or delta-only cost promise.
+
+Two parts share one engine:
+
+- **Deterministic core:** storage, typed relational execution, incremental maintenance,
+  constraints, transactions, validation, publication and recovery.
+- **Optional internal optimization agent:** inspect sanitized execution evidence, propose
+  shared physical representations and maintenance plans, and run budgeted experiments.
+  A deterministic checker and runtime policy decide whether candidates are admissible and
+  useful enough to install. The agent cannot approve its own candidate.
+
+RefPot is a database engine, not a backend package. Summonpot or another caller owns
+endpoints, application goals, business agents, external tools and approval workflows.
+Internal engine agents are in scope; application orchestration is not.
+
+### Competitive thesis to prove
+
+Incremental views, reactive databases, learned optimizers and verified rewrites already
+exist. Atomic derived maintenance alone is not new: PostgreSQL + pg_ivm is a direct
+baseline, and a competent SQLite layer may reproduce the application behavior.
+
+The research target is **agent-guided synthesis of shared, transactionally maintained
+physical representations inside an embedded engine**, including their maintenance,
+installation and retirement. The intended user benefit combines less application-owned
+synchronization with less manual physical-design work. Neither algorithmic novelty nor
+competitive superiority is established by this roadmap.
+
+Compare complete models against SQLite with reusable/generated maintenance, pg_ivm and
+an appropriate reactive/incremental platform. Consider Convex, SpacetimeDB, Feldera,
+Pathway and Differential Datalog according to their actual contracts. Compare agent-guided
+search with non-agent search over the same candidate language, not only an untuned baseline.
 
 ## Non-negotiable gates
 
-- Own the execution and storage engine; do not substitute a SQLite wrapper.
-- Keep the engine independently useful without the ORM.
-- Require at least 2× over SQLite on a declared, agreed workload matrix before making the
-  corresponding performance claim. Do not narrow the matrix after seeing failed results.
-- Preserve equivalent correctness, returned data, transaction boundaries, and durability.
-- Keep ordinary usage straightforward; internal adaptation must not become mandatory
-  application configuration or silently change guarantees.
-- Publish failed cells, raw evidence, maintenance costs, and limitations alongside wins.
+- Keep ordinary database operations independently useful without a model, server or ORM.
+- Preserve exact query meaning, types, multiplicities, ordering, errors, isolation and
+  durability across every optimization; unsupported transformations must be rejected.
+- Finish exact derived state and write-time invariants before acknowledging a commit.
+  Do not silently replace exact results with eventually consistent outputs.
+- Prepare allocations before publication and keep inference outside transaction locks and
+  the query hot path. Recovery must not call a model or arbitrary application Python.
+- Keep agent execution optional, bounded and opt-in; deny arbitrary generated native code,
+  unrestricted production writes and application tools. Exclude row values, SQL literals
+  and sensitive identifiers from provider telemetry by default.
+- Measure complete read/write, maintenance, construction, migration, reclamation and
+  recovery costs. Retain historical results and report regressions alongside improvements.
+- Do not claim arbitrary Python purity, incrementalize arbitrary bytecode, or mistake an
+  LLM assertion or a passing test suite for a proof of equivalence.
+- Prove standard and free-threaded Python support on actual interpreter builds. Threaded
+  native tests alone establish neither binding safety nor useful multicore execution.
 
-## 0. Fix the contract and qualification matrix
+## Delivery sequence
 
-Define what the first engine promises before optimizing it.
+M0–M1 establish the model and native relational representation. M2–M3 investigate agents
+against that deterministic foundation, before broad API expansion. M4–M5 qualify whole-model
+persistence and concurrency; M6 integrates safe adaptive installation. M7 delivers the
+installed consumer experience. Failure tests start with each component, not at the end.
+Offline agent experiments do not depend on online promotion being finished.
 
-- [ ] Specify supported values, key semantics, missing and duplicate behavior, ordering,
-      validation, and the first constraint subset.
-- [ ] Specify begin/commit/rollback, visibility, acknowledged durability, crash behavior,
-      error outcomes, and what happens after an uncertain commit.
-- [ ] Select the first concurrency/isolation contract and document unsupported patterns.
-- [ ] Agree the engine workload matrix: successful CRUD, misses, repeated mutations,
-      rollback, mixed workloads, point/range reads, batch sizes, dataset sizes, key locality,
-      memory limits, and concurrent request counts.
-- [ ] Identify SQLite baseline configurations and fairness rules for each workload.
-- [ ] Design minimal developer workflows for engine-only use and the later ORM; evaluate
-      ceremony and explicit transaction ownership without promising public names yet.
+## M0. Freeze a complete model and competent controls
 
-**Exit:** a reviewable semantic contract, fixed acceptance matrix, and expected-state oracle.
-SQL/API/file compatibility, language, and storage architecture remain explicit decisions,
-not assumptions inherited from a prototype.
+- [ ] Specify typed source tables, derived definitions, keys, duplicate/NULL semantics,
+      arithmetic/overflow, ordering, errors, invariants and transaction visibility.
+- [ ] Define the resource-allocation model and a second pricing or permissions model to
+      reject domain-specific hardcoding. Include updates, deletes and multi-row rollback.
+- [ ] Build an independent full-recomputation oracle and a competent SQLite control with
+      reusable/generated maintenance. Exercise pg_ivm and a relevant incremental platform
+      before making comparative claims; documentation tables are not executable controls.
+- [ ] Freeze workloads with narrow and broad changes, shared and disjoint computations,
+      read-heavy and write-heavy phases, memory budgets and recovery expectations.
+- [ ] Record the application-owned propagation, tuning and repair responsibilities in
+      each implementation, not merely API names or line counts.
 
-## 1. Build one coherent durable engine slice
+**Exit:** executable expected-state traces and controls for two models. Mutants omitting
+propagation, absence dependencies or atomic publication must fail. Separate product
+convenience, native execution advantage and originality findings.
 
-The next implementation gate is an integrated engine, not another disconnected lookup win.
+## M1. Build the deterministic self-maintaining relational core
 
-- [ ] Implement successful durable insert, read, update, and delete against a real index
-      and stored record representation; no fixture-derived values or fixed-key shortcuts.
-- [ ] Enforce the chosen value/constraint subset through the same operation boundary.
-- [ ] Implement atomic commit and rollback, including repeated mutations of the same row.
-- [ ] Define a versioned, self-describing storage format with validated metadata, bounds,
-      checksums, and rejection of unsupported versions.
-- [ ] Implement bounded logging/checkpointing and safe reclamation; retain required redo
-      until replacement state is durably published.
-- [ ] Exercise concurrent requests under the declared visibility/conflict contract; keep
-      single-writer serialization explicit if chosen rather than implying multiwriter support.
-- [ ] Expose an engine-only executable harness with complete final-state and reopen checks.
+- [ ] Add multiple typed tables, primary keys and equality indexes, using a bounded native
+      relational intermediate representation shared by execution and maintenance.
+- [ ] Implement filter/project, equijoins, anti-joins, grouped count/sum, chained derived
+      relations and final-state invariants. Start with an acyclic graph and explicit types.
+- [ ] Maintain results through inserts, updates and deletes on either side of a join;
+      preserve multiplicities, empty groups, negative observations and checked arithmetic.
+- [ ] Propagate transaction deltas privately, share supported intermediate work and evaluate
+      invariants against the complete final candidate, not statement-order artifacts.
+- [ ] Publish source, derived and dependency/index changes atomically or discard them all;
+      maintain read-your-writes and operation-level failure semantics.
+- [ ] Compare every committed source and derived relation with the independent oracle.
+      Expose operator visits and maintenance work; do not hide full reruns behind an API.
 
-**Exit:** durable CRUD, concurrent requests, bounded recovery, and transaction semantics work
-as one system. Performance alone cannot waive a correctness failure.
+**Exit:** both complete models run through the same native implementation without
+application-written propagation routines. Readers see no mixed epoch and failed
+transactions leave no partial graph changes. This is the first functional deliverable,
+not another isolated lookup or aggregate benchmark.
 
-### Candidate mechanisms, not settled architecture
+## M2. Build a restricted engine-agent experimentation interface
 
-Evaluate cache-aware separated key/value layouts and occupancy-dependent routing,
-preallocated bounded logical redo, incremental dirty-region checkpoints, and
-mutation-density-aware encoding. Compare complete combinations, including their maintenance
-and recovery costs. Keep full-snapshot ring designs as baselines, not automatic winners.
+- [ ] Expose sanitized operator structure, cardinality/work counters and read/write costs,
+      with explicit memory, time, inference and experiment budgets.
+- [ ] Let one optional agent inspect, hypothesize, compose approved operators, experiment
+      on isolated state and revise proposals. Keep deterministic execution as the default.
+- [ ] Define a candidate artifact covering the shared representation, read plans,
+      maintenance derivation, assumptions and resource estimates—not prose tuning advice.
+- [ ] Implement a small deterministic checker for supported rewrite derivations and side
+      conditions. Validate initial-state equivalence and preservation under supported
+      update transitions; generate maintenance through trusted incrementalization rules.
+- [ ] Reject unknown operators, unsupported proofs, unsafe overflow rewrites, faulty delete
+      maintenance and proposals crossing opaque Python-function boundaries.
+- [ ] Fail closed on malformed/untrusted model output, provider failure or exhausted budget
+      without interrupting normal database operations. No inference under writer locks.
 
-The tested page-image prototype lost against tuned SQLite; that does not rule out a full
-copy-on-write tree/root-swap architecture. A Rust rewrite is a permitted implementation
-choice, not evidence of speed. Do not select a language before the relevant measurement.
+**Exit:** a real agent produces a compositional candidate that the engine can execute in
+isolation and validate. Faulty rewrites and maintenance mutants are rejected. Provider-free
+fixtures test the protocol but do not substitute for exercising the actual agent loop.
 
-## 2. Qualify failure behavior and recovery
+## M3. Establish whether agent-guided specialization earns its place
 
-Run these checks during milestone 1 and expand them before trusting durability claims.
+- [ ] Use overlapping joins/aggregates to seek a shared representation across queries,
+      rather than only selecting an index or a complete pre-enumerated plan.
+- [ ] Compare ordinary optimization, competent hand-factored plans, deterministic search
+      over the **same candidate language**, and agent-guided search under matched budgets.
+- [ ] Charge inference, all trials, representation construction, ongoing writes, retained
+      memory, catch-up and retirement—not just favorable read-query latency.
+- [ ] Test held-out workloads and read-heavy/write-heavy transitions. Measure search cost,
+      plan quality and regressions, including cases where no change is best.
+- [ ] Use agent-generated adversarial mutations as extra testing, not a replacement for
+      the deterministic checker or independent oracle.
+- [ ] Preserve candidates, derivations, model/provider identity, budgets, sanitized traces,
+      exact source identities and reproducible analysis without publishing secrets.
 
-- [ ] Differential and state-machine tests for CRUD, duplicates, misses, constraints,
-      transaction sequences, rollback restoration, and reopen.
-- [ ] Process termination at record write, sync, acknowledgment, checkpoint publication,
-      wraparound, and reclamation boundaries; verify permitted outcomes against a ledger.
-- [ ] Fault injection for short writes, interrupted syscalls, EIO, ENOSPC, allocation
-      failures, and failures during recovery itself.
-- [ ] Reject corrupted headers, counts, lengths, payloads, trailers, and generations without
-      accepting fabricated state or performing unbounded allocation.
-- [ ] Test interrupted checkpoints, stale temporary files, multiple wraps, restart,
-      continued writes, and a second restart.
-- [ ] Verify concurrent visibility, conflicts, transaction identity, and error outcomes.
-- [ ] Run independent sanitizer/fuzz campaigns and preserve exact tested source identities.
-- [ ] Document filesystem/synchronization assumptions and verify the baseline uses matched
-      primitives. Process-kill tests are not physical power-loss qualification.
+**Exit:** a verified agent-proposed structure demonstrates a useful reduction in physical-design
+work or full-workload resource cost against strong controls. Any claimed agent-specific
+advantage must survive equal-budget non-agent search. If that does not hold, retain useful
+core work and keep agent specialization experimental; do not claim a differentiator from
+one winning query or simply searching more candidates. There is no fixed speed multiplier.
 
-**Exit:** a published failure model and passing qualification corpus. State remaining
-unsupported guarantees plainly; “fsync was called” is not a universal durability proof.
+## M4. Qualify durable whole-model state and definition evolution
 
-## 3. Earn the native-engine performance claim
+- [ ] Extend the versioned storage contract to source rows, accepted derived outputs,
+      definition identity and required dependency/index state at one commit frontier.
+- [ ] Choose explicitly which native structures are persisted versus rebuilt behind a
+      recovery barrier. Recovery must not call inference or registered Python functions.
+- [ ] Preserve bounded logging/checkpointing, capacity checks before acknowledgment,
+      allocation-before-publication and poisoned-writer behavior after uncertain I/O.
+- [ ] Inject short writes, interrupted syscalls, EIO, ENOSPC and allocation failures during
+      preparation, append, sync, publication, checkpoint, recovery and reclamation.
+- [ ] Test process termination, corrupted framing/lengths/metadata, interrupted checkpoints,
+      stale temporary files, reopen, continued writes and a second restart.
+- [ ] Version definitions explicitly. Implement offline atomic model migration first;
+      missing/incompatible definitions must not silently present stale state as current.
+- [ ] Document backup/restore, format transitions, filesystem assumptions and unsupported
+      failure guarantees; process-kill testing is not physical power-loss qualification.
 
-- [ ] Benchmark the coherent slice against prepared native SQLite with identical data,
-      returned tuples, real writes, transaction boundaries, and durability policy.
-- [ ] Sweep relevant SQLite checkpoint settings and retain the best-tested baseline per cell.
-- [ ] Include commit synchronization, checkpoints, compaction, reclamation, and final
-      maintenance; report initialization and calibration costs separately.
-- [ ] Calibrate trial duration, alternate candidate order, repeat pairs, and repeat complete
-      campaigns when variance is suspicious. Preserve both runs, including disagreements.
-- [ ] Persist raw trials, environment identity, source hashes, configurations, exact matrix,
-      expected-state validation, and a programmatic analysis/reproduction command.
-- [ ] Measure throughput, p95/p99, memory, total disk footprint including overlapping
-      checkpoint files, sustained log growth, and recovery time across dataset scaling.
-- [ ] Require reproducible 2× performance across the agreed matrix with explicit latency
-      and resource criteria; failed small-transaction cells remain failures.
+**Exit:** acknowledged transitions survive restart as a coherent model. Unacknowledged
+transitions may recover wholly old or wholly new, never partial. Interrupted migrations
+expose one complete definition version, and bounded recovery preserves subsequent use.
 
-**Exit:** a reproducible native-engine result covering the agreed scope. If the gate fails,
-report failure and investigate the mechanism; do not promote a single winning batch as an
-across-the-board result. Keep macOS native, Linux VM, and bare-metal evidence separate.
+## M5. Qualify concurrent execution and supported Python computations
 
-### Guarded optimization experiments
+- [ ] Implement independently owned transaction contexts, private graph evaluation, exact
+      conflict validation and short publication critical sections.
+- [ ] Test phantoms, missing-row dependencies, failed observations, own-write ordering and
+      write skew through derived constraints against serializable-history oracles.
+- [ ] Revalidate reusable observation/MVCC components and bound snapshot, row-version,
+      dependency-edge and retired-plan retention; do not transplant prototype mutexes or
+      fixed schemas as the product architecture.
+- [ ] Add optional keyed deterministic Python cells over immutable tracked inputs, with
+      explicit definition versions, dynamic dependencies and whole-cell reruns. Treat
+      registered code as trusted, not sandboxed or automatically proven pure.
+- [ ] Test branch-dependent edge replacement, caught lookup failures, unchanged-output
+      propagation stops and computation exceptions. Reject undeclared side effects by
+      contract; do not claim a decorator can enforce arbitrary Python purity.
+- [ ] Run Python callbacks outside the publication lock; release the GIL for native work.
+      Qualify ownership/lifetimes on standard and actual free-threaded CPython builds.
+- [ ] Exercise native sanitizer/race/fuzz campaigns and measure real overlap of independent
+      graph regions. Report hot-aggregate serialization and dense fan-out honestly.
 
-- **Routing:** test representative held-out requests and measure selector regret,
-  calibration, switching, and migration. Use hysteresis and a deterministic fallback;
-  choosing the fastest tiny pilot is not a sufficient policy.
-- **Encoding/checkpoints:** compare logical redo, dense deltas, and incremental checkpoints
-  end-to-end with replay/reclamation safety intact.
-- **Group commit:** combine already-waiting compatible work without added waiting to grow
-  groups; preserve each transaction's identity and acknowledgment boundary. Compare against
-  a similarly coalesced SQLite frontend as well as serial SQLite. One outstanding sequential
-  transaction cannot benefit from nonexistent neighbors.
-- **Cache evidence:** distinguish exposed cache topology from measured cache misses.
-  Do not claim PMU evidence without actual counters.
+**Exit:** source and derived invariants remain correct under concurrent transactions;
+independent native work actually overlaps. Supported Python cells and their dependency
+changes commit or abort together. No arbitrary caller callbacks are replayed on retry.
 
-## 4. Stabilize relational execution and direct use
+## M6. Install and retire verified physical plans safely
 
-- [ ] Define and implement the first SQL subset, with explicit type, NULL, collation,
-      conversion, constraint, and ordering semantics.
-- [ ] Add parameterized SQL preparation/planning and a structured-operation path feeding
-      the same execution core, without bypassing constraint or transaction enforcement.
-- [ ] Add the agreed range, projection, filtering, and relational operations incrementally;
-      document unsupported SQL rather than implying full compatibility.
-- [ ] Provide actionable errors, plan inspection, and bounded operational statistics.
-- [ ] Expand correctness and benchmark matrices when functionality expands; rerun the gates.
-- [ ] Ship runnable engine-only examples and storage/recovery documentation.
+- [ ] Build a candidate representation privately from a pinned snapshot while the current
+      authoritative plan remains usable; track and apply intervening committed changes.
+- [ ] Verify exact catch-up and compatible model identity, then durably switch the physical
+      plan catalog at a consistent epoch without changing logical definitions.
+- [ ] Retain old plans and their required state for active readers; reclaim only after
+      lifetime constraints permit it and account for overlapping memory/storage.
+- [ ] Persist accepted artifacts and required metadata so restart needs no model access.
+- [ ] Use deterministic activation budgets and regression policy. Keep a usable baseline;
+      account for rebuild/catch-up if a retired representation is needed for fallback.
+- [ ] Test crashes, concurrent updates, model changes, provider loss and allocation failures
+      during build, catch-up, switch, fallback and reclamation.
 
-**Exit:** independently useful direct engine access with a documented relational scope.
-SQLite SQL, file, or C API compatibility requires a separate explicit decision and tests.
+**Exit:** switching plans, reverting and restarting preserve identical logical results,
+errors and transaction guarantees. The agent cannot approve or publish its own proposal.
+No claim that rollback is instantaneous or free when old state was not maintained.
 
-## 5. Build and verify the Python binding
+## M7. Deliver the usable Python engine and coherent model lifecycle
 
-- [ ] Define a small public interface with predictable types, lifetimes, errors, and explicit
-      transactions; keep tuning machinery private by default.
-- [ ] Verify result ownership, cancellation/error boundaries, and chosen thread/concurrency
-      behavior; declare interpreter support based on tested builds.
-- [ ] Compare complete public operations against Python SQLite interfaces with equivalent
-      result materialization; measure binding overhead separately from native execution.
-- [ ] Provide installable artifacts and runnable `examples/` verified through the installed
-      package, not only source-tree imports.
+- [ ] Expose a small structured relational interface with explicit transactions, derived
+      relations, invariants, optional keyed cells and actionable execution reports.
+- [ ] Ship runnable `examples/` for resources, a second domain, rejection/rollback, recovery,
+      definition changes and agent specialization versus model-free execution.
+- [ ] Build release artifacts and run examples twice through installed wheels outside the
+      checkout on the declared platform/interpreter matrix; preserve existing API tests.
+- [ ] Add coherent snapshot-plus-committed-change batches with an explicit slow-consumer
+      policy. No failed-transaction notifications, implied durable resume or external
+      exactly-once effects.
+- [ ] Publish complete workload measurements: latency/throughput, memory, storage,
+      synchronization, checkpoints, maintenance, recovery and optimization costs. Preserve
+      paired repeats, raw results, strongest eligible controls and reproduction commands.
+- [ ] Align public docs and agent-readable exports with actual delivered capabilities;
+      keep experimental agent search separate from qualified deterministic behavior.
+- [ ] Complete release/publisher prerequisites, then obtain separate authorization for tags,
+      publication and deployment and independently verify public artifacts.
 
-**Exit:** usable engine-only Python access with independently published binding performance
-and no implication that native-engine ratios automatically carry through Python.
+**Exit:** a developer installs RefPot, defines either reference model, changes source rows
+and gets correct maintained results, atomic rejection, concurrent access and restart
+recovery without writing synchronization machinery. Where M3 and M6 are qualified, an
+optional agent can specialize that execution without changing the application's contract.
+A model outage does not prevent ordinary database use.
 
-## 6. Add the simple ORM
+## Later extensions, not prerequisites for the first useful model
 
-- [ ] Define a minimal model/query/transaction interface using concrete developer tasks,
-      not a large speculative configuration surface.
-- [ ] Compile ORM requests to validated structured operations instead of requiring an
-      ORM → SQL → parser round trip on RefPot's engine.
-- [ ] Keep transactions, query execution, and expensive loading visible; avoid mandatory
-      repository/factory stacks and hidden queries.
-- [ ] Prove ORM/direct-operation semantic equivalence for the supported feature set.
-- [ ] Benchmark complete ORM workflows against optimized SQLAlchemy paths and raw-engine
-      baselines, with returned objects, validation, writes, and commits included.
-- [ ] Ship runnable CRUD, transaction, relationship, and failure examples as features land.
+- [ ] Broaden SQL through the same relational/transaction boundary; specify and test the
+      supported subset rather than promise SQLite SQL, file or C API compatibility.
+- [ ] Add a simple ORM over validated structured operations, preserving explicit queries
+      and transactions. Measure complete ORM usage separately from native/Python execution.
+- [ ] Investigate monotone recursion, online logical-model upgrades and larger-than-memory
+      operation with separate contracts, failure tests and competitive controls.
 
-**Exit:** an ORM whose simplicity is demonstrated in ordinary usage and whose performance
-is measured separately. “Fastest ORM” is not a claim until a defined comparison supports it.
-
-## 7. Prepare a supported release
-
-### Implemented release foundations
-
-- [x] Add the MIT license and configure package metadata, platform/interpreter CI, artifact verification, and tag-triggered publication workflows. These are repository foundations, not a supported release.
-- [x] Publish 0.1.1 as the experimental alpha and independently verify public availability.
-- [x] Prepare 0.1.2 documentation, metadata, changelog, and artifact presentation. Preparation alone does not publish or qualify the release.
-
-### Still-open release gates
-
-- [ ] Document and qualify storage versioning, backup/restore, migrations, operational limits, and the supported failure/concurrency model.
-- [ ] Verify installation, examples, recovery, and the declared performance matrix from release artifacts on the supported environments.
-- [ ] Complete external publisher and deployment prerequisites, then publish and independently verify release artifacts; publication is a separate approval and verification gate.
-- [ ] Expand package performance beyond the initial six-cell screen and achieve the agreed acceptance matrix before claiming the SQLite goal.
-
-**Exit:** a supported release with honest capability boundaries, reproducible evidence,
-and no unsupported performance or durability guarantees.
-
-## Outside this initial push
-
-No server deployment, cloud replication, distributed consensus, broad compatibility promise,
-public tuning framework, or production engine is implied by this documentation launch.
-Research prototypes remain experimental until deliberately integrated and qualified.
+No backend framework, chat-to-SQL product, business-agent runtime, mandatory external
+service, cloud replication, distributed consensus or public tuning framework is implied.
+The first priority remains one complete self-maintaining model and a verified, useful
+agent-proposed execution structure—not a larger compatibility checklist.
 
 [Download the canonical roadmap as Markdown](/docs/project-roadmap.md).

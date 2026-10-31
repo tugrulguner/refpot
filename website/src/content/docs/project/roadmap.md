@@ -4,13 +4,17 @@ description: Canonical RefPot research milestones, generated from the repository
 ---
 
 
-RefPot's direction is a **self-maintaining embedded relational database for Python**,
-with an optional internal agent that designs workload-specific execution structures.
-RefPot owns its native storage and execution engine; it is not a SQLite wrapper.
+RefPot's direction is a **self-maintaining embedded relational database for Python**:
+query it with SQL or, explicitly, natural language through the same query interface;
+declare derived relations and let the engine maintain them transactionally; let optional
+engine agents investigate better physical representations without changing query meaning.
+RefPot owns its native storage and execution engine. It is not a SQLite wrapper.
 
-Developers define source tables, derived relations and rules. The planned engine maintains
-that model transactionally. Its optimization agent investigates **how to compute and
-maintain the model**, never what the application's rules or answers should mean.
+The ambition is an independently useful database with less application-owned synchronization
+and less manual physical-design work—not merely a natural-language front end, a faster
+fixed-schema map, or a new name for established optimization techniques. Building useful
+querying and pursuing original engine mechanisms are parallel obligations. Neither a failed
+optimizer experiment nor an unresolved novelty claim should block the useful database.
 
 This is the development direction, not a description of shipped capabilities. A checked item means only that bounded deliverable exists; it does not imply a supported release. All new milestones below are planned and unchecked. There are no delivery dates.
 
@@ -24,9 +28,10 @@ this roadmap defines the current objective, without changing those measurements.
 The fixed-schema Python `Database` / `Row` API supports CRUD, explicit transactions and
 snapshot/WAL persistence. It is thread-affine and exclusively owned by one process.
 Derived relations, internal optimization agents, SQL, ORM and concurrent access are **not
-shipped**. See the [package contract](/package-contract/),
-[package results](/project/package-performance/), and
-[release checklist](https://github.com/tugrulguner/refpot/blob/0f880f5ef2b17405bc1b6f3c4f43c050d99878b6/docs/releasing.md).
+shipped**. Natural-language query generation is also not shipped; there is no implemented
+SQL `execute` interface to which an agent flag can simply be added. See the
+[package contract](/package-contract/), [package results](/project/package-performance/),
+and [release checklist](https://github.com/tugrulguner/refpot/blob/55c6f6efdee908068dde037e4f74aebac6522349/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -35,6 +40,7 @@ shipped**. See the [package contract](/package-contract/),
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/55c6f6efdee908068dde037e4f74aebac6522349/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/55c6f6efdee908068dde037e4f74aebac6522349/research/application-model/RESULTS.md).
 
 ### Still-open qualification and product gates
 
@@ -43,263 +49,444 @@ shipped**. See the [package contract](/package-contract/),
 - [ ] Qualify errors, corruption, lock ownership and process-restart behavior; retain explicit filesystem assumptions and limits beyond process/fault tests.
 - [ ] Expand package measurements to sustained maintenance/checkpoints, mixed/insert/delete workloads, dataset scaling and release artifacts. Add concurrency measurements only when that capability exists.
 
-Retain these obligations while developing the new model. Existing package behavior and
-storage compatibility must not change without an explicit migration contract. Observation,
-MVCC and dependency-tracking experiments may supply requalified components; scratch tests
-and native-relative speedups do not establish shipped functionality or SQLite superiority.
+Retain these obligations while developing the relational engine. Preserve existing
+`Database` / `Row` behavior and storage compatibility unless an explicit migration contract
+is approved. Observation, MVCC and dependency-tracking experiments may supply requalified
+components; scratch tests and native-relative speedups do not establish shipped functionality.
+
+### What the latest research changes—and does not change
+
+Local, unpublished experiments explored shared join plans and maintained keyed summaries.
+The real agent lost to deterministic search in the former and tied competent hand-factored
+and deterministic controls in the latter. Summaries removed substantial work relative to
+an unfactored control on some workloads, but also regressed on a smaller case. These are
+restricted experimental observations, not published-package performance claims or a proof
+of an original mechanism. The evidence is not part of this roadmap-only change.
+
+Retain useful native representations and ordinary fallbacks. Keep seeking more fundamental
+ways to remove duplicated state and work, but do not make an optimizer-agent win a
+prerequisite for SQL, natural-language querying, or durable self-maintenance. Query generation
+and physical synthesis solve different problems and must pass different gates.
+
+## One query interface, one native execution engine
+
+**Proposed API, not available in the published package.** The exact result/configuration
+names remain to be specified in M0; the same method and `query` parameter are the intended
+contract. Assume the example's tables or derived relations have already been declared.
+
+```python
+db.execute(query="SELECT name FROM teams WHERE available_slots >= 2")
+
+db.execute(
+    query="Find teams with at least two available slots",
+    agent=True,
+)
+```
+
+- Default / `agent=False`: interpret `query` as SQL; bind parameters, validate and execute.
+- `agent=True`: interpret that same input as natural language; a configured query-generation
+  agent writes supported SQL, then RefPot validates and executes it. Do not guess the input
+  language. Missing agent configuration is an explicit error, not a fallback to another mode.
+- Handwritten and agent-generated SQL use the **same parser, binder, permission checks,
+  logical IR, native planner and executor**. SQL is not delegated to SQLite, and an agent's
+  prose answer is not a database result.
+- Both paths use the same typed result and execution-error contract. Agent mode additionally
+  exposes generated SQL, bound values, assumptions and generation provenance through
+  inspectable metadata, subject to redaction policy. Generation/clarification/provider errors
+  remain distinguishable from parser, transaction and storage errors.
+- Agent mode changes query compilation, not authority. Read-only comes first; explicitly
+  authorized mutation and definition work follow their own gates. A valid query need not
+  express the caller's intended meaning: deterministic validation does not prove NL intent.
+
+### Contracts to settle before the interface becomes public
+
+1. **SQL, values and results.** Specify parameter binding separately from query text; never
+   interpolate generated values into SQL. Define names, types/coercions, NULL and three-valued
+   logic, bag multiplicity, collation, overflow, decimal precision and timestamp/time-zone
+   behavior as each type is introduced. Reject unsupported syntax/types explicitly. Promise
+   ordering only with `ORDER BY`; fix streaming/cursor ownership, cancellation and row limits.
+   A limit must not silently turn an exact aggregate into a sampled answer.
+2. **Intent and semantic context.** Use explicit schema descriptions, relationships and
+   developer-owned definitions for terms such as "available", "active" and "recent". Resolve
+   units, reference time and time zone explicitly. Ambiguity is not authorization: return a
+   structured clarification/error rather than invent a business rule, ask interactively
+   inside a library call, or choose a risky interpretation merely because it parses.
+3. **Provider and disclosure boundary.** Configure the provider/model separately from the
+   per-call flag. Default context is permitted schema and declared semantic descriptions,
+   not table contents or returned rows. The user's request, identifiers and bound values can
+   themselves be sensitive; disclose what is sent before opt-in and allow redaction/local
+   providers. Row sampling or result sharing requires separate scope. Do not promise control
+   over a provider's retention. No credentials in traces or unrestricted external tools.
+4. **Untrusted output and budgets.** Validate the complete generated statement/AST, not just
+   its first keyword. Enforce statement count, allowed functions/operators, object access,
+   row/byte/work/time limits and bounded repair attempts. Reject write-bearing CTEs, side-effect
+   functions and injected instructions outside the allowed grammar/authority. The agent cannot
+   widen its own context, privileges or execution budget; no generated Python/native code.
+5. **Inference, transactions and freshness.** Perform inference outside transaction locks,
+   publication critical sections and active writer ownership. Initial agent mode generates
+   before opening an execution transaction; reject its use inside an already-active transaction
+   rather than suspending locks. Read-your-writes is supplied by executing the inspected,
+   generated SQL deterministically in an explicit transaction. Later snapshot-aware generation
+   must define pinned-snapshot lifetimes and cancellation before being enabled. Rebind and
+   recheck schema, policy and semantic-context versions at execution. Reject stale meaning
+   rather than execute a previously approved query against a changed definition. Schema-only
+   generation does not freeze data; results come from the execution snapshot.
+6. **Reuse, privacy and failure.** Define inspection/compile-without-execution and explicit
+   reuse of generated SQL with bound parameters. Distinguish a query cache from a result cache;
+   cache identity includes relevant schema, policy, semantic-context, provider/model/prompt and
+   parameter scope, plus snapshot/data scope when data informed generation. Revalidate reused
+   queries and isolate tenants/callers. Bound cache lifetime and audit retention; redact secrets
+   without discarding required execution provenance. Timeouts, cancellation or provider loss
+   before execution have no database effects; uncertain commit outcomes follow storage rules,
+   not blind agent retries.
 
 ## Product boundary and intended advantage
 
-The first application model is resource allocation:
+Three responsibilities share one engine without being conflated:
+
+| Responsibility | Output and authority | Success criterion |
+| --- | --- | --- |
+| Deterministic database | Native queries, maintained relations, constraints, atomic commits and recovery | Correct, independently useful engine with measured complete-workload costs |
+| Optional query-generation agent | Supported executable SQL within the caller's existing scope | Useful intent-to-query accuracy, honest clarification and bounded cost; same engine semantics |
+| Optional physical-optimization agent | Candidate representations and maintenance plans, not logical business rules | Verified semantics and control-relative benefit after all construction/maintenance/lifecycle costs |
+
+The first complete maintained model is resource allocation:
 
 `reservations → usage totals → available capacity → eligibility`
 
 A transaction changes reservations, propagates affected results, checks capacity and team
 limits against the complete proposed state, then commits everything or rejects everything.
-Readers must not see new reservations with old availability. Restart must restore one
-coherent source/derived/model version.
+SQL and natural-language reads query the same resulting relations. A later explicitly
+authorized natural-language reservation request must face the same constraints as direct
+SQL, not bypass them because the agent intended a reasonable allocation. Restart must
+restore one coherent source/derived/definition version.
 
-For supported definitions, applications should not need manually maintained derived-table
-writes, cache-invalidation handlers, refresh workers or derived-state reconciliation scripts.
-Domain rules remain developer-owned. Dense changes can still require substantial work;
-there is no universal constant-time or delta-only cost promise.
-
-Two parts share one engine:
-
-- **Deterministic core:** storage, typed relational execution, incremental maintenance,
-  constraints, transactions, validation, publication and recovery.
-- **Optional internal optimization agent:** inspect sanitized execution evidence, propose
-  shared physical representations and maintenance plans, and run budgeted experiments.
-  A deterministic checker and runtime policy decide whether candidates are admissible and
-  useful enough to install. The agent cannot approve its own candidate.
+A second pricing or permissions model rejects domain-specific hardcoding. For supported
+definitions, applications should not need manually maintained derived-table writes,
+cache-invalidation handlers, refresh workers or reconciliation scripts. Ordinary tables and
+ad hoc queries remain useful without declaring any maintained graph. An ad hoc SQL or NL
+query does not implicitly create a permanent maintained relation or a storage obligation.
+Developer-declared logical definitions and optimizer-private physical structures have
+separate catalogs and lifecycles.
 
 RefPot is a database engine, not a backend package. Summonpot or another caller owns
-endpoints, application goals, business agents, external tools and approval workflows.
-Internal engine agents are in scope; application orchestration is not.
+endpoints, business-agent goals, application tools and approval workflows. Database query
+generation, deterministic maintenance and bounded engine experimentation are in scope;
+application orchestration is not. A query agent is not a general tool-using application agent.
 
 ### Competitive thesis to prove
 
-Incremental views, reactive databases, learned optimizers and verified rewrites already
-exist. Atomic derived maintenance alone is not new: PostgreSQL + pg_ivm is a direct
-baseline, and a competent SQLite layer may reproduce the application behavior.
+The target is an embedded engine that combines **one SQL/NL query path, exact transactional
+self-maintenance and verified adaptive physical design**, with an original engine contribution
+that removes work or state rather than merely relocating application code. None of these
+capabilities alone establishes novelty. SQL generation, incremental views, reactive databases,
+early aggregation and learned optimizers already exist. PostgreSQL + pg_ivm is a direct
+maintenance baseline; competent SQLite layers and query-generation libraries are relevant
+controls, not straw men.
 
-The research target is **agent-guided synthesis of shared, transactionally maintained
-physical representations inside an embedded engine**, including their maintenance,
-installation and retirement. The intended user benefit combines less application-owned
-synchronization with less manual physical-design work. Neither algorithmic novelty nor
-competitive superiority is established by this roadmap.
-
-Compare complete models against SQLite with reusable/generated maintenance, pg_ivm and
-an appropriate reactive/incremental platform. Consider Convex, SpacetimeDB, Feldera,
-Pathway and Differential Datalog according to their actual contracts. Compare agent-guided
-search with non-agent search over the same candidate language, not only an untuned baseline.
+Compare complete models against prepared SQLite with reusable/generated maintenance,
+pg_ivm and a relevant incremental platform. Consider Convex, SpacetimeDB, Feldera, Pathway
+and Differential Datalog according to their actual contracts. Evaluate query-generation
+quality separately from engine cost; compare physical agents with non-agent search over
+the same candidate language. Measure eliminated synchronization/tuning/repair responsibilities,
+not just fewer API names. Neither competitive superiority, switching demand nor algorithmic
+novelty is established by this roadmap.
 
 ## Non-negotiable gates
 
-- Keep ordinary database operations independently useful without a model, server or ORM.
-- Preserve exact query meaning, types, multiplicities, ordering, errors, isolation and
-  durability across every optimization; unsupported transformations must be rejected.
+- Keep ordinary database operations independently useful without inference, credentials,
+  network, an external server, an ORM or a declared maintained model.
+- Preserve query meaning, types, multiplicities, ordering guarantees, errors, isolation and
+  durability across optimization; reject unsupported transformations rather than approximate.
 - Finish exact derived state and write-time invariants before acknowledging a commit.
-  Do not silently replace exact results with eventually consistent outputs.
-- Prepare allocations before publication and keep inference outside transaction locks and
-  the query hot path. Recovery must not call a model or arbitrary application Python.
-- Keep agent execution optional, bounded and opt-in; deny arbitrary generated native code,
-  unrestricted production writes and application tools. Exclude row values, SQL literals
-  and sensitive identifiers from provider telemetry by default.
-- Measure complete read/write, maintenance, construction, migration, reclamation and
-  recovery costs. Retain historical results and report regressions alongside improvements.
-- Do not claim arbitrary Python purity, incrementalize arbitrary bytecode, or mistake an
-  LLM assertion or a passing test suite for a proof of equivalence.
-- Prove standard and free-threaded Python support on actual interpreter builds. Threaded
-  native tests alone establish neither binding safety nor useful multicore execution.
+  Dense changes can require substantial work; promise neither constant-time maintenance nor
+  eventually consistent results disguised as exact ones.
+- Prepare allocations before publication. Recovery must not call inference or arbitrary
+  application Python. Query generation may add latency only when explicitly requested;
+  optimization inference is off the foreground query/commit path.
+- Make agent authority, provider disclosure and budgets explicit. Agent output, schema
+  descriptions and retrieved data are untrusted inputs, not privileged instructions.
+- Measure full reads, writes, maintenance, construction, migration, retention and recovery.
+  Report regressions and ordinary fallback behavior beside gains; tests are not equivalence proofs.
+- Qualify installed artifacts and actual standard/free-threaded CPython builds. Native
+  threaded tests alone establish neither binding safety nor useful multicore execution.
+- Keep new capabilities additive or explicitly migrated. A volatile model-slice test is not
+  evidence for durable package semantics; an agent fixture is not a live provider test.
 
-## Delivery sequence
+## Delivery sequence and dependencies
 
-M0–M1 establish the model and native relational representation. M2–M3 investigate agents
-against that deterministic foundation, before broad API expansion. M4–M5 qualify whole-model
-persistence and concurrency; M6 integrates safe adaptive installation. M7 delivers the
-installed consumer experience. Failure tests start with each component, not at the end.
-Offline agent experiments do not depend on online promotion being finished.
+M0 freezes contracts; M1 delivers the native SQL substrate. M2 adds optional read-only NL
+query generation, while M3 extends that substrate into atomic self-maintenance. These two
+tracks can proceed independently after M1. M4 makes the relational/maintained catalog durable;
+M5 qualifies concurrency and optional tracked Python computations. M6 extends explicit agent
+authority beyond reads. M7 pursues original physical mechanisms and agent synthesis; bounded
+offline work can run alongside the product track rather than block it. M8 qualifies live plan
+installation. M9 integrates broad SQL, lifecycle and installed-consumer qualification.
 
-## M0. Freeze a complete model and competent controls
+This is not a waterfall withholding all releases until M9. Every implemented slice needs
+runnable installed examples and truthful scope. A durable SQL/maintained-model preview can
+ship after its M1/M3/M4 and existing alpha gates; advertising NL additionally requires M2.
+Concurrent access requires M5, generated writes M6, and adaptive installation M8. A release
+may omit unqualified capabilities, never imply them. Release/merge authority remains separate.
 
-- [ ] Specify typed source tables, derived definitions, keys, duplicate/NULL semantics,
-      arithmetic/overflow, ordering, errors, invariants and transaction visibility.
-- [ ] Define the resource-allocation model and a second pricing or permissions model to
-      reject domain-specific hardcoding. Include updates, deletes and multi-row rollback.
-- [ ] Build an independent full-recomputation oracle and a competent SQLite control with
-      reusable/generated maintenance. Exercise pg_ivm and a relevant incremental platform
-      before making comparative claims; documentation tables are not executable controls.
-- [ ] Freeze workloads with narrow and broad changes, shared and disjoint computations,
-      read-heavy and write-heavy phases, memory budgets and recovery expectations.
-- [ ] Record the application-owned propagation, tuning and repair responsibilities in
-      each implementation, not merely API names or line counts.
+## M0. Freeze the query, model and authority contracts
 
-**Exit:** executable expected-state traces and controls for two models. Mutants omitting
-propagation, absence dependencies or atomic publication must fail. Separate product
-convenience, native execution advantage and originality findings.
+- [ ] Specify the shared query/configuration/result/error interface, typed parameters,
+      supported SQL grammar and capability discovery. Keep the installed `Database` / `Row`
+      boundary and future relational catalog migration explicit.
+- [ ] Resolve each contract above, including inspection without execution, semantic ambiguity,
+      schema/policy changes, transaction ownership, provider disclosure and cache identity.
+- [ ] Define two complete maintained models, plus useful ordinary table/query workflows that
+      need no maintained graph. Specify keys, types, duplicates, NULL, arithmetic, constraints,
+      isolation, failure and recovery expectations without hardcoding one application.
+- [ ] Build independent full-recomputation/state oracles and competent executable controls.
+      Freeze narrow/broad changes, shared/disjoint computations, read/write mixes and budgets.
+- [ ] Freeze an NL evaluation corpus with intended query semantics, acceptable equivalent SQL,
+      ambiguous/refused requests, paraphrases, units, schema drift and adversarial context.
+      Record application-owned propagation, tuning and repair work separately from query quality.
 
-## M1. Build the deterministic self-maintaining relational core
+**Exit:** executable expected-state traces for two models and ordinary querying; a concrete
+SQL/NL contract and threat model; separate engine, intent-quality and differentiation gates.
+Mutants omitting propagation, absence dependencies or atomic publication must fail. M0 is
+not complete merely because the earlier bounded native slice exists.
 
-- [ ] Add multiple typed tables, primary keys and equality indexes, using a bounded native
-      relational intermediate representation shared by execution and maintenance.
-- [ ] Implement filter/project, equijoins, anti-joins, grouped count/sum, chained derived
-      relations and final-state invariants. Start with an acyclic graph and explicit types.
-- [ ] Maintain results through inserts, updates and deletes on either side of a join;
-      preserve multiplicities, empty groups, negative observations and checked arithmetic.
+## M1. Deliver useful SQL on the native relational substrate
+
+- [ ] Add a typed multi-table catalog, keys/indexes and schema binding over a common native
+      logical IR. SQL parsing may use a dependency; execution/storage must remain RefPot-owned.
+- [ ] Deliver a declared first SQL subset: parameterized `SELECT`, projection/filter, equijoins,
+      grouped count/sum, ordering and limits, with explicit NULL/type/overflow semantics.
+      Reject unsupported features rather than silently delegate or reinterpret them.
+- [ ] Add deterministic table definition and parameterized insert/update/delete through the
+      same catalog/transaction boundary. Stage SQL expansion explicitly; do not claim full
+      SQLite syntax, file-format or C-API compatibility.
+- [ ] Define autocommit versus explicit transactions, read-your-writes, statement failures,
+      cursor/snapshot lifetimes, cancellation and bounded execution. Expose supported syntax,
+      query plans and work counters without requiring agent configuration.
+- [ ] Differential-test queries and mutations against independent semantics and matched SQL
+      controls; fuzz parser/binder boundaries and reject side-effect/unknown operators.
+- [ ] Integrate a bounded Python preview and runnable `examples/` from installed wheels,
+      clearly labeled volatile until M4 qualifies relational persistence. Preserve old API tests.
+
+**Exit:** callers create tables, change rows and run useful handwritten SQL on the native
+engine, without an agent or maintained model. Typed parameters, results, errors, rollback and
+inspection work through the public preview—not only a research-driver protocol.
+
+## M2. Generate and execute natural-language queries through that same interface
+
+- [ ] Add explicit `agent=True` dispatch and optional provider configuration. Generate
+      supported SQL plus typed bindings, then use exactly M1's validation/execution path.
+      Enforce a read-only AST/function/object scope initially; no separate NL execution engine.
+- [ ] Implement permitted semantic context, inspectable query/assumptions/provenance, structured
+      clarification and bounded repair. No synthetic result rows, automatic language guessing,
+      hidden interactive prompts or inferred permission to write.
+- [ ] Enforce provider/privacy policy, budgets, cancellation and revalidation of schema, policy
+      and semantic-context identity. Keep generation before execution transactions; reject
+      unsupported transaction contexts. Implement explicit generated-query inspection/reuse.
+- [ ] Test parity between handwritten and generated SQL for results, errors and transaction
+      behavior. Test NL semantics independently: paraphrases, ambiguity, schema changes, denied
+      objects, malicious context, timeout, malformed output and provider loss.
+- [ ] Run both provider-free fixtures and an explicitly configured real-provider E2E corpus.
+      Record actual model/prompt identity, latency, retries, failure/clarification rates and
+      measured usage/cost when available; unknown billing is unknown, not zero.
+- [ ] Run installed SQL/NL examples with common result handling; prove ordinary SQL still
+      works with no provider/dependencies configured and while the provider is unavailable.
+
+**Exit:** natural language produces a real supported query and real native results under
+read-only authority. Report semantic success and false-acceptance failures separately from
+syntactic validity. A successful optimization experiment is not required. This is
+**read-only first, not read-only forever**; M6 defines the later mutation/definition gates.
+
+## M3. Make declared derived relations and constraints self-maintaining
+
+- [ ] Extend the common IR with maintained filter/project, equijoins, anti-joins, grouped
+      count/sum and chained relations. Start with an acyclic graph and explicit definitions;
+      keep persistent declaration distinct from ad hoc SQL or NL query execution.
+- [ ] Maintain inserts, updates and deletes on either side of joins; preserve multiplicities,
+      NULL behavior, empty groups, absence dependencies and checked arithmetic.
 - [ ] Propagate transaction deltas privately, share supported intermediate work and evaluate
-      invariants against the complete final candidate, not statement-order artifacts.
-- [ ] Publish source, derived and dependency/index changes atomically or discard them all;
-      maintain read-your-writes and operation-level failure semantics.
-- [ ] Compare every committed source and derived relation with the independent oracle.
-      Expose operator visits and maintenance work; do not hide full reruns behind an API.
+      invariants against the complete final candidate rather than statement-order artifacts.
+      Specify immediate versus final-state constraints; do not weaken existing API semantics.
+- [ ] Publish source, derived and dependency/index changes atomically or discard them all.
+      Maintain read-your-writes and operation-level exception safety, including caught errors.
+- [ ] Run both complete reference models against an independent original-definition oracle;
+      mutations of maintenance and atomic-publication logic must fail. Expose maintenance
+      visits/copies/memory so recomputation is not hidden behind an incremental API label.
+- [ ] Demonstrate SQL and, when M2 is available, NL reads of the same maintained results.
+      Run installed examples for multi-row commit, delete/update propagation and rejection.
 
-**Exit:** both complete models run through the same native implementation without
-application-written propagation routines. Readers see no mixed epoch and failed
-transactions leave no partial graph changes. This is the first functional deliverable,
-not another isolated lookup or aggregate benchmark.
+**Exit:** both models run without application-written propagation routines; failed
+transactions leave no partial graph changes and readers see no mixed state. This establishes
+the functional maintained engine, not durability, concurrency or algorithmic novelty.
 
-## M2. Build a restricted engine-agent experimentation interface
+## M4. Qualify whole-model durability and schema/definition evolution
 
-- [ ] Expose sanitized operator structure, cardinality/work counters and read/write costs,
-      with explicit memory, time, inference and experiment budgets.
-- [ ] Let one optional agent inspect, hypothesize, compose approved operators, experiment
-      on isolated state and revise proposals. Keep deterministic execution as the default.
-- [ ] Define a candidate artifact covering the shared representation, read plans,
-      maintenance derivation, assumptions and resource estimates—not prose tuning advice.
-- [ ] Implement a small deterministic checker for supported rewrite derivations and side
-      conditions. Validate initial-state equivalence and preservation under supported
-      update transitions; generate maintenance through trusted incrementalization rules.
-- [ ] Reject unknown operators, unsupported proofs, unsafe overflow rewrites, faulty delete
-      maintenance and proposals crossing opaque Python-function boundaries.
-- [ ] Fail closed on malformed/untrusted model output, provider failure or exhausted budget
-      without interrupting normal database operations. No inference under writer locks.
-
-**Exit:** a real agent produces a compositional candidate that the engine can execute in
-isolation and validate. Faulty rewrites and maintenance mutants are rejected. Provider-free
-fixtures test the protocol but do not substitute for exercising the actual agent loop.
-
-## M3. Establish whether agent-guided specialization earns its place
-
-- [ ] Use overlapping joins/aggregates to seek a shared representation across queries,
-      rather than only selecting an index or a complete pre-enumerated plan.
-- [ ] Compare ordinary optimization, competent hand-factored plans, deterministic search
-      over the **same candidate language**, and agent-guided search under matched budgets.
-- [ ] Charge inference, all trials, representation construction, ongoing writes, retained
-      memory, catch-up and retirement—not just favorable read-query latency.
-- [ ] Test held-out workloads and read-heavy/write-heavy transitions. Measure search cost,
-      plan quality and regressions, including cases where no change is best.
-- [ ] Use agent-generated adversarial mutations as extra testing, not a replacement for
-      the deterministic checker or independent oracle.
-- [ ] Preserve candidates, derivations, model/provider identity, budgets, sanitized traces,
-      exact source identities and reproducible analysis without publishing secrets.
-
-**Exit:** a verified agent-proposed structure demonstrates a useful reduction in physical-design
-work or full-workload resource cost against strong controls. Any claimed agent-specific
-advantage must survive equal-budget non-agent search. If that does not hold, retain useful
-core work and keep agent specialization experimental; do not claim a differentiator from
-one winning query or simply searching more candidates. There is no fixed speed multiplier.
-
-## M4. Qualify durable whole-model state and definition evolution
-
-- [ ] Extend the versioned storage contract to source rows, accepted derived outputs,
-      definition identity and required dependency/index state at one commit frontier.
-- [ ] Choose explicitly which native structures are persisted versus rebuilt behind a
-      recovery barrier. Recovery must not call inference or registered Python functions.
-- [ ] Preserve bounded logging/checkpointing, capacity checks before acknowledgment,
+- [ ] Version source rows, logical schemas/definitions, accepted derived outputs and required
+      dependency/index metadata at one commit frontier. Choose what persists versus rebuilds
+      behind a recovery barrier; reopen must need neither inference nor Python callbacks.
+- [ ] Preserve bounded logging/checkpointing, pre-acknowledgment capacity checks,
       allocation-before-publication and poisoned-writer behavior after uncertain I/O.
 - [ ] Inject short writes, interrupted syscalls, EIO, ENOSPC and allocation failures during
-      preparation, append, sync, publication, checkpoint, recovery and reclamation.
-- [ ] Test process termination, corrupted framing/lengths/metadata, interrupted checkpoints,
-      stale temporary files, reopen, continued writes and a second restart.
-- [ ] Version definitions explicitly. Implement offline atomic model migration first;
-      missing/incompatible definitions must not silently present stale state as current.
-- [ ] Document backup/restore, format transitions, filesystem assumptions and unsupported
-      failure guarantees; process-kill testing is not physical power-loss qualification.
+      prepare, append, sync, publication, checkpoint, recovery and reclamation. Test process
+      termination, corrupt framing/lengths/metadata, stale files and repeated reopen/write/reopen.
+- [ ] Implement offline atomic schema/definition migration first. Invalidate affected plans,
+      generated-query reuse and semantic-context bindings; never serve stale derived state as
+      current or silently reinterpret a previously bound query after a definition change.
+- [ ] Define backup/restore, integrity checking and old-format transitions. Retain explicit
+      filesystem assumptions; process-kill tests do not establish physical power-loss safety.
+- [ ] Run installed model/SQL recovery examples and the supported platform failure matrix,
+      alongside existing alpha qualification. Recovery and normal deterministic use must
+      continue without provider credentials, model access or an agent cache.
 
-**Exit:** acknowledged transitions survive restart as a coherent model. Unacknowledged
-transitions may recover wholly old or wholly new, never partial. Interrupted migrations
-expose one complete definition version, and bounded recovery preserves subsequent use.
+**Exit:** acknowledged transitions survive restart as one coherent model. An uncertain
+transition is wholly absent or present, never partial. Interrupted migration exposes one
+complete definition version; bounded recovery preserves continued writes and a second restart.
 
-## M5. Qualify concurrent execution and supported Python computations
+## M5. Qualify concurrency, free-threading and tracked Python computations
 
 - [ ] Implement independently owned transaction contexts, private graph evaluation, exact
-      conflict validation and short publication critical sections.
-- [ ] Test phantoms, missing-row dependencies, failed observations, own-write ordering and
-      write skew through derived constraints against serializable-history oracles.
-- [ ] Revalidate reusable observation/MVCC components and bound snapshot, row-version,
-      dependency-edge and retired-plan retention; do not transplant prototype mutexes or
-      fixed schemas as the product architecture.
-- [ ] Add optional keyed deterministic Python cells over immutable tracked inputs, with
-      explicit definition versions, dynamic dependencies and whole-cell reruns. Treat
-      registered code as trusted, not sandboxed or automatically proven pure.
-- [ ] Test branch-dependent edge replacement, caught lookup failures, unchanged-output
-      propagation stops and computation exceptions. Reject undeclared side effects by
-      contract; do not claim a decorator can enforce arbitrary Python purity.
-- [ ] Run Python callbacks outside the publication lock; release the GIL for native work.
-      Qualify ownership/lifetimes on standard and actual free-threaded CPython builds.
-- [ ] Exercise native sanitizer/race/fuzz campaigns and measure real overlap of independent
-      graph regions. Report hot-aggregate serialization and dense fan-out honestly.
+      conflict validation and short publication critical sections. State isolation guarantees
+      explicitly; validate phantoms, missing/failed observations, write skew and own-write order
+      against serializable-history oracles before claiming serializable maintained models.
+- [ ] Requalify observation/MVCC experiments and bound snapshots, row versions, dependency
+      edges and retired structures. Demonstrate real overlap of independent native work;
+      report hot-key/hot-aggregate serialization and dense fan-out honestly.
+- [ ] Release the GIL for native work; qualify binding ownership/lifetimes on standard and
+      actual free-threaded CPython. Run native sanitizer/race/fuzz campaigns and installed
+      multithreaded workloads, not only threaded C++ harnesses.
+- [ ] Separately add optional keyed deterministic Python cells over immutable tracked inputs,
+      versioned definitions and whole-cell reruns. Registered code is trusted—not sandboxed,
+      automatically pure or an invitation to execute agent-generated Python.
+- [ ] Test branch-dependent dependency replacement, caught lookup failures, unchanged-output
+      propagation stops and callback exceptions. Callbacks run outside publication locks;
+      never replay arbitrary caller callbacks on automatic retries or recovery.
+- [ ] Define Python-cell persistence/rebuild behavior under M4 without callback replay. Test
+      how conflict retries, callback failure and definition changes preserve atomic effects.
 
-**Exit:** source and derived invariants remain correct under concurrent transactions;
-independent native work actually overlaps. Supported Python cells and their dependency
-changes commit or abort together. No arbitrary caller callbacks are replayed on retry.
+**Exit:** concurrent native queries and maintained writes preserve declared isolation and
+invariants with bounded retained state. Optional Python cells require their own qualification;
+they do not block useful native concurrency or weaken provider-free recovery.
 
-## M6. Install and retire verified physical plans safely
+## M6. Extend explicit agent authority to writes and persistent definitions
 
-- [ ] Build a candidate representation privately from a pinned snapshot while the current
-      authoritative plan remains usable; track and apply intervening committed changes.
-- [ ] Verify exact catch-up and compatible model identity, then durably switch the physical
-      plan catalog at a consistent epoch without changing logical definitions.
-- [ ] Retain old plans and their required state for active readers; reclaim only after
-      lifetime constraints permit it and account for overlapping memory/storage.
-- [ ] Persist accepted artifacts and required metadata so restart needs no model access.
-- [ ] Use deterministic activation budgets and regression policy. Keep a usable baseline;
-      account for rebuild/catch-up if a retired representation is needed for fallback.
-- [ ] Test crashes, concurrent updates, model changes, provider loss and allocation failures
-      during build, catch-up, switch, fallback and reclamation.
+- [ ] After M1/M2/M3/M4, support deliberately authorized generated DML through the same query
+      parameter and native transaction path. Require M5 for claims about concurrent generated
+      writes. `agent=True` alone never authorizes mutation, DDL or definition installation.
+- [ ] Define narrowly scoped capabilities for operations, tables/columns and applicable row
+      policies, with transaction-time affected-row/work limits. Recheck authority and constraints
+      during execution; a preflight count or dry run is not protection against changed data.
+- [ ] Expose generated SQL and bindings for caller inspection/approval where requested.
+      Bind approvals to query, parameters, schema/policy/semantic versions and expiration;
+      rejection or changed meaning requires a new decision, not silent agent substitution.
+- [ ] Define no-effect, aborted and uncertain-outcome errors; never automatically reissue a
+      possibly committed write. Specify bounded idempotency identity/retention where supported,
+      atomically coupling effects and outcome receipts rather than promising exactly-once magic.
+- [ ] In a separately gated subphase, generate schema or maintained-definition proposals.
+      Apply them only through explicit definition authority and M4 migration/recovery rules;
+      an ordinary query must not install them. Business-rule meaning remains caller-owned.
+- [ ] Exercise overbroad mutations, ambiguity, authorization drift, concurrent change, provider
+      failure, cancellation, constraint rejection, crash/reopen and expired retry identities
+      through installed examples and actual-provider tests as well as deterministic fixtures.
 
-**Exit:** switching plans, reverting and restarting preserve identical logical results,
-errors and transaction guarantees. The agent cannot approve or publish its own proposal.
-No claim that rollback is instantaneous or free when old state was not maintained.
+**Exit:** authorized NL writes obey the same transaction, invariant and durability guarantees
+as handwritten SQL; rejected requests have no partial effects. Generated definitions remain
+proposals until explicitly accepted. Application approvals stay with the caller, not a new
+RefPot business-workflow framework.
 
-## M7. Deliver the usable Python engine and coherent model lifecycle
+## M7. Pursue original physical mechanisms and verified agent synthesis
 
-- [ ] Expose a small structured relational interface with explicit transactions, derived
-      relations, invariants, optional keyed cells and actionable execution reports.
-- [ ] Ship runnable `examples/` for resources, a second domain, rejection/rollback, recovery,
-      definition changes and agent specialization versus model-free execution.
-- [ ] Build release artifacts and run examples twice through installed wheels outside the
-      checkout on the declared platform/interpreter matrix; preserve existing API tests.
-- [ ] Add coherent snapshot-plus-committed-change batches with an explicit slow-consumer
-      policy. No failed-transaction notifications, implied durable resume or external
-      exactly-once effects.
-- [ ] Publish complete workload measurements: latency/throughput, memory, storage,
-      synchronization, checkpoints, maintenance, recovery and optimization costs. Preserve
-      paired repeats, raw results, strongest eligible controls and reproduction commands.
-- [ ] Align public docs and agent-readable exports with actual delivered capabilities;
-      keep experimental agent search separate from qualified deterministic behavior.
-- [ ] Complete release/publisher prerequisites, then obtain separate authorization for tags,
-      publication and deployment and independently verify public artifacts.
+- [ ] Start from necessary state, acknowledgment and recovery invariants. Investigate shared
+      representations across queries, factorized maintenance, reuse across candidate states,
+      and ways to eliminate redundant propagation/logging/storage—not only index selection or
+      selecting among prewritten plans. State what work disappears and which cost replaces it.
+- [ ] For each mechanism, identify nearest prior art, state its semantic/domain assumptions
+      and define a falsifying complete-model experiment before claiming invention. Preserve
+      useful conventional mechanisms without presenting integration alone as originality.
+- [ ] Expose sanitized operator structure and measured costs through an isolated, budgeted
+      engine experimentation interface. A real optional agent can inspect, compose approved
+      operators, evaluate and revise; it cannot execute arbitrary code or change logical rules.
+- [ ] Require candidate artifacts containing representation, read/maintenance plans, derivations,
+      side conditions and resource estimates. Check initial equivalence and supported update
+      transitions through a small deterministic checker/trusted incrementalization rules.
+      Fail closed on unsupported proofs, unsafe arithmetic and opaque Python boundaries.
+- [ ] Compare ordinary optimization, competent hand-factored plans, deterministic search over
+      the **same candidate language** and agent search under matched budgets. Charge inference,
+      all trials, construction, writes, retained memory, catch-up, retirement and recovery.
+- [ ] Test held-out workloads, scaling and phase transitions, including "no change" wins.
+      Preserve frozen source/candidate identities, exact counts, regressions, independent
+      original-definition oracles and reproducible evidence. Tests supplement—not replace—the
+      restricted equivalence argument. Never present instruction restrictions as a sandbox.
 
-**Exit:** a developer installs RefPot, defines either reference model, changes source rows
-and gets correct maintained results, atomic rejection, concurrent access and restart
-recovery without writing synchronization machinery. Where M3 and M6 are qualified, an
-optional agent can specialize that execution without changing the application's contract.
-A model outage does not prevent ordinary database use.
+**Exit:** an executable mechanism removes meaningful complete-workload cost or physical-design
+work against strong controls without weaker semantics. Agent-specific promotion additionally
+requires control-relative benefit; rediscovering the hand design or losing to equal-budget
+search is not that benefit. Retain useful deterministic progress and continue ambitious
+research when an agent hypothesis fails. No fixed multiplier and no veto on M1–M6 delivery.
 
-## Later extensions, not prerequisites for the first useful model
+## M8. Install, adapt and retire verified physical representations safely
 
-- [ ] Broaden SQL through the same relational/transaction boundary; specify and test the
-      supported subset rather than promise SQLite SQL, file or C API compatibility.
-- [ ] Add a simple ORM over validated structured operations, preserving explicit queries
-      and transactions. Measure complete ORM usage separately from native/Python execution.
-- [ ] Investigate monotone recursion, online logical-model upgrades and larger-than-memory
-      operation with separate contracts, failure tests and competitive controls.
+- [ ] Depend on M3/M4/M5 and an admissible checked candidate language from M7, not on agent
+      superiority. Deterministic proposals may use the same lifecycle; an unqualified proposer
+      stays experimental. Logical definitions and physical installation authority remain distinct.
+- [ ] Build privately from a pinned snapshot, track intervening committed changes and validate
+      exact catch-up against compatible logical/schema identity. Keep the authoritative plan
+      usable; switch the durable physical catalog only at a consistent safe point.
+- [ ] Retain old plans/state for active readers and reclaim after lifetime constraints permit.
+      Account for overlapping memory/storage and bound catch-up under sustained writes; decline
+      activation rather than violate latency, capacity or recovery limits.
+- [ ] Persist accepted artifacts and required metadata so restart needs no agent. Enforce
+      deterministic activation budgets and regression policy; keep a usable ordinary fallback.
+      Include rebuild/catch-up cost if a retired representation must be recreated.
+- [ ] Test crash, provider loss, allocation failure, concurrent writes and model changes during
+      build, catch-up, switch, fallback and reclamation; measure sustained adaptation costs.
 
-No backend framework, chat-to-SQL product, business-agent runtime, mandatory external
-service, cloud replication, distributed consensus or public tuning framework is implied.
-The first priority remains one complete self-maintaining model and a verified, useful
-agent-proposed execution structure—not a larger compatibility checklist.
+**Exit:** installation, fallback and restart preserve identical logical results, errors and
+transaction guarantees. The agent cannot approve or publish its own proposal. Reversion is
+not claimed instantaneous or free when old state was not maintained.
+
+## M9. Broaden the database and qualify the complete Python experience
+
+- [ ] Grow SQL deliberately: richer joins/subqueries, CTEs, expressions, grouping/aggregates
+      and window operations, with a published support matrix and independent semantic tests.
+      Distinguish executable queries from the narrower incrementally maintainable subset;
+      unsupported persistent definitions fail explicitly rather than silently weakening guarantees.
+- [ ] Add coherent snapshot-plus-committed-change batches with slow-consumer/backpressure and
+      retention policies. No failed-transaction notifications, implied durable resume or external
+      exactly-once effects. Qualify any durable resume feature separately.
+- [ ] Ship runnable `examples/` for ordinary SQL, common SQL/NL results, two maintained models,
+      rollback, recovery, migrations, concurrency, optional cells and each advertised agent mode.
+      Run them twice through installed wheels outside the checkout on the declared matrix.
+- [ ] Publish full-workload latency/throughput, memory/storage, synchronization, checkpoints,
+      maintenance, recovery, inference and optimization costs. Preserve paired repeats, raw
+      results, strongest eligible controls and reproduction commands; separate intent accuracy
+      from native-engine performance and original-mechanism claims.
+- [ ] Qualify predictable resource ceilings, diagnostics, cancellation and integrity/backup
+      workflows. Keep installation and ordinary use simple; optional agents and an eventual ORM
+      must not impose a model, service, framework or hidden application protocol on SQL callers.
+- [ ] Align human docs, agent-readable exports, supported-feature discovery and artifacts with
+      delivered behavior. Obtain separate release/publication/deployment authorization and
+      independently verify the public artifacts; a roadmap checkbox does not ship an API.
+
+**Exit:** a developer installs RefPot and uses each advertised mode through one coherent native
+engine, with bounded resource behavior and explicit authority/failure semantics. Ordinary
+use survives model outages. Demonstrated differentiation must name the task, competitor,
+mechanism and measured benefit—not merely the combined feature list.
+
+## Further architecture frontier—not abandoned ambition
+
+- [ ] Investigate larger-than-memory execution, spilling and bounded-state maintenance with
+      explicit I/O/capacity/recovery contracts and complete-workload controls.
+- [ ] Extend maintained computation toward supported recursion/fixpoints, richer aggregates
+      and online logical-schema/model evolution, with termination and migration guarantees.
+- [ ] Investigate deeper co-design of authoritative state, physical representations and durable
+      transition evidence to remove duplicated work. Keep exploratory mechanisms isolated until
+      full failure/compatibility gates justify replacing the shipped baseline.
+- [ ] Add a simple optional ORM over the same validated operations. Preserve explicit SQL,
+      transactions and independent engine usage; benchmark complete ORM workloads separately.
+
+No backend framework, mandatory external service, cloud replication, distributed consensus
+or application-agent runtime is implied. The ambition is a substantial embedded database and
+an original engine contribution, with useful SQL/NL querying delivered along the way—not an
+endless experiment gate, a query wrapper, or a compatibility checklist mistaken for invention.
 
 [Download the canonical roadmap as Markdown](/docs/project-roadmap.md).

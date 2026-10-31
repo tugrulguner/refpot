@@ -4,17 +4,22 @@ description: Canonical RefPot research milestones, generated from the repository
 ---
 
 
-RefPot's direction is a **self-maintaining embedded relational database for Python**:
-query it with SQL or, explicitly, natural language through the same query interface;
-declare derived relations and let the engine maintain them transactionally; let optional
-engine agents investigate better physical representations without changing query meaning.
+RefPot's direction is a **self-maintaining embedded relational database for Python** whose
+primary ambition is to invent a better deterministic engine and a simpler database experience.
+Storage, queries, writes, transactions, maintenance, concurrency and recovery are all part of
+that design problem—not a conventional substrate to finish before adding the interesting AI.
 RefPot owns its native storage and execution engine. It is not a SQLite wrapper.
 
-The ambition is an independently useful database with less application-owned synchronization
-and less manual physical-design work—not merely a natural-language front end, a faster
-fixed-schema map, or a new name for established optimization techniques. Building useful
-querying and pursuing original engine mechanisms are parallel obligations. Neither a failed
-optimizer experiment nor an unresolved novelty claim should block the useful database.
+RefPot must earn adoption **with agents completely disabled**. Better ordinary database
+operations and better Python usability are first-class product objectives. Optional natural-
+language querying and engine agents add capabilities to that database; they are not its main
+justification or a substitute for engine invention. SQL and NL still share one query interface.
+
+The goal is not merely a natural-language front end, a faster fixed-schema map, or a familiar
+engine with a new API. Challenge unnecessary work, duplicated state and developer ceremony
+throughout the core. Useful releases can precede a proven original mechanism, but conventional
+feature completion does not satisfy the architectural ambition. Neither a failed optimizer
+experiment nor an unresolved novelty claim should block independently useful progress.
 
 This is the development direction, not a description of shipped capabilities. A checked item means only that bounded deliverable exists; it does not imply a supported release. All new milestones below are planned and unchecked. There are no delivery dates.
 
@@ -31,7 +36,7 @@ Derived relations, internal optimization agents, SQL, ORM and concurrent access 
 shipped**. Natural-language query generation is also not shipped; there is no implemented
 SQL `execute` interface to which an agent flag can simply be added. See the
 [package contract](/package-contract/), [package results](/project/package-performance/),
-and [release checklist](https://github.com/tugrulguner/refpot/blob/55c6f6efdee908068dde037e4f74aebac6522349/docs/releasing.md).
+and [release checklist](https://github.com/tugrulguner/refpot/blob/1b6f850613936591f13a04bf7ddd17505cc9e219/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -40,7 +45,7 @@ and [release checklist](https://github.com/tugrulguner/refpot/blob/55c6f6efdee90
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
-- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/55c6f6efdee908068dde037e4f74aebac6522349/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/55c6f6efdee908068dde037e4f74aebac6522349/research/application-model/RESULTS.md).
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/1b6f850613936591f13a04bf7ddd17505cc9e219/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/1b6f850613936591f13a04bf7ddd17505cc9e219/research/application-model/RESULTS.md).
 
 ### Still-open qualification and product gates
 
@@ -67,6 +72,51 @@ Retain useful native representations and ordinary fallbacks. Keep seeking more f
 ways to remove duplicated state and work, but do not make an optimizer-agent win a
 prerequisite for SQL, natural-language querying, or durable self-maintenance. Query generation
 and physical synthesis solve different problems and must pass different gates.
+
+## Deterministic engine and usability are the primary design agenda
+
+The central question is: **why choose RefPot for ordinary database work when no agent is
+configured?** A natural-language demo cannot answer it. Neither can implementing SQL, using
+C++, or packaging known operators. The intended answer must combine a concrete engine
+advantage with a simpler complete developer workflow, under explicit workload and guarantee
+boundaries. There is no claim that one design will win every workload.
+
+Start this work in M0–M1; it is **not deferred to M7** or restricted to agent-generated plans.
+Treat the current map-backed package, volatile relational slice and earlier experiments as
+baselines and components to challenge—not as the settled future architecture. Preserve the
+shipped contract while investigating alternatives in isolated native slices. Freeze observable
+semantics before interfaces harden; do not prematurely freeze the physical representation.
+
+### Core architectural questions and evidence
+
+| Design axis | Ambition to investigate | Evidence required with agents disabled |
+| --- | --- | --- |
+| **Storage and access design** | Co-design authoritative records, lookup/range access, indexes and query execution instead of accepting separate representations and conversions by default. Compare row/column/hybrid and established storage organizations where relevant; do not select or reject a family by fashion. | Point/range reads, joins, singleton/batch writes and scaling; complete memory, write-amplification and maintenance costs, including losing cases. |
+| **One change, less repeated work** | Investigate whether one typed change representation can drive visibility, index updates, derived maintenance, constraint checks and durable evidence without repeated full-state scans, copies or translations. Share necessary work across operations, not only across agent-selected queries. | Original-state oracles, insert/update/delete/rollback, sparse and broad changes, transaction acknowledgment and retained-state accounting. Removing work must not move an uncounted cost into commit or recovery. |
+| **Concurrency by construction** | Design ownership, versions, dependency validation and publication together so independent work can overlap without making every operation pay for unrelated work. Avoid treating a global lock or the GIL as the architecture. | Serializable-history checks where promised, conflicts/phantoms/write skew, actual multicore overlap, skewed workloads, bounded versions and reclamation. |
+| **Durability without redundant machinery** | Challenge which state and transition evidence must be stored, rebuilt or duplicated; integrate commit, checkpoint and recovery design rather than bolt persistence onto a volatile result. | Equal acknowledgment guarantees, I/O/crash/corruption tests, bounded recovery and continued use, full checkpoint/space/reclamation cost. Fewer syncs obtained by weakening acknowledgment guarantees are not an architectural win. |
+| **Python usability as an engine constraint** | Design ordinary schema definition, typed parameters/results, explicit transactions, bulk operations and lifecycle together. Minimize conversion and ownership friction without hidden queries, flushes, mandatory sessions/repositories or an ORM dependency. | Runnable installed workflows for setup, querying, mutation, rollback, migration and reopen; API concept/lifetime inventory, error-recovery steps and Python-boundary cost—not just shorter snippets. |
+
+These are architectural hypotheses, not names for already-invented mechanisms. For each
+candidate, state the unnecessary work or user responsibility it removes, the invariant that
+makes removal valid, nearest prior art, shifted costs and a falsifying experiment. Record
+counterexamples and reject cosmetic simplifications honestly; a negative result must refine the
+next architectural question, not turn engine invention into an optional future extra.
+
+### An agent-free adoption case, not just an agent-free fallback
+
+Use a complete Python workflow: define tables, load/update data, run repeated queries, commit
+or reject a multi-row change, maintain declared results, evolve definitions and reopen after
+failure. Compare with competent SQLite usage and appropriate alternatives under matched
+semantics. Track runtime work, latency distributions, throughput, memory/storage and recovery
+alongside setup concepts, manual synchronization, tuning and repair responsibilities.
+
+Separate three verdicts: **usable deterministic database**, **demonstrated engine/usability
+advantage**, and **original mechanism**. The first can ship honestly before the others, but
+does not complete them. Agent-mode results cannot clear either deterministic advantage gate.
+Keep fast ordinary operations, low overhead and predictable scaling as engineering objectives
+without reinstating a universal speed multiplier. Agent features must not impose provider,
+configuration or steady-state inference overhead on ordinary database use.
 
 ## One query interface, one native execution engine
 
@@ -146,7 +196,7 @@ Three responsibilities share one engine without being conflated:
 
 | Responsibility | Output and authority | Success criterion |
 | --- | --- | --- |
-| Deterministic database | Native queries, maintained relations, constraints, atomic commits and recovery | Correct, independently useful engine with measured complete-workload costs |
+| Deterministic database—primary product | Invented native execution/storage mechanisms, ordinary queries/writes, maintained relations, atomic commits and recovery; simple Python usage | Correctness plus a demonstrated agent-free engine and usability advantage; originality assessed separately |
 | Optional query-generation agent | Supported executable SQL within the caller's existing scope | Useful intent-to-query accuracy, honest clarification and bounded cost; same engine semantics |
 | Optional physical-optimization agent | Candidate representations and maintenance plans, not logical business rules | Verified semantics and control-relative benefit after all construction/maintenance/lifecycle costs |
 
@@ -176,10 +226,12 @@ application orchestration is not. A query agent is not a general tool-using appl
 
 ### Competitive thesis to prove
 
-The target is an embedded engine that combines **one SQL/NL query path, exact transactional
-self-maintenance and verified adaptive physical design**, with an original engine contribution
-that removes work or state rather than merely relocating application code. None of these
-capabilities alone establishes novelty. SQL generation, incremental views, reactive databases,
+The primary thesis is **a better deterministic embedded engine and simpler Python database
+usage**, supported by a mechanism that removes unnecessary work, state or developer-owned
+protocols. Exact self-maintenance and deterministic physical design are parts of that thesis,
+not its entire scope. One SQL/NL query path and optional agents extend it; their presence cannot
+justify choosing the ordinary database. None of these capabilities alone establishes novelty.
+SQL generation, incremental views, reactive databases,
 early aggregation and learned optimizers already exist. PostgreSQL + pg_ivm is a direct
 maintenance baseline; competent SQLite layers and query-generation libraries are relevant
 controls, not straw men.
@@ -215,13 +267,16 @@ novelty is established by this roadmap.
 
 ## Delivery sequence and dependencies
 
-M0 freezes contracts; M1 delivers the native SQL substrate. M2 adds optional read-only NL
-query generation, while M3 extends that substrate into atomic self-maintenance. These two
-tracks can proceed independently after M1. M4 makes the relational/maintained catalog durable;
-M5 qualifies concurrency and optional tracked Python computations. M6 extends explicit agent
-authority beyond reads. M7 pursues original physical mechanisms and agent synthesis; bounded
-offline work can run alongside the product track rather than block it. M8 qualifies live plan
-installation. M9 integrates broad SQL, lifecycle and installed-consumer qualification.
+M0 establishes the deterministic architecture/usability hypotheses and freezes observable
+contracts. M1 compares native designs and delivers the first SQL/ordinary-operation slice;
+it is not merely a parser in front of an assumed engine. Core invention continues through
+M3 maintenance, M4 durability and M5 concurrency, with agent-free evidence at every boundary.
+M2 adds optional NL reads after M1 and is not a dependency of M3–M5. M6 extends explicit agent
+authority beyond reads. M7 extends physical-design research and optionally adds agent synthesis;
+it is not the starting point for original engine work. M8 qualifies live plan installation.
+M9 integrates broad SQL, lifecycle and complete deterministic usability qualification, then
+qualifies each advertised optional mode separately. Milestone numbers do not serialize these
+independent tracks; an NL corpus/provider adapter must not hold up the deterministic core.
 
 This is not a waterfall withholding all releases until M9. Every implemented slice needs
 runnable installed examples and truthful scope. A durable SQL/maintained-model preview can
@@ -229,8 +284,15 @@ ship after its M1/M3/M4 and existing alpha gates; advertising NL additionally re
 Concurrent access requires M5, generated writes M6, and adaptive installation M8. A release
 may omit unqualified capabilities, never imply them. Release/merge authority remains separate.
 
-## M0. Freeze the query, model and authority contracts
+## M0. Establish core design hypotheses and freeze observable contracts
 
+- [ ] Write falsifiable architectural hypotheses for the deterministic design axes above,
+      including a candidate cost model, nearest known designs and an agent-free adoption case.
+      Identify ordinary workloads and developer responsibilities each proposal must improve;
+      do not choose the storage/transaction architecture solely by extending the current prototype.
+- [ ] Specify minimal Python workflows and explicit ownership/error semantics before binding
+      them to internal structures. Compare concept count, conversions, hidden work and recovery
+      burden with competent incumbent usage. Usability is not deferred to an ORM or M9 polish.
 - [ ] Specify the shared query/configuration/result/error interface, typed parameters,
       supported SQL grammar and capability discovery. Keep the installed `Database` / `Row`
       boundary and future relational catalog migration explicit.
@@ -245,13 +307,22 @@ may omit unqualified capabilities, never imply them. Release/merge authority rem
       ambiguous/refused requests, paraphrases, units, schema drift and adversarial context.
       Record application-owned propagation, tuning and repair work separately from query quality.
 
-**Exit:** executable expected-state traces for two models and ordinary querying; a concrete
-SQL/NL contract and threat model; separate engine, intent-quality and differentiation gates.
-Mutants omitting propagation, absence dependencies or atomic publication must fail. M0 is
-not complete merely because the earlier bounded native slice exists.
+**Exit:** falsifiable core design proposals and usability workflows, executable expected-state
+traces for two models and ordinary querying, and concrete query/authority contracts. The
+deterministic contract and controls unblock M1 independently of the optional NL corpus.
+Mutants omitting propagation, absence dependencies or atomic publication must fail. Separate
+engine correctness, engine/usability advantage, originality and NL quality; the earlier bounded
+native slice alone completes none of these broader gates.
 
-## M1. Deliver useful SQL on the native relational substrate
+## M1. Prove the first deterministic design slice and deliver native SQL
 
+- [ ] Implement and compare competing native designs for the highest-value M0 hypothesis,
+      using the same ordinary operations, semantics and complete cost accounting. Retain the
+      existing baseline and negative results; make the selected representation and unresolved
+      limitations explicit. Do not claim invention from a faster isolated operator.
+- [ ] Carry the selected slice into ordinary Python usage and test usability alongside native
+      behavior: typed parameters/results, bulk operations, predictable lifetimes and actionable
+      errors. Keep logical semantics stable while revising physical internals from evidence.
 - [ ] Add a typed multi-table catalog, keys/indexes and schema binding over a common native
       logical IR. SQL parsing may use a dependency; execution/storage must remain RefPot-owned.
 - [ ] Deliver a declared first SQL subset: parameterized `SELECT`, projection/filter, equijoins,
@@ -270,7 +341,10 @@ not complete merely because the earlier bounded native slice exists.
 
 **Exit:** callers create tables, change rows and run useful handwritten SQL on the native
 engine, without an agent or maintained model. Typed parameters, results, errors, rollback and
-inspection work through the public preview—not only a research-driver protocol.
+inspection work through the public preview—not only a research-driver protocol. Retain a
+measured architectural decision and a comparative usability result, including failures. A
+conventional baseline may support an honest preview; it does not close the deterministic
+invention or adoption-advantage objectives. No agent feature is required to demonstrate the slice.
 
 ## M2. Generate and execute natural-language queries through that same interface
 
@@ -299,6 +373,9 @@ syntactic validity. A successful optimization experiment is not required. This i
 
 ## M3. Make declared derived relations and constraints self-maintaining
 
+- [ ] Compare deterministic change/propagation representations against both full recomputation
+      and competent incremental maintenance. Account for duplicated work removed and shifted
+      cost on sparse and dense changes; qualifying self-maintenance is not contingent on an agent.
 - [ ] Extend the common IR with maintained filter/project, equijoins, anti-joins, grouped
       count/sum and chained relations. Start with an acyclic graph and explicit definitions;
       keep persistent declaration distinct from ad hoc SQL or NL query execution.
@@ -321,6 +398,9 @@ the functional maintained engine, not durability, concurrency or algorithmic nov
 
 ## M4. Qualify whole-model durability and schema/definition evolution
 
+- [ ] Evaluate M0's state/transition-evidence designs against the retained durable baseline
+      under equal acknowledgment semantics. Measure logging, checkpoints, space and recovery
+      together; neither a volatile speedup nor weakened sync guarantees selects the architecture.
 - [ ] Version source rows, logical schemas/definitions, accepted derived outputs and required
       dependency/index metadata at one commit frontier. Choose what persists versus rebuilds
       behind a recovery barrier; reopen must need neither inference nor Python callbacks.
@@ -344,6 +424,9 @@ complete definition version; bounded recovery preserves continued writes and a s
 
 ## M5. Qualify concurrency, free-threading and tracked Python computations
 
+- [ ] Compare candidate ownership/validation/publication designs on ordinary concurrent
+      workloads with agents disabled, measuring useful overlap, contention, tail latency and
+      retained state. Let those results inform the core architecture, not only lock tuning.
 - [ ] Implement independently owned transaction contexts, private graph evaluation, exact
       conflict validation and short publication critical sections. State isolation guarantees
       explicitly; validate phantoms, missing/failed observations, write skew and own-write order
@@ -393,8 +476,11 @@ as handwritten SQL; rejected requests have no partial effects. Generated definit
 proposals until explicitly accepted. Application approvals stay with the caller, not a new
 RefPot business-workflow framework.
 
-## M7. Pursue original physical mechanisms and verified agent synthesis
+## M7. Extend deterministic physical design and verified agent synthesis
 
+- [ ] Extend the architectural work begun in M0–M5 rather than introduce invention only here.
+      First qualify representations and maintenance strategies with deterministic construction
+      and selection; assess what an optional proposer adds in a separate comparison.
 - [ ] Start from necessary state, acknowledgment and recovery invariants. Investigate shared
       representations across queries, factorized maintenance, reuse across candidate states,
       and ways to eliminate redundant propagation/logging/storage—not only index selection or
@@ -446,6 +532,11 @@ not claimed instantaneous or free when old state was not maintained.
 
 ## M9. Broaden the database and qualify the complete Python experience
 
+- [ ] Run the full deterministic acceptance and comparative usability campaign with agents disabled.
+      Require an explicit agent-free adoption case before claiming RefPot's overall advantage;
+      report ordinary query/write/transaction/recovery results separately from NL convenience or
+      agent search. Carry unresolved architectural objectives forward rather than mark them done
+      because the feature matrix is complete.
 - [ ] Grow SQL deliberately: richer joins/subqueries, CTEs, expressions, grouping/aggregates
       and window operations, with a published support matrix and independent semantic tests.
       Distinguish executable queries from the narrower incrementally maintainable subset;
@@ -469,8 +560,9 @@ not claimed instantaneous or free when old state was not maintained.
 
 **Exit:** a developer installs RefPot and uses each advertised mode through one coherent native
 engine, with bounded resource behavior and explicit authority/failure semantics. Ordinary
-use survives model outages. Demonstrated differentiation must name the task, competitor,
-mechanism and measured benefit—not merely the combined feature list.
+use is designed to be compelling without a model, not merely to survive model outages.
+Demonstrated differentiation must name the task, competitor, mechanism and measured engine
+and usability benefit—not merely the combined feature list or the existence of agent mode.
 
 ## Further architecture frontier—not abandoned ambition
 

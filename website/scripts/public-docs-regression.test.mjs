@@ -28,6 +28,10 @@ test('roadmap exports preserve proposed unified query examples and all planned m
  assert.match(code(page)[0],/db\.execute\(query=/);
  assert.match(code(page)[0],/agent=True/);
  assert.match(page,/Proposed API, not available in the published package/);
+ const agenda='## Deterministic engine and usability are the primary design agenda';
+ assert.ok(page.includes(agenda));
+ assert.ok(page.indexOf(agenda)<page.indexOf('## One query interface'));
+ assert.match(page,/with agents completely disabled/);
  assert.deepEqual([...page.matchAll(/^## (M\d+)\./gm)].map(match=>match[1]),Array.from({length:10},(_,i)=>`M${i}`));
  assert.doesNotMatch(page.split('## M0.')[1],/- \[x\]/);
 });

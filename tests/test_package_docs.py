@@ -115,6 +115,31 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertNotIn("No backend framework, chat-to-SQL product", text)
         self.assertNotIn("M2–M3 investigate agents", text)
 
+    def test_roadmap_makes_deterministic_invention_and_usability_primary(self):
+        text = (ROOT / "ROADMAP.md").read_text()
+        normalized = " ".join(text.split())
+        core = "## Deterministic engine and usability are the primary design agenda"
+        self.assertLess(text.index(core), text.index("## One query interface"))
+        for phrase in (
+            "with agents completely disabled",
+            "Storage and access design",
+            "One change, less repeated work",
+            "Concurrency by construction",
+            "Durability without redundant machinery",
+            "Python usability as an engine constraint",
+            "not deferred to M7",
+            "agent-free adoption case",
+        ):
+            self.assertIn(phrase, normalized)
+        sections = {
+            key: text.split(f"## {key}.", 1)[1].split("\n## ", 1)[0]
+            for key in ("M0", "M1", "M9")
+        }
+        self.assertIn("architectural hypotheses", sections["M0"])
+        self.assertIn("competing native designs", sections["M1"])
+        self.assertIn("usability", sections["M1"])
+        self.assertIn("agents disabled", sections["M9"])
+
     def test_exported_roadmap_preserves_canonical_content_and_milestones(self):
         import re
 

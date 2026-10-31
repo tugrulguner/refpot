@@ -1,0 +1,1 @@
+Revise the planned RefPot engine roadmap around one native SQL/natural-language query interface, durable transactional self-maintenance, explicit agent write authority, concurrency and verified physical-representation research. These are planned capabilities, not new package APIs.

@@ -55,7 +55,7 @@ class PackageDocumentationTests(unittest.TestCase):
 
         text = (ROOT / "ROADMAP.md").read_text()
         milestones = re.findall(r"^## (M\d+)\. (.+)$", text, re.MULTILINE)
-        self.assertEqual([key for key, _ in milestones], [f"M{i}" for i in range(8)])
+        self.assertEqual([key for key, _ in milestones], [f"M{i}" for i in range(10)])
         planned = text.split("## M0.", 1)[1]
         self.assertNotIn("- [x]", planned)
         for phrase in (
@@ -70,6 +70,50 @@ class PackageDocumentationTests(unittest.TestCase):
             self.assertIn(phrase, text)
         self.assertNotIn("Require reproducible 2×", text)
         self.assertNotIn("Require at least 2×", text)
+
+    def test_roadmap_unifies_query_generation_without_shrinking_engine_ambition(self):
+        import ast
+        import re
+
+        text = (ROOT / "ROADMAP.md").read_text()
+        examples = re.findall(r"```python\n(.*?)\n```", text, re.DOTALL)
+        calls = [
+            node
+            for example in examples
+            for node in ast.walk(ast.parse(example))
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "execute"
+        ]
+        self.assertEqual(len(calls), 2)
+        for call in calls:
+            self.assertIn("query", [keyword.arg for keyword in call.keywords])
+        self.assertFalse(any(keyword.arg == "agent" for keyword in calls[0].keywords))
+        agent = next(keyword for keyword in calls[1].keywords if keyword.arg == "agent")
+        self.assertIs(ast.literal_eval(agent.value), True)
+        self.assertNotIn("db.ask(", text)
+        normalized = " ".join(text.split())
+        for phrase in (
+            "Proposed API, not available in the published package",
+            "agent-generated SQL",
+            "same parser, binder, permission checks",
+            "query-generation agent",
+            "physical-optimization agent",
+            "schema, policy and semantic-context versions",
+            "Ambiguity is not authorization",
+            "read-only first, not read-only forever",
+            "Read-your-writes",
+            "outside transaction locks",
+            "NULL and three-valued logic",
+            "idempotency",
+            "safe point",
+            "larger-than-memory",
+            "same candidate language",
+            "installed wheels",
+        ):
+            self.assertIn(phrase, normalized)
+        self.assertNotIn("No backend framework, chat-to-SQL product", text)
+        self.assertNotIn("M2–M3 investigate agents", text)
 
     def test_exported_roadmap_preserves_canonical_content_and_milestones(self):
         import re

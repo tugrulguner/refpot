@@ -38,7 +38,7 @@ with TemporaryDirectory() as directory:
 
 A database starts empty. `insert` creates a row; `update` changes only the provided non-`None` fields. `get` returns an immutable, detached `Row`. Keys and integer values are signed 64-bit integers; text is limited to 31 UTF-8 encoded bytes. Duplicate inserts raise `ValueError`; missing reads, updates and deletes raise `KeyError`. These are fixed-schema operations, not SQL or an ORM.
 
-Continue with [transactions](/build/transactions/), [errors and ownership](/build/errors/), or the [exact API reference](/reference/api/). The repository also contains [examples/crud.py](https://github.com/tugrulguner/refpot/blob/0f880f5ef2b17405bc1b6f3c4f43c050d99878b6/examples/crud.py).
+Continue with [transactions](/build/transactions/), [errors and ownership](/build/errors/), or the [exact API reference](/reference/api/). The repository also contains [examples/crud.py](https://github.com/tugrulguner/refpot/blob/1b6f850613936591f13a04bf7ddd17505cc9e219/examples/crud.py).
 
 
 [Download this page as Markdown](/docs/build-crud.md)

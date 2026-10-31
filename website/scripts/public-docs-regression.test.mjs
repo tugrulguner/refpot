@@ -17,6 +17,24 @@ test('rendered roadmap does not retain repository-relative destinations',async()
  assert.ok(text.includes('(/package-contract/)'));
  assert.match(text,/https:\/\/github\.com\/tugrulguner\/refpot\/blob\/[a-f0-9]{40}\/docs\/releasing\.md/);
 });
+test('roadmap exports preserve proposed unified query examples and all planned milestones',async()=>{
+ const canonical=await readFile(new URL('../ROADMAP.md',root),'utf8');
+ const download=await readFile(new URL('public/docs/project-roadmap.md',root),'utf8');
+ const page=await readFile(new URL('src/content/docs/project/roadmap.md',root),'utf8');
+ assert.equal(download,canonical);
+ const code=text=>[...text.matchAll(/```python\n([\s\S]*?)\n```/g)].map(match=>match[1]);
+ assert.deepEqual(code(page),code(canonical));
+ assert.equal(code(page).length,1);
+ assert.match(code(page)[0],/db\.execute\(query=/);
+ assert.match(code(page)[0],/agent=True/);
+ assert.match(page,/Proposed API, not available in the published package/);
+ const agenda='## Deterministic engine and usability are the primary design agenda';
+ assert.ok(page.includes(agenda));
+ assert.ok(page.indexOf(agenda)<page.indexOf('## One query interface'));
+ assert.match(page,/with agents completely disabled/);
+ assert.deepEqual([...page.matchAll(/^## (M\d+)\./gm)].map(match=>match[1]),Array.from({length:10},(_,i)=>`M${i}`));
+ assert.doesNotMatch(page.split('## M0.')[1],/- \[x\]/);
+});
 test('published evidence uses existing pinned source objects, not mutable main links',async()=>{
  const destinations=new Set();
  for(const name of ['project/benchmarks','project/package-performance','internals/recovery','reference/api']){

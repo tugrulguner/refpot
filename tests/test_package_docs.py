@@ -140,6 +140,46 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("usability", sections["M1"])
         self.assertIn("agents disabled", sections["M9"])
 
+    def test_roadmap_encodes_reassessed_engine_and_nl_decision_gates(self):
+        text = (ROOT / "ROADMAP.md").read_text()
+        normalized = " ".join(text.split())
+        for phrase in (
+            "Unified data-and-change foundation",
+            "competent modular shared-kernel baseline",
+            "not a settled universal representation",
+            "first-class committed capability",
+            "No regexes, keyword matching",
+            "No mandatory business dictionary",
+            "compiler-accepted plan is not externally confirmed meaning",
+            "execute/clarify/decline policy",
+            "wrong automatically executed answers",
+            "execution coverage",
+            "held-out paraphrase families",
+            "meaning-changing near-paraphrases",
+            "runtime conflict observations",
+            "model-to-SQL",
+            "model-to-structured-proposal",
+        ):
+            self.assertIn(phrase, normalized)
+        for stale in (
+            "Optional natural-",
+            "M2 adds optional NL",
+            "Optional query-generation agent",
+            "return ***",
+        ):
+            self.assertNotIn(stale, text)
+        sections = {
+            key: text.split(f"## {key}.", 1)[1].split("\n## ", 1)[0]
+            for key in ("M0", "M1", "M2", "M3", "M4", "M5", "M9")
+        }
+        for key in ("M0", "M1", "M3"):
+            self.assertIn("shared-kernel", sections[key])
+        for phrase in ("execution coverage", "clarification burden", "matched"):
+            self.assertIn(phrase, sections["M2"])
+        self.assertIn("WAL ordering", sections["M4"])
+        self.assertIn("runtime conflict observations", sections["M5"])
+        self.assertIn("two independent results", sections["M9"])
+
     def test_exported_roadmap_preserves_canonical_content_and_milestones(self):
         import re
 

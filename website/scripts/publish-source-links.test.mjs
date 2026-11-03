@@ -6,6 +6,7 @@ test('resolves source-relative page, asset and evidence URLs without losing frag
  assert.equal(publishSourceLinks('[Results](../benchmarks/package-performance/RESULTS.md#scope)','docs/package-contract.md',revision),'[Results](/project/package-performance/#scope)');
  assert.equal(publishSourceLinks('![Chart](../../docs/assets/chart.png?download=1)','benchmarks/example/README.md',revision),`![Chart](https://raw.githubusercontent.com/tugrulguner/refpot/${revision}/docs/assets/chart.png?download=1)`);
  assert.equal(publishSourceLinks('[Source](script.py#L2)','benchmarks/example/README.md',revision),`[Source](https://github.com/tugrulguner/refpot/blob/${revision}/benchmarks/example/script.py#L2)`);
+ assert.equal(publishSourceLinks('[SQL preview](sql-preview.md)','docs/package-contract.md',revision),'[SQL preview](/reference/sql-preview/)');
  assert.equal(publishSourceLinks('[History](../benchmarks/random-updates/README.md)','docs/evidence.md',revision),'[History](/project/benchmarks/)');
 });
 test('preserves fenced and inline code while rewriting links outside it',()=>{

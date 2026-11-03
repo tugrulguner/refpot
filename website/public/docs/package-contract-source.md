@@ -4,9 +4,9 @@
 
 ## Records and operations
 
-A database starts empty; callers supply records. Keys and integer values are signed 64-bit integers. Text is UTF-8 limited to 31 encoded bytes. The public Python entry points are `from refpot import Database, Row`, with CRUD operations and explicit transactions. The database path names a **file, not a directory**; its parent directory must already exist.
+A database starts empty; callers supply records. Keys and integer values are signed 64-bit integers. Text is UTF-8 limited to 31 encoded bytes. The currently published package's Python entry points are `from refpot import Database, Row`, with CRUD operations and explicit transactions. The database path names a **file, not a directory**; its parent directory must already exist. This is the existing fixed-schema file API; it is not the separate unreleased SQL preview described below.
 
-SQL, ORM, arbitrary Python values, secondary indexes, migrations, and existing-format compatibility are not provided. No independent physical replicas are maintained.
+For this fixed-schema API, SQL, ORM, arbitrary Python values, secondary indexes, migrations, and existing-format compatibility are not provided. No independent physical replicas are maintained. The existence of an unreleased `refpot.sql` preview does not add SQL to the currently published package or change this API; see [SQL preview contract](sql-preview.md).
 
 ## Python API
 
@@ -49,4 +49,10 @@ The package-performance campaign compares the actual Python package with prepare
 
 Historical random-update results are separate: the **3.04–5.95×** result belongs only to its audited experimental harness, not the Python package, and its reopen comparison remains **16/16 losses**. See the [recommendation](package-recommendation.md), [roadmap](../ROADMAP.md), [historical methodology](../benchmarks/random-updates/README.md), and [package-performance guide](../benchmarks/package-performance/README.md).
 
-The API and storage format are experimental. There is no production durability guarantee; physical power-loss safety, broad cross-platform behavior, concurrent readers, multiwriter use, Windows, SQL, ORM, and SQLite SQL/file/C API compatibility are unsupported.
+The API and storage format are experimental. There is no production durability guarantee; physical power-loss safety, broad cross-platform behavior, concurrent readers, multiwriter use, Windows, SQL in the currently published package, ORM, and SQLite SQL/file/C API compatibility are unsupported. A distinct, unreleased in-memory SQL preview is documented separately; it does not alter this API or its storage behavior.
+
+## Separate unreleased SQL preview
+
+The new `from refpot.sql import Database, Result, SQLError` interface is a volatile, in-development SQL preview, **not included in the currently published package** and not verified in a published wheel. It uses `Database()` with no file path, holds only in-memory state, and discards all rows on `close()`. It does not replace the `from refpot import Database, Row` API described above, share its persistence contract, or make roadmap M1 complete.
+
+The preview accepts only a bounded integer SQL subset: tables with an integer primary key followed by zero or more integer `NOT NULL` columns; parameterized single-row insert, update and delete; select/projection/filter; one inner join; count/sum with at most one grouping key; selected-column ordering and bounded limit. Empty global `SUM` returns `None`; stored columns cannot be NULL. Execution and limits, transaction-wide abort behavior (which differs from this fixed-schema API), result types, stats, ownership and unsupported syntax are specified in the [SQL preview documentation](sql-preview.md). A runnable source-checkout example is [`examples/sql_preview.py`](../examples/sql_preview.py); it is not evidence that the preview is available from the current published package.

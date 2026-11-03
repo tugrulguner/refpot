@@ -1,6 +1,7 @@
 import { posix } from 'node:path';
 const pages = new Map([
  ['docs/package-contract.md','/package-contract/'],
+ ['docs/sql-preview.md','/reference/sql-preview/'],
  ['docs/usage.md','/package/'],
  ['docs/package-recommendation.md','/status/'],
  ['ROADMAP.md','/project/roadmap/'],

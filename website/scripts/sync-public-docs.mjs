@@ -61,6 +61,7 @@ const manuals = [
   { slug: 'project/package-performance', title: 'Package performance results', source: '../../benchmarks/package-performance/RESULTS.md' },
   { slug: 'project/contributing', title: 'Contributing to RefPot', source: '../../CONTRIBUTING.md' },
   { slug: 'reference/agent-guide', title: 'Using RefPot with a coding agent', source: '../../skills/refpot-database/SKILL.md' },
+  { slug: 'reference/sql-preview', title: 'Unreleased SQL preview', source: '../../docs/sql-preview.md' },
 ];
 for (const manual of manuals) {
   const source = await readFile(new URL(manual.source, import.meta.url), 'utf8');

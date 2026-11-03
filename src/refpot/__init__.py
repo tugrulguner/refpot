@@ -1,4 +1,4 @@
-"""RefPot's initial native CRUD slice; SQL and ORM are not implemented."""
+"""RefPot's durable fixed-schema CRUD API; volatile SQL lives in refpot.sql."""
 
 from __future__ import annotations
 

@@ -1,0 +1,10 @@
+{
+  "research/package-sql/workload.cpp": "1734313575da9a0f6c549231df27eeaeebc0fb19c865153abd45936d5d46e6b3",
+  "research/package-sql/run.py": "605729cc1b09993075546f91c535b0a18152bfa4752f5165abf37b47dce892a4",
+  "research/native-sql/sql.hpp": "656589d672d91d097e4291695a7c1cced307c636be0f5ffa32daa4ba6ea4a38e",
+  "research/shared-change/native.hpp": "9fbe352a6f8fb64846e9597c67e8982ecf90809d617805e8a122e22bacdc65e1",
+  "native/relational/sql.hpp": "92346a4d08aad953ee38baea9679a12c02ef86bb76ef2a81802bb376bca50604",
+  "native/relational/foundation.hpp": "785c60e7154566fe6b591299b11d1b8bb7bb17f5006717856f5b74eb1c8753bb",
+  "native/relational/operators.hpp": "e4164d49bc479a2842904228e3392538b67bd6119e79c1146ef545c33b7e5118",
+  "native/model/model.hpp": "6ae140b0f81987152c10dcdfed1a39d506d5962e4c30e1c96fc8cedd29d110f8"
+}

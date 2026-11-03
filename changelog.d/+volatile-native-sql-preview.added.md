@@ -1,0 +1,1 @@
+Document the unreleased volatile native SQL preview contract separately from the currently published fixed-schema API. The public API and runnable source example are not evidence of package or wheel availability; broader SQL, durability, concurrency, and roadmap M1 qualification remain outstanding.

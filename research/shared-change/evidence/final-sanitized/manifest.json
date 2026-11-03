@@ -1,0 +1,41 @@
+{
+  "base_revision": "f0f58fee0b08822e247878a0e93b1093d20d65e6",
+  "source_hashes": {
+    "research/shared-change/cases.py": "7ca1b2fd9c4abce8c7416076797df3559ff021a8db07c00a5b5a1bbbdd1d7c71",
+    "research/shared-change/run.py": "f68720792ea8f2dfa416ca9e6ffae769616257f214baba82b7857e4d8082eaf9",
+    "research/shared-change/test_foundation.py": "5a2a3418956e7ba486f6b44c39a42ba443a87d7444a686cad43a01312e968fd2",
+    "research/shared-change/driver.cpp": "7d1cd4c8f3eead344d74f932ee6aa24694af8fce540b5f87d0efec7b9cd65847",
+    "research/shared-change/test_native.cpp": "6155a03e7d668bfb12641215225e2e5e6949e88fc975b7830de0d18a57603614",
+    "research/shared-change/native.hpp": "9dad768ba5b5eb6572a2d93e100bd92b02f0ccacee5e8130b80dc04bf27be3e4",
+    "research/shared-change/CONTRACT.md": "a7becf6613c87beb3fa1722d4114292034d0557093ae1220d3d10196ae9e6acf",
+    "native/model/model.hpp": "6ae140b0f81987152c10dcdfed1a39d506d5962e4c30e1c96fc8cedd29d110f8",
+    "examples/experimental_shared_change.py": "6df7f07dd7f85882557d0367a3ebbeb5099f4580f6d229509c2537e24783d10b",
+    "tests/test_shared_change.py": "a65bbfd24721e22ce756d10954dbd2c62201c41096d84ee1c60ca305e7cb2a86",
+    "research/application-model/models.py": "8ff303943e3a357eeb9c48398a3e80ef1dd867fe945fcbdc4e1ef58aa3414130",
+    "research/application-model/native_model.py": "a5e2b373af544753df581bffb7e623c21ea0f41226c498f93b88cd9b55bc6f21",
+    "research/application-model/oracle.py": "54d783c37198386decc4fb3e14eb19109acd1d7bf987bd1cf15d5fb1e8bc8b29",
+    "research/application-model/qualify_mutants.py": "6402d0449ead83fdcdcb3dba5b09fc6f7ab6a1a8e4e1e15a6f97dc991e1d83d8",
+    "research/application-model/sqlite_control.py": "79bcdc5cf419a1b5bda26efc9ef410eda28c8750544e5cf254139fecb0b96fc0",
+    "research/application-model/test_controls.py": "579fa221e5e56cf9406a0a4334883584cf59c8aca3156fac3e4e3fc5abaea96e",
+    "research/application-model/test_transport.py": "2c339caf9a6f68f0bec415bd6da075af09ee861b8757692f0049ae5fcf300951"
+  },
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "python": "3.11.6 (v3.11.6:8b6ee5ba3b, Oct  2 2023, 11:18:21) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin\n",
+  "flags": [
+    "-std=c++17",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "sanitized": true,
+  "binary_hashes": {
+    "modular": "99b316962b1d70f25a70a333bad03dd89295c8d0156ba156322f8ac88eaf2fa0",
+    "overlay": "56e7c270ea4db34ed91fa5bfda7176a05c2f5278c4e5355cbd549d64edaba8d7"
+  },
+  "scope": "volatile native component work counters, not speed or database superiority"
+}

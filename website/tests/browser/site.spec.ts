@@ -1,7 +1,7 @@
 import { gunzipSync } from 'node:zlib';
 import { test, expect } from '@playwright/test';
 import { sanitizeAnalyticsProperties } from '../../src/analytics-privacy.mjs';
-const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/project/benchmarks/', '/project/package-performance/', '/project/contributing/', '/reference/agent-guide/', '/does-not-exist/'];
+const routes = ['/', '/package/', '/package-contract/', '/build/crud/', '/build/transactions/', '/build/persistence/', '/build/errors/', '/reference/api/', '/reference/sql-preview/', '/internals/recovery/', '/status/', '/design/', '/performance-method/', '/project/roadmap/', '/project/benchmarks/', '/project/package-performance/', '/project/contributing/', '/reference/agent-guide/', '/does-not-exist/'];
 const resources = ['ModePot', 'GitHub', 'Community', 'About Tugrul'];
 for (const width of [1280, 768, 390, 320]) {
   for (const theme of ['light', 'dark', 'auto']) {
@@ -84,7 +84,7 @@ test('every layout preserves desktop and compact family navigation with keyboard
         const toggle=page.getByRole('button',{name:'Menu',exact:true});
         await toggle.focus(); await page.keyboard.press('Enter');
         const menu=page.getByRole('region',{name:'Menu',exact:true});
-        for(const label of ['ModePot','GitHub','Community','About Tugrul','Feedback / issue (opens in a new tab)','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
+        for(const label of ['ModePot','GitHub','Community','About Tugrul','Feedback / issue (opens in a new tab)','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Unreleased SQL preview','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
         await page.keyboard.press('Escape'); await expect(menu).toBeHidden(); await expect(toggle).toBeFocused();
       }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -181,6 +181,28 @@ test('package performance report is complete, linked, and downloadable', async (
   expect(body).toContain('Recomputed result matrix');
   expect(body).toContain('recovery_fixture.py');
   await expect(page.locator('nav').getByRole('link', { name: 'Package performance results' })).toHaveAttribute('href', '/project/package-performance/');
+});
+
+test('unreleased SQL preview is labeled and downloadable without implying shipped support', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/package-contract/');
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  const previewLink = page.getByRole('region', { name: 'Menu', exact: true }).getByRole('link', { name: 'Unreleased SQL preview', exact: true });
+  await expect(previewLink).toHaveAttribute('href', '/reference/sql-preview/');
+  await previewLink.click();
+  await expect(page).toHaveURL(/\/reference\/sql-preview\/$/);
+  await expect(page.locator('main h1')).toHaveText('Unreleased SQL preview');
+  const main = page.locator('main');
+  await expect(main).toContainText('not included in the currently published package');
+  await expect(main).toContainText('The existing fixed-schema');
+  const download = page.getByRole('link', { name: 'Download this page as Markdown' });
+  await expect(download).toHaveAttribute('href', '/docs/reference-sql-preview.md');
+  const response = await page.request.get('/docs/reference-sql-preview.md');
+  expect(response.ok()).toBeTruthy();
+  const markdown = await response.text();
+  expect(markdown).toContain('not included in the currently published package');
+  expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{

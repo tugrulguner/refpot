@@ -113,6 +113,9 @@ class ReleaseContractTests(unittest.TestCase):
                 for name in (
                     "refpot/__init__.py",
                     "refpot/_core.pyi",
+                    "refpot/sql.py",
+                    "refpot/_sql.pyi",
+                    "refpot/_sql.cpython-311-test.so",
                     "refpot/py.typed",
                     "refpot-0.1.1.dist-info/licenses/LICENSE",
                     "refpot-0.1.1.dist-info/METADATA",
@@ -127,6 +130,13 @@ class ReleaseContractTests(unittest.TestCase):
             with tarfile.open(sdist, "w:gz") as archive:
                 for name in (
                     "src/refpot/native/core.cpp",
+                    "src/refpot/native/relational_bindings.cpp",
+                    "src/refpot/native/relational/sql.hpp",
+                    "src/refpot/native/relational/foundation.hpp",
+                    "src/refpot/native/relational/operators.hpp",
+                    "src/refpot/native/model/model.hpp",
+                    "src/refpot/tests/test_sql_database.py",
+                    "src/refpot/examples/sql_preview.py",
                     "src/refpot/CMakeLists.txt",
                     "src/refpot/LICENSE",
                     "src/refpot/tests/test_database.py",
@@ -151,6 +161,19 @@ class ReleaseContractTests(unittest.TestCase):
                 )
             digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
             self.assertEqual(len(digest), 64)
+            with zipfile.ZipFile(wheel) as archive:
+                payloads = {name: archive.read(name) for name in archive.namelist()}
+            with zipfile.ZipFile(wheel, "w") as archive:
+                for name, data in payloads.items():
+                    if not name.endswith(".so"):
+                        archive.writestr(name, data)
+            rejected = subprocess.run(
+                [sys.executable, "scripts/verify_artifacts.py", str(dist)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(rejected.returncode, 0, "wheel omitted SQL native extension")
 
     def test_public_release_claims_and_install_path_are_consistent(self) -> None:
         sources = [

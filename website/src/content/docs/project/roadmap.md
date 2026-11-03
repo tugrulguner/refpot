@@ -42,7 +42,7 @@ Derived relations, internal optimization agents, SQL, ORM and concurrent access 
 shipped**. Natural-language query generation is also not shipped; there is no implemented
 SQL `execute` interface to which an agent flag can simply be added. See the
 [package contract](/package-contract/), [package results](/project/package-performance/),
-and [release checklist](https://github.com/tugrulguner/refpot/blob/acaf2cd4647b503fb99a7705dc0f751b8bb302a2/docs/releasing.md).
+and [release checklist](https://github.com/tugrulguner/refpot/blob/40e0a0ec30298a18b7734fa86525be6db2af613d/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -51,7 +51,7 @@ and [release checklist](https://github.com/tugrulguner/refpot/blob/acaf2cd4647b5
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
-- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/acaf2cd4647b503fb99a7705dc0f751b8bb302a2/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/acaf2cd4647b503fb99a7705dc0f751b8bb302a2/research/application-model/RESULTS.md).
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/40e0a0ec30298a18b7734fa86525be6db2af613d/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/40e0a0ec30298a18b7734fa86525be6db2af613d/research/application-model/RESULTS.md).
 
 ### Still-open qualification and product gates
 

@@ -14,12 +14,21 @@ def main() -> None:
     sdists = sorted(dist.glob("*.tar.gz"))
     assert len(sdists) == 1, f"expected one sdist, found {len(sdists)}"
     if wheels:
-        required = ("refpot/__init__.py", "refpot/_core.pyi", "refpot/py.typed")
+        required = (
+            "refpot/__init__.py",
+            "refpot/_core.pyi",
+            "refpot/sql.py",
+            "refpot/_sql.pyi",
+            "refpot/py.typed",
+        )
         for wheel in wheels:
             with zipfile.ZipFile(wheel) as archive:
                 names = set(archive.namelist())
                 for member in required:
                     assert member in names, f"{member} missing from {wheel}"
+                assert any(
+                    name.startswith("refpot/_sql.") and name.endswith(".so") for name in names
+                ), "wheel has no native SQL extension"
                 metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
                 metadata = archive.read(metadata_name).decode()
                 assert "License-Expression: MIT" in metadata, (
@@ -32,6 +41,13 @@ def main() -> None:
         names = archive.getnames()
         for suffix in (
             "/native/core.cpp",
+            "/native/relational_bindings.cpp",
+            "/native/relational/sql.hpp",
+            "/native/relational/foundation.hpp",
+            "/native/relational/operators.hpp",
+            "/native/model/model.hpp",
+            "/tests/test_sql_database.py",
+            "/examples/sql_preview.py",
             "/CMakeLists.txt",
             "/LICENSE",
             "/tests/test_database.py",

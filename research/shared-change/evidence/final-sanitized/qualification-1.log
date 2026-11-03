@@ -1,0 +1,13 @@
+Inherited semantic controls: modular 8
+Inherited semantic controls: overlay 8
+Seeded full-state transaction outcomes: {'accepted': 114, 'rejected': 526}
+test_abort_and_bad_request_cannot_publish_prepared_effects (__main__.FoundationContract.test_abort_and_bad_request_cannot_publish_prepared_effects) ... ok
+test_existing_semantic_contract_in_both_native_modes (__main__.FoundationContract.test_existing_semantic_contract_in_both_native_modes) ... ok
+test_prepared_read_is_private_until_explicit_publish (__main__.FoundationContract.test_prepared_read_is_private_until_explicit_publish) ... ok
+test_seeded_full_state_against_independent_controls (__main__.FoundationContract.test_seeded_full_state_against_independent_controls) ... ok
+test_unchanged_expression_stops_downstream_work (__main__.FoundationContract.test_unchanged_expression_stops_downstream_work) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 7.763s
+
+OK

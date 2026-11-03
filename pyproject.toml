@@ -95,7 +95,7 @@ ignore = ["E501"]
 pythonVersion = "3.11"
 typeCheckingMode = "standard"
 include = ["src", "tests", "examples", "scripts"]
-extraPaths = ["research/application-model"]
+extraPaths = ["research/application-model", "research/native-sql", "research/shared-change"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

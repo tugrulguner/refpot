@@ -45,7 +45,7 @@
 
 ## Why RefPot
 
-RefPot is an early custom embedded database engine: a native C++ redo-and-checkpoint core exposed through a small Python `Database` / `Row` API. The package preview already supports fixed-schema CRUD and explicit transactions; it is not merely a research design. SQL and ORM are future design direction, not shipped interfaces.
+RefPot is an early custom embedded database engine: a native C++ redo-and-checkpoint core exposed through the published fixed-schema Python `Database` / `Row` API. A separate, unreleased volatile native SQL preview is under development; it is not part of the currently published package. The SQL preview does not replace the existing API or its storage format. ORM remains future design direction.
 
 ## Quick start
 
@@ -95,7 +95,7 @@ The complete quick start demonstrates CRUD, transaction commit and rollback, che
 
 The database starts empty. Keys and integer values are signed 64-bit integers; text is UTF-8 limited to 31 encoded bytes. The database path names a **file, not a directory**, and its parent directory must already exist. One process exclusively owns each database; only its creating thread may use the handle.
 
-The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery are each bounded to 64 MiB. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details are not broad recovery qualification or a physical power-loss guarantee. Concurrent readers, multiwriter use, Windows, existing-format compatibility, SQL and ORM are unsupported. See the full [package contract](docs/package-contract.md) and [package recommendation](docs/package-recommendation.md).
+The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery are each bounded to 64 MiB. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details are not broad recovery qualification or a physical power-loss guarantee. Concurrent readers, multiwriter use, Windows and existing-format compatibility are unsupported. SQL is not included in the currently published package; see the separate [unreleased volatile SQL preview](docs/sql-preview.md). ORM is not provided. See the full [package contract](docs/package-contract.md) and [package recommendation](docs/package-recommendation.md).
 
 ## Current package architecture
 
@@ -112,6 +112,8 @@ Task-oriented guides are available for [CRUD](https://refpot.modepot.io/build/cr
 ## Reference
 
 The [package contract](docs/package-contract.md) documents the exact `Database` and `Row` API, validation, errors, ownership, capacity and unsupported behavior. Hosted guides: [API reference](https://refpot.modepot.io/reference/api/) · [package reference](https://refpot.modepot.io/package-contract/).
+
+The separate [`refpot.sql` SQL preview](docs/sql-preview.md) describes an unreleased, volatile API and its bounded supported subset. Its runnable source example is [examples/sql_preview.py](examples/sql_preview.py); it is not an example for the currently published package and does not alter the existing `from refpot import Database, Row` API.
 
 ## Internals
 
@@ -145,7 +147,7 @@ The historical findings are separate from package performance. The 3.04–5.95×
 
 ## Planned design direction
 
-The preserved [planned architecture visual](#refpot) shows a future SQL/ORM direction, not this preview. Neither SQL nor ORM is implemented.
+The preserved [planned architecture visual](#refpot) remains a future SQL/ORM direction, not a depiction of the separate SQL preview. The SQL preview is unreleased and volatile; it is distinct from the fixed-schema API available in the currently published package. ORM is not implemented.
 
 - **Engine first.** Establish correctness and performance before building the ORM.
 - **One semantic boundary.** Direct operations must not bypass validation or constraints.

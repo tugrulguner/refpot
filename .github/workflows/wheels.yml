@@ -125,13 +125,15 @@ jobs:
           uv venv --python '${{ matrix.python }}' "$RUNNER_TEMP/wheel-test"
           uv pip install --python "$RUNNER_TEMP/wheel-test/bin/python" wheelhouse/*.whl pytest
           install="$RUNNER_TEMP/wheel-test/bin/python"
-          "$install" -c 'import pathlib, refpot; assert ".venv" not in str(pathlib.Path(refpot.__file__).resolve()); print(refpot.__file__)'
+          "$install" -c 'import pathlib, sys, refpot; from refpot import sql, _sql; prefix = pathlib.Path(sys.prefix).resolve(); assert all(pathlib.Path(m.__file__).resolve().is_relative_to(prefix) for m in (refpot, sql, _sql)); print(refpot.__file__, sql.__file__, _sql.__file__)'
           mkdir -p "$RUNNER_TEMP/refpot-consumer/tests"
           cp -R "$SOURCE_ROOT/examples" "$RUNNER_TEMP/refpot-consumer/"
-          cp "$SOURCE_ROOT"/tests/test_database.py "$SOURCE_ROOT"/tests/test_package_recovery.py "$SOURCE_ROOT"/tests/test_state_machine.py "$SOURCE_ROOT"/tests/test_io_failures.py "$SOURCE_ROOT"/tests/test_capacity.py "$RUNNER_TEMP/refpot-consumer/tests/"
+          cp "$SOURCE_ROOT"/tests/test_database.py "$SOURCE_ROOT"/tests/test_sql_database.py "$SOURCE_ROOT"/tests/test_package_recovery.py "$SOURCE_ROOT"/tests/test_state_machine.py "$SOURCE_ROOT"/tests/test_io_failures.py "$SOURCE_ROOT"/tests/test_capacity.py "$RUNNER_TEMP/refpot-consumer/tests/"
           cp -R "$SOURCE_ROOT"/tests/native "$RUNNER_TEMP/refpot-consumer/tests/"
           cd "$RUNNER_TEMP/refpot-consumer"
           "$install" -m pytest tests -q
+          "$install" examples/sql_preview.py
+          "$install" examples/sql_preview.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: wheel-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.platform }}-cp${{ matrix.python }}

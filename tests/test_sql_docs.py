@@ -47,6 +47,8 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertNotIn("ctypes.CDLL", text)
         self.assertNotIn("--library", text)
         self.assertNotIn("M1 is complete", text)
+        self.assertNotIn("SQLite's integer-overflow-to-float behavior", text)
+        self.assertIn("SQLite integer `SUM` raises on intermediate integer overflow", text)
         self.assertIn("not included", text.lower())
 
     def test_runnable_example_uses_only_the_public_preview_api(self):

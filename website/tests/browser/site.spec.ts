@@ -185,7 +185,12 @@ test('package performance report is complete, linked, and downloadable', async (
 
 test('unreleased SQL preview is labeled and downloadable without implying shipped support', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/reference/sql-preview/');
+  await page.goto('/package-contract/');
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  const previewLink = page.getByRole('region', { name: 'Menu', exact: true }).getByRole('link', { name: 'Unreleased SQL preview', exact: true });
+  await expect(previewLink).toHaveAttribute('href', '/reference/sql-preview/');
+  await previewLink.click();
+  await expect(page).toHaveURL(/\/reference\/sql-preview\/$/);
   await expect(page.locator('main h1')).toHaveText('Unreleased SQL preview');
   const main = page.locator('main');
   await expect(main).toContainText('not included in the currently published package');
@@ -197,7 +202,6 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   const markdown = await response.text();
   expect(markdown).toContain('not included in the currently published package');
   expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
-  await expect(page.locator('nav').getByRole('link', { name: 'Unreleased SQL preview' })).toHaveAttribute('href', '/reference/sql-preview/');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

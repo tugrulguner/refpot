@@ -1,5 +1,6 @@
 #pragma once
 #include "../model/model.hpp"
+#include <optional>
 
 namespace refpot::relational {
 using I = model::I;
@@ -12,6 +13,7 @@ struct BoundPredicate {
     std::size_t column;
     Comparison operation;
     I value;
+    std::optional<std::size_t> right_column=std::nullopt;
     static BoundPredicate bind(std::size_t column, const std::string& op, I value) {
         Comparison c;
         if (op=="=" || op=="eq") c=Comparison::Equal;
@@ -24,7 +26,8 @@ struct BoundPredicate {
         return {column,c,value};
     }
     bool matches(const Row& row) const noexcept {
-        I input=row[column]; // column bound against the declared row width
+        I input=row[column]; // columns bound against the declared row width
+        I value=right_column?row[*right_column]:this->value;
         switch(operation) {
             case Comparison::Equal: return input==value;
             case Comparison::NotEqual: return input!=value;

@@ -57,7 +57,7 @@ public:
 };
 }
 class Database {
-    struct Table {std::string name;std::vector<std::string> columns;};
+    struct Table {std::string name;std::vector<std::string> columns;bool derived=false;};
     struct Source {std::size_t table;std::string alias;std::size_t offset;};
     struct Item {std::string kind;syntax::Ref ref;std::string alias;std::size_t column=0;};
     using Predicate=relational::BoundPredicate;
@@ -65,6 +65,7 @@ class Database {
     struct Budget {std::size_t visits=0;void step(){if(++visits>1000000)throw std::runtime_error("query work budget exceeded");}};
     std::size_t row_limit_;
     std::vector<Table> tables_;
+    std::vector<std::string> assertions_;
     std::unique_ptr<foundation::Model> model_;
     std::size_t pending_mutations_=0, committed_rows_=0, visible_rows_=0;
     bool in_tx_=false;
@@ -91,7 +92,10 @@ class Database {
         if(p.match("where"))do {
             auto column=bind(p.ref(),sources);auto op=p.take();
             if(op!="="&&op!="!="&&op!="<>"&&op!="<"&&op!="<="&&op!=">"&&op!=">=")throw std::invalid_argument("unsupported comparison");
-            result.push_back(Predicate::bind(column,op,p.value())); ++predicate_bindings_;
+            auto predicate=Predicate::bind(column,op,0);
+            if(!p.peek().empty()&&syntax::alpha(p.peek()[0]))predicate.right_column=bind(p.ref(),sources);
+            else predicate.value=p.value();
+            result.push_back(predicate); ++predicate_bindings_;
         }while(p.match("and"));
         return result;
     }
@@ -104,12 +108,12 @@ class Database {
         I next_rows=static_cast<I>(visible_rows_);
         for(const auto& m:mutations) next_rows+=m.op=="insert"?1:m.op=="delete"?-1:0;
         if(next_rows<0 || static_cast<std::size_t>(next_rows)>row_limit_)throw std::runtime_error("global catalog row limit exceeded");
-        if(in_tx_) { model_->append(mutations); pending_mutations_+=mutations.size(); }
+        if(in_tx_) { model_->append(mutations,false); pending_mutations_+=mutations.size(); }
         else { model_->apply(mutations); committed_rows_=static_cast<std::size_t>(next_rows); }
         visible_rows_=static_cast<std::size_t>(next_rows);
         statement_mutations_+=mutations.size();
     }
-    Result select(syntax::Parser& p,bool explain) {
+    Result select(syntax::Parser& p,bool explain,const std::string& view="") {
         std::vector<Item> items;
         bool star=p.match("*");
         if(!star)do {
@@ -163,30 +167,82 @@ class Database {
         if(joined)result.plan+=" NESTED_LOOP_JOIN "+tables_[sources[1].table].name;
         if(!where.empty())result.plan+=" FILTER";if(aggregate||group)result.plan+=" AGGREGATE";
         if(!order.empty())result.plan+=" SORT";if(limit)result.plan+=" LIMIT";
+        if(!view.empty()) {
+            if(in_tx_)throw std::invalid_argument("DDL inside a transaction is unsupported");
+            if(tables_.size()>=128)throw std::invalid_argument("relation limit exceeded");
+            if(view.rfind("refpot_internal_",0)==0)throw std::invalid_argument("reserved internal relation prefix");
+            for(const auto& t:tables_)if(t.name==view)throw std::invalid_argument("relation already exists");
+            if(!order.empty()||limit)throw std::invalid_argument("unsupported maintained query clause");
+            if(aggregate&&!group)throw std::invalid_argument("maintained aggregates require GROUP BY");
+            if(items.size()>64)throw std::invalid_argument("view column limit exceeded");
+            std::set<std::string> names;
+            for(std::size_t i=0;i<items.size();++i) {
+                if(items[i].kind!="column"&&items[i].alias.empty())throw std::invalid_argument("maintained aggregates require aliases");
+                if(!names.insert(result.columns[i]).second)throw std::invalid_argument("duplicate view column");
+            }
+            std::vector<foundation::Definition> definitions;
+            std::string input=tables_[sources[0].table].name;
+            auto add=[&](foundation::Definition d) {
+                d.name="refpot_internal_"+std::to_string(tables_.size())+"_"+std::to_string(definitions.size());
+                input=d.name;definitions.push_back(std::move(d));
+            };
+            if(joined) {
+                const auto offset=sources[1].offset;
+                if(left>=offset)std::swap(left,right);
+                foundation::Definition d;d.op="join";d.left=input;d.right=tables_[sources[1].table].name;
+                d.left_key=left;d.right_key=right-offset;add(std::move(d));
+            }
+            for(const auto& predicate:where) {
+                static const char* comparisons[]={"eq","ne","lt","le","gt","ge"};
+                foundation::Definition d;d.op="filter";d.input=input;d.column=predicate.column;
+                d.cmp=comparisons[static_cast<std::size_t>(predicate.operation)];d.value=predicate.value;d.right_column=predicate.right_column;
+                add(std::move(d));
+            }
+            if(group) {
+                std::optional<std::size_t> sum_column;
+                for(const auto& item:items)if(item.kind=="sum") {
+                    if(sum_column&&*sum_column!=item.column)throw std::invalid_argument("only one maintained SUM input is supported");
+                    sum_column=item.column;
+                }
+                foundation::Definition mapped;mapped.op="map";mapped.input=input;
+                mapped.exprs={{"c"+std::to_string(*group)},{sum_column?"c"+std::to_string(*sum_column):"0"}};add(std::move(mapped));
+                foundation::Definition grouped;grouped.op="group";grouped.input=input;grouped.key=0;grouped.value_column=1;add(std::move(grouped));
+            }
+            foundation::Definition projected;projected.name=view;projected.op="map";projected.input=input;
+            for(const auto& item:items) projected.exprs.push_back({"c"+std::to_string(group?(item.kind=="column"?0:item.kind=="sum"?1:2):item.column)});
+            definitions.push_back(std::move(projected));
+            Table added{view,result.columns,true};
+            result.rows.clear();result.plan="CREATE MATERIALIZED VIEW "+view;
+            if(explain)return result;
+            tables_.reserve(tables_.size()+1);
+            model_->add_definitions(definitions);
+            tables_.push_back(std::move(added));return result;
+        }
         if(explain)return result;
         Budget budget;
         struct Accumulator {I count=0;std::vector<relational::Aggregate> sums;};
         std::map<I,Accumulator> groups;
         if(aggregate&&!group)groups.emplace(0,Accumulator{0,std::vector<relational::Aggregate>(items.size())});
-        auto emit=[&](const Row& row) {
+        auto emit=[&](const Row& row,I multiplicity) {
             if(!matches(row,where))return;
             if(aggregate||group) {
                 I key=group?row[*group]:0;
                 auto it=groups.find(key);
                 if(it==groups.end()){if(groups.size()>=100000)throw std::runtime_error("group limit exceeded");it=groups.emplace(key,Accumulator{0,std::vector<relational::Aggregate>(items.size())}).first;}
-                ++it->second.count;
-                for(std::size_t j=0;j<items.size();++j)if(items[j].kind=="sum")it->second.sums[j].add(row[items[j].column]);
+                it->second.count=foundation::detail::checked(static_cast<__int128>(it->second.count)+multiplicity);
+                for(std::size_t j=0;j<items.size();++j)if(items[j].kind=="sum")it->second.sums[j].add(row[items[j].column],multiplicity);
             }else {
-                if(result.rows.size()>=100000)throw std::runtime_error("result limit exceeded");
-                std::vector<std::optional<I>> projected;for(const auto& item:items)projected.push_back(row[item.column]);result.rows.push_back(std::move(projected));
+                if(multiplicity<0||static_cast<std::uint64_t>(multiplicity)>100000-result.rows.size())throw std::runtime_error("result limit exceeded");
+                std::vector<std::optional<I>> projected;for(const auto& item:items)projected.push_back(row[item.column]);
+                for(I n=0;n<multiplicity;++n){budget.step();result.rows.push_back(projected);}
             }
         };
         scan(sources[0].table,[&](const Row& a,I ac) {
-            budget.step();if(ac!=1)throw std::logic_error("invalid source multiplicity");
+            budget.step();if(ac<=0)throw std::logic_error("invalid relation multiplicity");
             if(joined)scan(sources[1].table,[&](const Row& b,I bc) {
-                budget.step();if(bc!=1)throw std::logic_error("invalid source multiplicity");
-                Row row=a;row.insert(row.end(),b.begin(),b.end());if(row[left]==row[right])emit(row);return true;
-            });else emit(a);
+                budget.step();if(bc<=0)throw std::logic_error("invalid relation multiplicity");
+                Row row=a;row.insert(row.end(),b.begin(),b.end());if(row[left]==row[right])emit(row,foundation::detail::checked(static_cast<__int128>(ac)*bc));return true;
+            });else emit(a,ac);
             return true;
         });
         for(const auto& [key,acc]:groups) {
@@ -218,7 +274,18 @@ class Database {
             return result;
         }
         if(op=="create") {
-            p.need("table");Table added;added.name=p.name();p.need("(");
+            if(p.match("assertion")) {
+                auto name=p.name();p.need("check");p.need("(");p.need("not");p.need("exists");p.need("(");p.need("select");p.need("*");p.need("from");
+                auto relation=p.name();table(relation);p.need(")");p.need(")");p.end();
+                if(in_tx_)throw std::invalid_argument("DDL inside a transaction is unsupported");
+                if(assertions_.size()>=128)throw std::invalid_argument("assertion limit exceeded");
+                if(std::find(assertions_.begin(),assertions_.end(),name)!=assertions_.end())throw std::invalid_argument("assertion already exists");
+                result.plan="CREATE ASSERTION "+name;if(explain)return result;
+                assertions_.reserve(assertions_.size()+1);model_->add_required_empty(relation);assertions_.push_back(std::move(name));return result;
+            }
+            if(p.match("materialized")) {p.need("view");auto name=p.name();p.need("as");p.need("select");return select(p,explain,name);}
+            p.need("table");Table added;added.name=p.name();
+            if(added.name.rfind("refpot_internal_",0)==0)throw std::invalid_argument("reserved internal relation prefix");p.need("(");
             do {
                 auto col=p.name();p.need("integer");
                 if(added.columns.empty()){p.need("primary");p.need("key");}
@@ -237,7 +304,7 @@ class Database {
             tables_.push_back(std::move(added));return result;
         }
         if(op=="insert") {
-            p.need("into");auto n=table(p.name());p.need("values");p.need("(");Row row;
+            p.need("into");auto n=table(p.name());if(tables_[n].derived)throw std::invalid_argument("derived relation is read-only");p.need("values");p.need("(");Row row;
             do {row.push_back(p.value());}while(p.match(","));p.need(")");p.end();
             if(row.size()!=tables_[n].columns.size())throw std::invalid_argument("INSERT row width mismatch");
             result.plan="INSERT source";if(explain)return result;
@@ -245,6 +312,7 @@ class Database {
         }
         if(op=="update"||op=="delete") {
             bool del=op=="delete";if(del)p.need("from");auto name=p.name();auto n=table(name);
+            if(tables_[n].derived)throw std::invalid_argument("derived relation is read-only");
             std::vector<Source> sources{{n,name,0}};std::vector<std::pair<std::size_t,I>> assignments;
             if(!del){p.need("set");do {auto c=bind(p.ref(),sources);if(c==0)throw std::invalid_argument("primary key is immutable");p.need("=");I value=p.value();for(const auto& a:assignments)if(a.first==c)throw std::invalid_argument("duplicate assignment");assignments.emplace_back(c,value);}while(p.match(","));}
             auto where=predicates(p,sources);p.end();result.plan=del?"DELETE source scan":"UPDATE source scan";
@@ -270,6 +338,7 @@ public:
                 {"source_mutation_applications",model_->source_mutation_applications()},
                 {"full_bag_copied_entries",model_->materialized_entries()},
                 {"predicate_bindings",predicate_bindings_},{"predicate_tests",predicate_tests_},
+                {"maintenance_steps",model_->maintenance_steps()},
                 {"prior_mutation_replays",0},{"catalog_copied_rows",0},{"candidate_copied_entries",0}};
     }
     void rollback()noexcept{model_->rollback();pending_mutations_=0;visible_rows_=committed_rows_;in_tx_=false;}

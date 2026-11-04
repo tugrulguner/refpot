@@ -33,10 +33,12 @@ this roadmap defines the current objective, without changing those measurements.
 ## Current implementation: experimental alpha
 
 The fixed-schema Python `Database` / `Row` API supports CRUD, explicit transactions and
-snapshot/WAL persistence. It is thread-affine and exclusively owned by one process.
-Derived relations, internal optimization agents, SQL, ORM and concurrent access are **not
-shipped**. Natural-language query generation is also not shipped; there is no implemented
-SQL `execute` interface to which an agent flag can simply be added. See the
+snapshot/WAL persistence. It is thread-affine and exclusively owned by one process. A separate,
+unreleased volatile `refpot.sql` preview provides an experimental `execute` path for a bounded
+SQL/maintained-view subset; it does not change the fixed-schema API or its persistence boundary.
+The preview is not published, and its relational state is volatile. Natural-language query
+generation, ORM and concurrent access are not shipped. The preview does not make the proposed
+shared SQL/NL interface available or provide an `agent` mode. See the
 [package contract](docs/package-contract.md), [package results](benchmarks/package-performance/RESULTS.md),
 and [release checklist](docs/releasing.md).
 
@@ -48,6 +50,9 @@ and [release checklist](docs/releasing.md).
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
 - [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](research/application-model/CONTRACT.md) and [results](research/application-model/RESULTS.md).
+- [x] Add an unreleased volatile `refpot.sql` execution preview with a bounded SQL/maintained-view subset, shared predicate evaluation, and incremental SUM maintenance across transactions. Completed real-pybind installed wheel and sdist qualification for this slice; artifacts are not published. This is not full SQL, durable maintained relations, or completion of M1/M3.
+
+M1 remains open: the preview does not satisfy its full design-comparison, usability, SQL and qualification gates. M3 remains open: the bounded transaction-maintenance slice does not complete its broader relation, oracle, failure-safety or workflow gates.
 
 ### Still-open qualification and product gates
 

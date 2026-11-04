@@ -193,15 +193,20 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   await expect(page).toHaveURL(/\/reference\/sql-preview\/$/);
   await expect(page.locator('main h1')).toHaveText('Unreleased SQL preview');
   const main = page.locator('main');
-  await expect(main).toContainText('not included in the currently published package');
+  await expect(main).toContainText('not included in the currently published 0.1.2 package');
   await expect(main).toContainText('The existing fixed-schema');
+  await expect(main).toContainText('Maintained relations and assertions');
+  await expect(main).toContainText('CREATE MATERIALIZED VIEW');
+  await expect(main).toContainText('CREATE ASSERTION');
   const download = page.getByRole('link', { name: 'Download this page as Markdown' });
   await expect(download).toHaveAttribute('href', '/docs/reference-sql-preview.md');
   const response = await page.request.get('/docs/reference-sql-preview.md');
   expect(response.ok()).toBeTruthy();
   const markdown = await response.text();
-  expect(markdown).toContain('not included in the currently published package');
+  expect(markdown).toContain('not included in the currently published 0.1.2 package');
   expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
+  expect(markdown).toContain('## Maintained relations and assertions');
+  expect(markdown).toContain('CREATE ASSERTION');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

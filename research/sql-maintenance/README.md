@@ -20,6 +20,12 @@ An independent Python interpreter replays source operations before deriving expe
 
 Regression tests in `tests/test_sql_maintenance_control.py` execute both engines and deliberately run a rollback-as-commit mutant and a dropped-write mutant against real SQLite. The oracle must reject both. It also rejects missing and altered persisted history.
 
+## Retained qualified v2 records
+
+`evidence/qualified-v2/` preserves the exact three-engine histories from an external wheel consumer built from immutable Git tree `62179679d909bf421187c547762a2d77d3ebdb5f`. Each engine completed 24 transactions across the two fixtures. `provenance.json` records that tree, native-source and wheel-archive digests, raw-record hashes, and the consumer test result. Installed module paths and extension digests remain in each native record. These are unreleased candidate results, not evidence about the published 0.1.2 package despite the unchanged development version metadata.
+
+The regression suite replays the independent expected histories against these retained records and requires exact cross-engine equality. The local artifact/archive paths in provenance identify the qualification environment; they are not portable download URLs. Reproduce fresh installed results with the command above. Functional equality does not establish a performance, novelty, durability, or concurrency advantage.
+
 ## Retained, rejected first attempt
 
 `control.py`, `candidate_adapter.py`, `workload.json`, and `evidence/sqlite-control.json` preserve the first delegated attempt; they are NOT qualification evidence. Parent review reproduced a concrete defect: the control committed before handling a requested rollback. Its oracle recomputed derived rows from the database's own source rows, so it accepted the wrong committed history. The candidate adapter also requested unsupported REFERENCES and arithmetic expressions, normalized away empty-group differences, and did not compare full per-transaction records against SQLite.

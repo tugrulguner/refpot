@@ -1,6 +1,7 @@
 """Executable comparison and oracle-mutation checks for maintained SQL."""
 
 import copy
+import hashlib
 import importlib.util
 import json
 import unittest
@@ -26,6 +27,22 @@ class MaintenanceControlTests(unittest.TestCase):
                 candidate = MATCHED.run("native", mode)
                 self.assertEqual(MATCHED.validate(candidate), expected_count)
                 self.assertEqual(candidate["records"], control["records"])
+
+    def test_retained_v2_records_match_the_independent_history(self):
+        evidence = DIRECTORY / "evidence" / "qualified-v2"
+        records = []
+        manifest = json.loads((evidence / "provenance.json").read_text())
+        for name in ("sqlite", "native-overlay", "native-modular"):
+            file = evidence / f"{name}.json"
+            self.assertEqual(
+                hashlib.sha256(file.read_bytes()).hexdigest(),
+                manifest["records_sha256"][file.name],
+            )
+            data = json.loads(file.read_text())
+            self.assertEqual(MATCHED.validate(data), 24)
+            records.append(data["records"])
+        self.assertEqual(records[0], records[1])
+        self.assertEqual(records[0], records[2])
 
     def test_oracle_rejects_actual_rollback_and_dropped_write_mutants(self):
         for mutant in ("commit-rollback", "drop-operation"):

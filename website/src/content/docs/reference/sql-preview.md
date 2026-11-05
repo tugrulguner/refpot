@@ -82,16 +82,62 @@ Assertions use the deliberately narrow form `CREATE ASSERTION name CHECK (NOT EX
 
 Creating a maintained view over populated inputs computes the newly declared derived state only; it does not copy existing source rows into a replacement catalog. It does scan inputs to calculate that new state, and the declaration can be rejected by the work or intermediate-row limits.
 
+### Missing-resource constraints
+
+An inner join cannot expose references whose target row is missing. Declare a maintained
+absence relation, then assert that it remains empty:
+
+```sql
+CREATE MATERIALIZED VIEW missing AS
+SELECT r.id, r.resource FROM reservations AS r
+WHERE NOT EXISTS (SELECT * FROM capacity AS c WHERE c.resource = r.resource)
+
+CREATE ASSERTION resource_exists CHECK (NOT EXISTS (SELECT * FROM missing))
+```
+
+This is a bounded correlated `NOT EXISTS` form: one outer relation, one inner relation,
+`SELECT *` or `SELECT 1` inside the subquery, and exactly one equality between qualified
+outer and inner column references. Reversed equality is accepted; self-reference requires
+distinct aliases. Both inputs may be maintained bags. Any positive matching right-side
+multiplicity excludes the left row; duplicate left rows retain their multiplicity.
+Deleting the last matching right row exposes the left rows again. Missing-resource
+violations can be repaired before explicit commit, just like capacity violations.
+
+The same projection-only form works in ordinary `SELECT`. It cannot be combined with
+another predicate, join, aggregate, grouping, ordering, or limit in that statement.
+Create a named absence view and query it separately for those supported operations.
+Other subqueries remain unsupported. The runnable
+[`examples/sql_maintenance.py`](../examples/sql_maintenance.py) demonstrates both capacity
+and missing-resource assertions, including rejection and delete/reinsert repair.
+
+### Transaction-local propagation
+
+After the first statement prepares a private candidate, subsequent statements propagate
+only their new signed effects through the declared graph. The candidate retains canonical
+net effects for publication separately from the current statement's propagation effects.
+Grouped sums/counts update affected keys from their previous candidate totals using wide
+accumulation; joins include simultaneous changes to both inputs exactly once. Publication
+nodes are refreshed only for changed tuples, including multiplicity changes and cancellation.
+Modular mode retains each affected materialized bag rather than copying it again per statement.
+
+This removes cumulative derived-change replay on append, not all population-dependent work.
+The initial preparation still uses the existing evaluator. Joins still scan current candidate
+inputs; maintained absence scans its inputs and prior output to replace affected keys. Overlay
+visibility merges committed rows with accumulated effects. Catalog bookkeeping remains per
+statement. Row-count metadata is retained per relation; statement deltas and prepared insertion
+nodes also consume memory. Valid native publication remains allocation-free; parsing and
+returning a SQL `COMMIT` result are outside that native publication claim.
+
 ## Limits and unsupported features
 
 The preview enforces bounded work, not an overall process-memory or wall-clock deadline. SQL guards include 64 KiB text, 8192 tokens/parameters, up to 128 public relations and 128 assertions, 64 columns per relation, 100000 total source rows, 10000 accumulated transaction mutation effects, 100000 rows/groups for ordinary query results, and one million logical visits per SELECT or mutation scan. For maintained relations, each internal relation is capped at 100000 logical rows, a derived delta at 200000 distinct keys, maintenance work at 1000000 steps per stage/declaration, and the internal catalog at 1024 definitions across source and derived relations. A bounded intermediate can exceed its cap and be rejected even if a later filter or projection would make the final result small. These are current implementation caps, not throughput claims. `stats()["maintenance_steps"]` is a cumulative work counter, not a speed measure. `LIMIT` bounds returned rows, not scan work or sorting work.
 
-Unsupported features include text or nullable stored columns, expressions/arithmetic, `OR`, outer joins, multiple joins or grouping keys, subqueries, CTEs, `DISTINCT`, `HAVING`, `UNION`, SQL comments, quoted identifiers, named parameters, multi-row `VALUES`, `DROP`/`ALTER`, secondary indexes, cursors, asynchronous execution/cancellation, persistence, concurrent use and natural-language `agent=True`. There is no SQLite SQL, file-format or C API compatibility promise.
+Unsupported features include text or nullable stored columns, expressions/arithmetic, `OR`, outer joins, multiple joins or grouping keys, subqueries other than the bounded correlated `NOT EXISTS` form above, CTEs, `DISTINCT`, `HAVING`, `UNION`, SQL comments, quoted identifiers, named parameters, multi-row `VALUES`, `DROP`/`ALTER`, secondary indexes, cursors, asynchronous execution/cancellation, persistence, concurrent use and natural-language `agent=True`. There is no SQLite SQL, file-format or C API compatibility promise.
 
 ## Failure boundary and remaining costs
 
 A rejected executed statement aborts the entire explicit transaction, unlike the fixed-schema API's behavior where catching a validation/missing/duplicate error does not discard earlier valid staged operations. A Python transaction context records a failed statement and raises on exit even if the caller caught the original error. `explain=True` does not execute or abort a transaction. If converting a native result to Python fails after execution, the preview closes the handle rather than claiming the already-executed mutation rolled back. This is fail-closed volatile ownership, not an outcome-recovery protocol.
 
-The SQL preview is not the complete relational architecture in the roadmap. It has no durable storage, snapshot/recovery protocol, concurrent readers, multiwriter semantics, free-threading qualification, or natural-language interface. The supported subset is not broad SQL support. SQL predicates and maintained filters use the same bound comparison primitive; SQL and maintained groups share checked-count/wide-sum aggregation. Both overlay and modular modes use these helpers, so reuse is not an overlay-only advantage or proof of a universal intermediate representation. Source-only SQL transactions extend their private candidate in place, discard the whole candidate on failure, and retain a mutation count rather than replayable requests. A new maintained declaration computes its new derived relation state without copying existing source rows, subject to bounded declaration work and intermediate relations; later maintenance currently reevaluates cumulative derived changes. Ad hoc SQL has no maintained query cache. Joins use nested loops; ordering materializes and sorts before applying `LIMIT`. `maintenance_steps` is a cumulative work counter, not a speed measure. Diagnostic counters and local comparisons do not by themselves establish an architectural or performance advantage. No claim here closes roadmap M1 or the separate storage, concurrency, durability, installed-artifact and broader qualification work.
+The SQL preview is not the complete relational architecture in the roadmap. It has no durable storage, snapshot/recovery protocol, concurrent readers, multiwriter semantics, free-threading qualification, or natural-language interface. The supported subset is not broad SQL support. SQL predicates and maintained filters use the same bound comparison primitive; SQL and maintained groups share checked-count/wide-sum aggregation. Both overlay and modular modes use these helpers, so reuse is not an overlay-only advantage or proof of a universal intermediate representation. Source-only SQL transactions extend their private candidate in place, discard the whole candidate on failure, and retain a mutation count rather than replayable requests. A new maintained declaration computes its new derived relation state without copying existing source rows, subject to bounded declaration work and intermediate relations; subsequent statements propagate transaction-local effects without replaying cumulative derived changes, with the remaining scans and retained-state costs described above. Ad hoc SQL has no maintained query cache. Joins use nested loops; ordering materializes and sorts before applying `LIMIT`. `maintenance_steps` is a cumulative work counter, not a speed measure. Diagnostic counters and local comparisons do not by themselves establish an architectural or performance advantage. No claim here closes roadmap M1 or the separate storage, concurrency, durability, installed-artifact and broader qualification work.
 
 [Download this page as Markdown](/docs/reference-sql-preview.md)

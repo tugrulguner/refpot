@@ -46,7 +46,20 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("Implemented foundations", text)
         self.assertIn("Still-open qualification and product gates", text)
         self.assertIn("- [x] Implement fixed-schema CRUD, explicit transactions", text)
+        self.assertIn("- [x] Add an unreleased volatile `refpot.sql` execution preview", text)
+        self.assertIn("real-pybind installed wheel and sdist qualification", text)
+        self.assertIn("not published", text)
         self.assertIn("- [ ] Complete native CRUD/transaction/recovery failure qualification", text)
+        self.assertIn("M1 remains open", text)
+        self.assertIn("M3 remains open", text)
+        self.assertNotIn("there is no implemented\nSQL `execute` interface", text)
+        milestones = {
+            key: text.split(f"## {key}.", 1)[1].split("\n## ", 1)[0]
+            for key in ("M1", "M3")
+        }
+        for section in milestones.values():
+            self.assertNotIn("- [x]", section)
+            self.assertIn("- [ ]", section)
         self.assertIn("fixed **2× SQLite target is withdrawn**", text)
         self.assertIn("historical screening results", text)
 
@@ -60,7 +73,8 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertNotIn("- [x]", planned)
         for phrase in (
             "self-maintaining embedded relational database",
-            "Derived relations, internal optimization agents, SQL, ORM",
+            "unreleased volatile `refpot.sql` preview",
+            "Natural-language query\ngeneration, ORM and concurrent access are not shipped",
             "not a backend package",
             "same candidate language",
             "Recovery must not call inference",

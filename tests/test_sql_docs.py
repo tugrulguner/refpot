@@ -27,7 +27,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertTrue(doc.exists(), "the canonical preview contract is missing")
         text = doc.read_text()
         for phrase in (
-            "not included in the currently published package",
+            "not included in the currently published 0.1.2 package",
             "volatile",
             "Database()",
             'mode="overlay"',
@@ -50,6 +50,45 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertNotIn("SQLite's integer-overflow-to-float behavior", text)
         self.assertIn("SQLite integer `SUM` raises on intermediate integer overflow", text)
         self.assertIn("not included", text.lower())
+
+    def test_maintained_sql_scope_transactions_and_caps_are_explicit(self):
+        text = (ROOT / "docs/sql-preview.md").read_text()
+        normalized = " ".join(text.lower().split())
+        for phrase in (
+            "create materialized view",
+            "comparisons joined with `and`",
+            "one equijoin",
+            "group by one key",
+            "aggregate outputs need aliases",
+            "only one distinct `sum` input",
+            "unique and addressable",
+            "order by`, `limit`, global aggregates",
+            "duplicate rows and their multiplicities are preserved",
+            "views are read-only",
+            "create assertion name check (not exists (select * from relation))",
+            "explicit transaction may temporarily violate an assertion and repair it",
+            "autocommit",
+            "ddl (tables, views and assertions) is forbidden inside explicit transactions",
+            "ordinary executed error aborts the whole explicit transaction",
+            "`explain=true` parses and binds but does not mutate or abort",
+            "does not copy existing source rows",
+            "100000 logical rows",
+            "200000 distinct keys",
+            "1000000 steps per stage/declaration",
+            "1024 definitions across source and derived relations",
+            "128 public relations and 128 assertions",
+            "bounded intermediate can exceed its cap",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, normalized)
+        self.assertIn("cumulative work counter, not a speed measure", normalized)
+        self.assertIn("not included in the currently published 0.1.2 package", normalized)
+        self.assertIn("published 0.1.2", normalized)
+
+    def test_maintained_preview_has_an_unreleased_changelog_fragment(self):
+        text = (ROOT / "changelog.d/+sql-maintained-relations.added.md").read_text()
+        self.assertIn("unreleased source preview", text.lower())
+        self.assertIn("not part of the published 0.1.2 package", text)
 
     def test_runnable_example_uses_only_the_public_preview_api(self):
         example = ROOT / "examples/sql_preview.py"

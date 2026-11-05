@@ -1,0 +1,27 @@
+{
+  "format": "maintained-sql-frozen-workload-v1",
+  "seed": 482719,
+  "fixtures": ["capacity", "pricing"],
+  "workloads": {
+    "capacity": [
+      {"id":"sparse-join-right-move","pattern":"sparse","ops":[{"op":"update_fact","id":4,"dimension":2,"amount":2}]},
+      {"id":"sparse-delete-insert","pattern":"sparse","ops":[{"op":"delete_fact","id":2},{"op":"insert_fact","id":5,"dimension":1,"amount":4}]},
+      {"id":"dense-both-sides-and-retractions","pattern":"dense","ops":[{"op":"update_dimension","id":2,"rate":1,"ceiling":10},{"op":"update_fact","id":1,"dimension":2,"amount":3},{"op":"delete_fact","id":3},{"op":"insert_fact","id":6,"dimension":3,"amount":4},{"op":"update_fact","id":4,"dimension":1,"amount":1}]},
+      {"id":"rollback-prefix","pattern":"sparse","outcome":"rollback","ops":[{"op":"insert_fact","id":7,"dimension":3,"amount":2},{"op":"delete_fact","id":6}]},
+      {"id":"deferred-violation-repaired","pattern":"sparse","ops":[{"op":"insert_fact","id":8,"dimension":1,"amount":8},{"op":"update_dimension","id":1,"rate":1,"ceiling":30}]},
+      {"id":"rejected-final-assertion","pattern":"sparse","outcome":"reject","ops":[{"op":"insert_fact","id":9,"dimension":1,"amount":99}]},
+      {"id":"ordinary-error-aborts-prefix","pattern":"sparse","outcome":"reject","ops":[{"op":"insert_fact","id":10,"dimension":2,"amount":1},{"op":"ordinary_error","id":11,"amount":1}]},
+      {"id":"dense-rebalance-after-rejection","pattern":"dense","ops":[{"op":"update_fact","id":8,"dimension":3,"amount":2},{"op":"update_dimension","id":1,"rate":1,"ceiling":11},{"op":"update_dimension","id":3,"rate":1,"ceiling":20},{"op":"delete_fact","id":5}]}
+    ],
+    "pricing": [
+      {"id":"sparse-left-join-side-rate-update","pattern":"sparse","ops":[{"op":"update_dimension","id":1,"rate":13,"ceiling":10000}]},
+      {"id":"sparse-fact-update-delete","pattern":"sparse","ops":[{"op":"update_fact","id":4,"dimension":2,"amount":2},{"op":"delete_fact","id":2}]},
+      {"id":"dense-both-sides-and-retractions","pattern":"dense","ops":[{"op":"update_dimension","id":2,"rate":8,"ceiling":10000},{"op":"update_fact","id":1,"dimension":2,"amount":5},{"op":"delete_fact","id":3},{"op":"insert_fact","id":6,"dimension":3,"amount":7},{"op":"update_fact","id":4,"dimension":1,"amount":1}]},
+      {"id":"rollback-prefix","pattern":"sparse","outcome":"rollback","ops":[{"op":"insert_fact","id":7,"dimension":3,"amount":2},{"op":"delete_fact","id":6}]},
+      {"id":"deferred-violation-repaired","pattern":"sparse","ops":[{"op":"update_dimension","id":1,"rate":17,"ceiling":1},{"op":"update_dimension","id":1,"rate":17,"ceiling":10000}]},
+      {"id":"rejected-final-assertion","pattern":"sparse","outcome":"reject","ops":[{"op":"update_dimension","id":1,"rate":17,"ceiling":1}]},
+      {"id":"ordinary-error-aborts-prefix","pattern":"sparse","outcome":"reject","ops":[{"op":"insert_fact","id":10,"dimension":2,"amount":1},{"op":"ordinary_error","id":11,"amount":1}]},
+      {"id":"dense-rebalance-after-rejection","pattern":"dense","ops":[{"op":"update_fact","id":1,"dimension":3,"amount":2},{"op":"update_dimension","id":1,"rate":7,"ceiling":10000},{"op":"delete_fact","id":5}]}
+    ]
+  }
+}

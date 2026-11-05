@@ -1,0 +1,18 @@
+{
+  "source_tree": "62179679d909bf421187c547762a2d77d3ebdb5f",
+  "source_sha256": {
+    "foundation.hpp": "9371e65d9287f2d6043cbd58d610a137baf3333dccda6665b6fcb2fdb0afb6ef",
+    "operators.hpp": "ee8083d53d9ceabdcf2630c7bf75ebe762c1b73aa2e533c3da9c4be9bb702f54",
+    "sql.hpp": "97982e399b69bdcac081ebe843e9b33e2ffcb9125c2f48e1f1d056c5fe35ab18"
+  },
+  "wheel": {
+    "path": "/Users/tugrulguner/.hermes/refpot-research/sql-maintenance/artifacts-62179679/dist/refpot-0.1.2-cp311-cp311-macosx_26_0_arm64.whl",
+    "sha256": "87ae18ba504d8af816654a9a14fe5595b85452e6a6780ea2a05c1dacd40cd6c2"
+  },
+  "test_result": "............................................ [ 91%]\n....                                                                   [100%]\n48 passed, 30 subtests passed in 4.12s",
+  "records_sha256": {
+    "native-modular.json": "2be8e6d99a5a1c7649092f4752fd765b6c9ac4077eae2dacbd040349c7dec538",
+    "native-overlay.json": "83c990cdc1e0f8ba778a166b954a07d584ac5d25e4e26942092ace96db4f85b5",
+    "sqlite.json": "4d3cc62feb8e918457dfbdd6947cc3b2b2fd36c5a7e175b3d2cf795c026d2eb7"
+  }
+}

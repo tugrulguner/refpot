@@ -274,6 +274,61 @@ void rejected_commit_sweep(refpot::foundation::Mode mode) {
     assert(reached_constraint&&failures>0);
 }
 
+void absence_append_sweep(refpot::foundation::Mode mode) {
+    const std::vector<std::string> queries{
+        "DELETE FROM limits WHERE id = 8",
+        "UPDATE source SET k = 9 WHERE id = 3",
+        "INSERT INTO source VALUES (5, 9, 6)"
+    };
+    for (const auto& query:queries) {
+        bool success=false;long failures=0;
+        for(long cut=0;cut<2000&&!success;++cut) {
+            disarm();refpot::sqlpreview::Database db(mode);setup(db);
+            db.execute("CREATE MATERIALIZED VIEW missing AS SELECT s.id, s.k FROM source AS s WHERE NOT EXISTS (SELECT * FROM limits AS l WHERE l.id = s.k)");
+            db.execute("CREATE MATERIALIZED VIEW grouped AS SELECT k, SUM(v) AS total, COUNT(*) AS n FROM source GROUP BY k");
+            db.execute("CREATE ASSERTION present CHECK (NOT EXISTS (SELECT * FROM missing))");
+            db.execute("BEGIN");
+            db.execute("INSERT INTO source VALUES (4, 7, 5)");
+            db.execute("UPDATE source SET v = 6 WHERE id = 1");
+            allocation_attempts=0;fail_after=cut;
+            bool refused=false;
+            try {db.execute(query);} catch(const std::bad_alloc&){refused=true;}
+            const long attempts=allocation_attempts;disarm();
+            if(refused) {
+                ++failures;assert(attempts==cut+1);assert(!db.in_transaction());
+            } else {
+                success=true;assert(attempts<=cut);assert(db.in_transaction());
+                assert(!db.execute("SELECT * FROM missing").rows.empty());
+                db.execute("ROLLBACK");
+            }
+            assert_source(db,{{1,7,3},{2,7,4},{3,8,2}});
+            assert_group(db,{{7,7,2},{8,2,1}});assert_limits(db);
+            assert(db.execute("SELECT * FROM missing").rows.empty());
+            // Continued usability after every refused allocation, not only final cut.
+            db.execute("INSERT INTO source VALUES (6, 8, 1)");
+            db.execute("DELETE FROM source WHERE id = 6");
+        }
+        assert(success&&failures>0);
+    }
+}
+
+void allocation_free_absence_publication(refpot::foundation::Mode mode) {
+    using namespace refpot::foundation;
+    Definition left;left.name="left";left.op="source";left.width=2;
+    Definition right;right.name="right";right.op="source";right.width=2;
+    Definition missing;missing.name="missing";missing.op="anti";
+    missing.left="left";missing.right="right";missing.left_key=1;missing.right_key=1;
+    Model model({left,right,missing},{"missing"},mode);
+    model.prepare({{"insert","left",{1,7},0}},false);
+    model.append({{"insert","right",{2,7},0}},false);
+    model.append({{"delete","right",{},2}},false);
+    model.append({{"insert","right",{3,7},0}},false);
+    allocation_attempts=0;fail_after=0;model.commit();
+    disarm();assert(allocation_attempts==0);
+    assert(model.bag("missing").empty());
+    assert((model.bag("right")==Bag{{Row{3,7},1}}));
+}
+
 void allocation_free_publication(refpot::foundation::Mode mode) {
     using namespace refpot::foundation;
     Definition source;source.name="source";source.op="source";source.width=2;
@@ -329,6 +384,8 @@ int main() {
         commit_failure_sweep(mode);
         rejected_commit_sweep(mode);
         allocation_free_publication(mode);
+        absence_append_sweep(mode);
+        allocation_free_absence_publication(mode);
     }
     std::cout << "SQL maintenance allocation-failure sweeps passed\n";
 }

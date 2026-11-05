@@ -113,7 +113,7 @@ Task-oriented guides are available for [CRUD](https://refpot.modepot.io/build/cr
 
 The [package contract](docs/package-contract.md) documents the exact `Database` and `Row` API, validation, errors, ownership, capacity and unsupported behavior. Hosted guides: [API reference](https://refpot.modepot.io/reference/api/) · [package reference](https://refpot.modepot.io/package-contract/).
 
-The separate [`refpot.sql` SQL preview](docs/sql-preview.md) documents unreleased, volatile SQL, including source-preview maintained views and deferred assertions. Runnable source examples are [examples/sql_preview.py](examples/sql_preview.py) and [examples/sql_maintenance.py](examples/sql_maintenance.py); these source-preview APIs are not available from the currently published 0.1.2 package or verified in a published wheel, and do not alter the existing `from refpot import Database, Row` API.
+The separate [`refpot.sql` SQL preview](docs/sql-preview.md) documents unreleased, volatile SQL, including source-preview maintained views, transaction-local propagation, and deferred capacity/missing-reference assertions. Runnable source examples are [examples/sql_preview.py](examples/sql_preview.py) and [examples/sql_maintenance.py](examples/sql_maintenance.py); these source-preview APIs are not available from the currently published 0.1.2 package or verified in a published wheel, and do not alter the existing `from refpot import Database, Row` API.
 
 ## Internals
 

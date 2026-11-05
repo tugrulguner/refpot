@@ -30,12 +30,12 @@ class MaintainedNativeTests(unittest.TestCase):
             ):
                 self.test_maintained_native_contract()
                 commands = [call.args[0] for call in run.call_args_list]
-                self.assertEqual(len(commands), 12)
+                self.assertEqual(len(commands), 20)
                 for command in commands[::2]:
                     self.assertEqual(command[0], expected)
                     self.assertIn("-Werror", command)
                 self.assertEqual(
-                    sum("-fsanitize=address,undefined" in command for command in commands), 3
+                    sum("-fsanitize=address,undefined" in command for command in commands), 5
                 )
 
     def test_compile_failure_includes_diagnostics(self):
@@ -48,7 +48,7 @@ class MaintainedNativeTests(unittest.TestCase):
             # swallowing them in this enclosing test's result.
             result = unittest.TestResult()
             MaintainedNativeTests("test_maintained_native_contract").run(result)
-        self.assertEqual(run.call_count, 6)  # Never execute after a failed compile.
+        self.assertEqual(run.call_count, 10)  # Never execute after a failed compile.
         self.assertFalse(result.wasSuccessful())
         self.assertTrue(result.failures)
         self.assertTrue(all("compiler detail" in message for _, message in result.failures))
@@ -61,6 +61,8 @@ class MaintainedNativeTests(unittest.TestCase):
                 "test_sql_maintenance_native.cpp",
                 "test_maintenance_foundation.cpp",
                 "test_sql_maintenance_alloc.cpp",
+                "test_transaction_deltas.cpp",
+                "test_sql_absence.cpp",
             ):
                 for sanitized in (False, True):
                     with self.subTest(source=source, sanitized=sanitized):

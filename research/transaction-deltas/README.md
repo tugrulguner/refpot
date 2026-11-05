@@ -41,8 +41,8 @@ prefix. Tests inject both an omitted source operation and rollback-as-commit and
 require the independent oracle to catch each.
 
 The native backend is an adapter for the unreleased installed `refpot.sql`
-preview. It was not run as part of this SQLite-only qualification. Once the
-foundation lands and the candidate is installed/importable, run:
+preview. Candidate installed wheel and sdist runs are recorded in [RESULTS.md](RESULTS.md)
+and `evidence/qualified.json`. To reproduce with an installed candidate, run:
 
 ```sh
 python3 research/transaction-deltas/runner.py --engine native-overlay
@@ -89,6 +89,7 @@ Use a fresh output directory; existing trial files are never overwritten. Pass
 The default 256-row screen stays within the native nested-loop declaration/query budgets;
 large workloads may be refused, and are not silently downscaled.
 
-No performance conclusion is made here. The native absence path was not in the
+The [bounded findings](RESULTS.md) include native losses and all raw records. They
+are a short service/RSS screen, not a broad performance conclusion. The native absence path was not in the
 old baseline, so the old baseline is not treated as comparable. Retain raw records
 and provenance before making any cross-engine claim.

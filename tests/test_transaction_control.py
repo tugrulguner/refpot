@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import itertools
+import json
 from pathlib import Path
 
 import pytest
@@ -65,6 +67,31 @@ def test_sqlite_control_preserves_absence_bag_and_operation_error_cases():
     } <= cases
     validated = runner.validate(result)
     assert validated == result["transaction_count"]
+
+
+def test_retained_records_match_oracle_and_complete_cost_matrix():
+    data = json.loads((RUNNER.parent / "evidence/qualified.json").read_text())
+    histories = []
+    for record in data["correctness"].values():
+        assert runner.validate(record) == record["transaction_count"]
+        histories.append(record["records"])
+    assert histories[0] == histories[1] == histories[2]
+    rows = data["cost_records"]
+    keys = {(r["engine"], r["workload"], r["repeat"]) for r in rows}
+    expected = set(
+        itertools.product(
+            ("sqlite", "native-overlay", "native-modular"), ("sparse", "dense"), range(3)
+        )
+    )
+    assert keys == expected and len(rows) == len(expected)
+    assert all(r["rows"] == 256 and r["service_ns"] > 0 for r in rows)
+    assert all(
+        r["peak_process_rss_bytes"] >= r["baseline_peak_process_rss_bytes"] > 0 for r in rows
+    )
+    damaged = data["correctness"]["sqlite"]
+    damaged["records"][0]["history"][0]["state"]["fact"].clear()
+    with pytest.raises(AssertionError):
+        runner.validate(damaged)
 
 
 def test_benchmark_records_measure_only_service_and_peak_rss_is_bytes(tmp_path):

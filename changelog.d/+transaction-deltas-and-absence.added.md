@@ -1,0 +1,1 @@
+Add transaction-local maintained-relation propagation and a bounded correlated `NOT EXISTS` form for absence-aware final-state assertions in the unreleased source preview. These volatile APIs are not part of the published 0.1.2 package; the fixed-schema API and storage are unchanged.

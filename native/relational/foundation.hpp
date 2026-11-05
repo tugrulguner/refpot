@@ -30,12 +30,14 @@ class Model {
     struct Candidate {
         std::map<std::string, Bag> visible, changes, staged;
         Stats stats;
+        std::map<std::string,I> row_counts;
         bool validate=true;
     };
     std::vector<Definition> defs_;
     std::vector<std::string> required_;
     std::map<std::string, std::size_t> index_;
     std::map<std::string, Bag> state_;
+    std::map<std::string,I> row_counts_;
     std::uint64_t epoch_=0;
     Stats stats_;
     Mode mode_;
@@ -130,7 +132,8 @@ class Model {
         return p->second;
     }
 
-    void stage(Candidate& c, const std::vector<Mutation>& mutations) const {
+    void stage(Candidate& c, const std::vector<Mutation>& mutations,
+               std::map<std::string,Bag>* statement_delta=nullptr) const {
         for (const auto& m:mutations) {
             ++source_mutation_applications_;
             auto p=index_.find(m.table);
@@ -151,13 +154,130 @@ class Model {
             auto& delta=c.changes.at(m.table);
             if (old) {
                 change(delta,previous,-1,c.stats);
+                c.row_counts[m.table]=detail::checked(static_cast<__int128>(c.row_counts.at(m.table))-1);
+                if (statement_delta) change((*statement_delta)[m.table],previous,-1,c.stats);
                 if (bag) bag->erase(previous);
             }
             if (writing) {
                 change(delta,m.row,1,c.stats);
+                c.row_counts[m.table]=detail::checked(static_cast<__int128>(c.row_counts.at(m.table))+1);
+                if (statement_delta) change((*statement_delta)[m.table],m.row,1,c.stats);
                 if (bag) bag->emplace(m.row,1);
             }
         }
+    }
+
+    Bag derive_statement(Candidate& c, const Definition& d,
+                         const std::map<std::string,Bag>& statement_delta) const {
+        const auto& local=[&](const std::string& name)->const Bag& {
+            static const Bag empty;
+            auto p=statement_delta.find(name);
+            return p==statement_delta.end()?empty:p->second;
+        };
+        const bool binary=d.op=="join"||d.op=="anti"||d.op=="union";
+        const bool touched=binary?(!local(d.left).empty()||!local(d.right).empty()):!local(d.input).empty();
+        if(!touched)return {};
+        Bag out;
+        auto add=[&](const Row& row,I amount) {
+            if(!amount)return;
+            auto p=out.find(row);
+            I combined=detail::checked(static_cast<__int128>(p==out.end()?0:p->second)+amount);
+            if(!combined) {if(p!=out.end())out.erase(p);return;}
+            if(p==out.end()&&out.size()>=200000)throw std::length_error("derived delta limit exceeded");
+            if(p==out.end())++c.stats.delta_key_copies;
+            out[row]=combined;
+        };
+        if(d.op=="map") {
+            for(const auto& x:local(d.input)) {
+                maintenance_step(c.stats);Row row;
+                for(const auto& expression:d.exprs)row.push_back(detail::eval(expression,x.first));
+                add(row,x.second);
+            }
+        } else if(d.op=="filter") {
+            auto predicate=relational::BoundPredicate::bind(d.column,d.cmp,d.value);
+            predicate.right_column=d.right_column;
+            for(const auto& x:local(d.input)){maintenance_step(c.stats);if(predicate.matches(x.first))add(x.first,x.second);}
+        } else if(d.op=="union") {
+            for(const auto& name:{d.left,d.right})for(const auto& x:local(name)){maintenance_step(c.stats);add(x.first,x.second);}
+        } else if(d.op=="join") {
+            std::map<Row,__int128> wide;
+            auto pair=[&](const Row& a,I ac,const Row& b,I bc) {
+                maintenance_step(c.stats);
+                if(a[d.left_key]==b[d.right_key]) {
+                    Row row=a;row.insert(row.end(),b.begin(),b.end());
+                    if(!wide.count(row)&&wide.size()>=200000)throw std::length_error("derived delta limit exceeded");
+                    wide[row]+=static_cast<__int128>(ac)*bc;
+                }
+            };
+            // dL*newR + newL*dR - dL*dR: uses current candidate inputs,
+            // including simultaneous deletion and self-join cross terms exactly once.
+            for(const auto& a:local(d.left))visible(c,d.right,[&](const Row& b,I bc){pair(a.first,a.second,b,bc);return true;},&c.stats);
+            if(!local(d.right).empty())visible(c,d.left,[&](const Row& a,I ac){for(const auto& b:local(d.right))pair(a,ac,b.first,b.second);return true;},&c.stats);
+            for(const auto& a:local(d.left))for(const auto& b:local(d.right))pair(a.first,-a.second,b.first,b.second);
+            for(const auto& x:wide)add(x.first,detail::checked(x.second));
+        } else if(d.op=="group") {
+            struct Effect { __int128 sum=0,count=0; };
+            std::map<I,Effect> effects;
+            for(const auto& x:local(d.input)) {
+                maintenance_step(c.stats);
+                auto& effect=effects[x.first[d.key]];
+                effect.sum+=static_cast<__int128>(x.first[d.value_column])*x.second;
+                effect.count+=x.second;
+            }
+            for(const auto& entry:effects) {
+                maintenance_step(c.stats);
+                const I key=entry.first;
+                // Group output is uniquely keyed in column zero, just like a source.
+                const Row* prior=source_row(c,d.name,key);
+                const __int128 count=(prior?(*prior)[2]:0)+entry.second.count;
+                const __int128 sum=(prior?(*prior)[1]:0)+entry.second.sum;
+                if(prior)add(*prior,-1);
+                if(count<0)throw std::logic_error("negative aggregate count");
+                if(count)add({key,detail::checked(sum),detail::checked(count)},1);
+            }
+        } else if(d.op=="anti") {
+            std::set<I> keys;
+            for(const auto& x:local(d.left)){maintenance_step(c.stats);keys.insert(x.first[d.left_key]);}
+            for(const auto& x:local(d.right)){maintenance_step(c.stats);keys.insert(x.first[d.right_key]);}
+            // The output still holds the pre-statement candidate here. Replace
+            // only affected keys; no reconstruction from surviving input rows.
+            visible(c,d.name,[&](const Row& row,I count) {
+                if(keys.count(row[d.left_key]))add(row,-count);
+                return true;
+            },&c.stats);
+            std::set<I> present;
+            visible(c,d.right,[&](const Row& row,I) {
+                if(keys.count(row[d.right_key]))present.insert(row[d.right_key]);
+                return true;
+            },&c.stats);
+            visible(c,d.left,[&](const Row& row,I count) {
+                const I key=row[d.left_key];
+                if(keys.count(key)&&!present.count(key))add(row,count);
+                return true;
+            },&c.stats);
+        }
+        __int128 row_change=0;
+        auto& canonical_delta=c.changes.at(d.name);
+        for(const auto& x:out) {
+            maintenance_step(c.stats);
+            auto p=canonical_delta.find(x.first);
+            I canonical=detail::checked(static_cast<__int128>(p==canonical_delta.end()?0:p->second)+x.second);
+            auto base=state_.at(d.name).find(x.first);
+            I current=detail::checked(static_cast<__int128>(base==state_.at(d.name).end()?0:base->second)+canonical);
+            if(current<0)throw std::logic_error("negative derived multiplicity statement check: "+d.name);
+            row_change+=x.second;
+        }
+        const __int128 final_rows=static_cast<__int128>(c.row_counts.at(d.name))+row_change;
+        if(final_rows<0||final_rows>100000)throw std::length_error("derived row limit exceeded");
+        for(const auto& x:out) {maintenance_step(c.stats);change(canonical_delta,x.first,x.second,c.stats);}
+        if(canonical_delta.size()>200000)throw std::length_error("derived delta limit exceeded");
+        c.row_counts[d.name]=static_cast<I>(final_rows);
+        if(mode_==Mode::Modular&&!out.empty()) {
+            Bag& target=materialize(c,d.name);
+            for(const auto& x:out)detail::add(target,x.first,x.second);
+        }
+        ++c.stats.derived_nodes;
+        return out;
     }
 
     void derive(Candidate& c, const Definition& d) const {
@@ -257,6 +377,7 @@ class Model {
             if (count<0) throw std::logic_error("negative derived multiplicity");
         }
         if(rows<0||rows>100000)throw std::length_error("derived row limit exceeded");
+        c.row_counts[d.name]=static_cast<I>(rows);
         if (mode_==Mode::Modular && !out.empty()) {
             Bag& bag=materialize(c,d.name);
             for (const auto& x:out) detail::add(bag,x.first,x.second);
@@ -267,33 +388,43 @@ class Model {
 
     void evaluate(Candidate& c,const std::vector<Mutation>& mutations, bool append=false) const {
         if (epoch_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("epoch exhausted");
-        if (!append) for (const auto& d:defs_) c.changes.emplace(d.name,Bag{});
-        stage(c,mutations);
-        if (append) {
-            for (const auto& d:defs_) if (d.op!="source") c.changes.at(d.name).clear();
-            c.staged.clear();
-            for (const auto& d:defs_) if (d.op!="source") c.visible.erase(d.name);
+        std::map<std::string,Bag> statement_delta;
+        if (!append) {
+            for (const auto& d:defs_) c.changes.emplace(d.name,Bag{});
+            stage(c,mutations);
+            for (const auto& d:defs_) {
+                if (d.op=="source") c.stats.source_delta_rows+=c.changes.at(d.name).size();
+                else derive(c,d);
+            }
+        } else {
             c.stats={};
-        }
-        for (const auto& d:defs_) {
-            if (d.op=="source") c.stats.source_delta_rows+=c.changes.at(d.name).size();
-            else derive(c,d);
+            stage(c,mutations,&statement_delta);
+            for (const auto& d:defs_) {
+                if(d.op=="source") c.stats.source_delta_rows+=statement_delta[d.name].size();
+                else statement_delta[d.name]=derive_statement(c,d,statement_delta);
+            }
         }
         if (c.validate) for (const auto& name:required_) {
             bool nonempty=false;
             visible(c,name,[&](const Row&,I) { nonempty=true; return false; },&c.stats);
             if (nonempty) throw std::logic_error("required-empty relation is nonempty");
         }
-        for (const auto& item:c.changes) {
-            c.stats.delta_entries+=item.second.size();
-            if (mode_==Mode::Overlay && !item.second.empty()) {
-                auto& staged=c.staged.emplace(item.first,Bag{}).first->second;
-                const auto& base=state_.at(item.first);
-                for (const auto& x:item.second) if (x.second>0 && !base.count(x.first)) {
-                    staged.emplace(x.first,x.second); ++c.stats.staged_insert_rows;
-                }
+        const auto& changed=append?statement_delta:c.changes;
+        if(mode_==Mode::Overlay)for(const auto& item:changed) {
+            if(item.second.empty())continue;
+            auto& staged=c.staged[item.first];
+            const auto& base=state_.at(item.first);
+            const auto& canonical=c.changes.at(item.first);
+            for(const auto& x:item.second) {
+                maintenance_step(c.stats);
+                auto current=canonical.find(x.first);
+                if(current!=canonical.end()&&current->second>0&&!base.count(x.first))
+                    staged.insert_or_assign(x.first,current->second);
+                else staged.erase(x.first);
             }
         }
+        for(const auto& item:c.changes)c.stats.delta_entries+=item.second.size();
+        for(const auto& item:c.staged)c.stats.staged_insert_rows+=item.second.size();
         c.stats.publication_row_effects=c.stats.delta_entries;
         c.stats.retained_candidate_rows=c.stats.delta_entries+c.stats.staged_insert_rows;
         for (const auto& item:c.visible) c.stats.retained_candidate_rows+=item.second.size();
@@ -309,6 +440,7 @@ public:
         validate_column_references(defs_);
         for (std::size_t i=0;i<defs_.size();++i) {
             index_.emplace(defs_[i].name,i); state_.emplace(defs_[i].name,Bag{});
+            row_counts_.emplace(defs_[i].name,0);
             sources_only_ &= defs_[i].op=="source";
         }
     }
@@ -323,8 +455,10 @@ public:
         defs.push_back(definition); index.emplace(definition.name,defs.size()-1);
         std::map<std::string,Bag> empty; empty.emplace(definition.name,Bag{});
         auto node=empty.extract(definition.name);
+        std::map<std::string,I> count_node_map;count_node_map.emplace(definition.name,0);
+        auto count_node=count_node_map.extract(definition.name);
         defs_.swap(defs); index_.swap(index);
-        state_.insert(std::move(node));
+        state_.insert(std::move(node)); row_counts_.insert(std::move(count_node));
         ++epoch_;
     }
     void add_required_empty(const std::string& name) {
@@ -349,6 +483,7 @@ public:
         refpot::model::Model check(std::move(base_defs),{});
         validate_column_references(defs);
         std::map<std::string,Bag> added;
+        std::map<std::string,I> added_counts;
         std::size_t visits=0;
         auto tick=[&] { ++maintenance_steps_;if(++visits>1000000)throw std::length_error("maintenance work limit exceeded"); };
         auto parent=[&](const std::string& name)->const Bag& {
@@ -388,13 +523,15 @@ public:
                 for(const auto& x:groups){tick();add({x.first,x.second.value(),x.second.count},1);}
             } else throw std::invalid_argument("unsupported initialization operator");
             added.emplace(d.name,std::move(out));
+            added_counts.emplace(d.name,rows);
         }
         // All allocation/validation has finished. Transfer disjoint map nodes.
-        state_.merge(added);defs_.swap(defs);index_.swap(index);sources_only_=false;++epoch_;
+        state_.merge(added);row_counts_.merge(added_counts);defs_.swap(defs);index_.swap(index);sources_only_=false;++epoch_;
     }
     void prepare(const std::vector<Mutation>& mutations,bool validate=true) {
         if (active_) { rollback(); throw std::logic_error("transaction already active"); }
         auto candidate=std::make_unique<Candidate>(); candidate->validate=validate;
+        candidate->row_counts=row_counts_;
         evaluate(*candidate,mutations);
         active_=std::move(candidate);
     }
@@ -487,6 +624,7 @@ public:
                 }
             }
         }
+        row_counts_.swap(active_->row_counts);
         stats_=active_->stats; ++epoch_; active_.reset();
     }
     void rollback() noexcept { active_.reset(); }
@@ -494,6 +632,10 @@ public:
     std::map<std::string,Bag> snapshot() const { return state_; }
     const Bag& bag(const std::string& name) const { return state_.at(name); }
     Stats stats() const { return stats_; }
+    Stats candidate_stats() const {
+        if(!active_)throw std::logic_error("no active transaction");
+        return active_->stats;
+    }
     std::uint64_t maintenance_steps() const noexcept { return maintenance_steps_; }
     std::uint64_t source_mutation_applications() const { return source_mutation_applications_; }
     std::uint64_t materialized_entries() const { return materialized_entries_; }

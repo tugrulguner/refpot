@@ -128,7 +128,7 @@ jobs:
           "$install" -c 'import pathlib, sys, refpot; from refpot import sql, _sql; prefix = pathlib.Path(sys.prefix).resolve(); assert all(pathlib.Path(m.__file__).resolve().is_relative_to(prefix) for m in (refpot, sql, _sql)); print(refpot.__file__, sql.__file__, _sql.__file__)'
           mkdir -p "$RUNNER_TEMP/refpot-consumer/tests"
           cp -R "$SOURCE_ROOT/examples" "$RUNNER_TEMP/refpot-consumer/"
-          cp "$SOURCE_ROOT"/tests/test_database.py "$SOURCE_ROOT"/tests/test_sql_database.py "$SOURCE_ROOT"/tests/test_sql_maintenance.py "$SOURCE_ROOT"/tests/test_package_recovery.py "$SOURCE_ROOT"/tests/test_state_machine.py "$SOURCE_ROOT"/tests/test_io_failures.py "$SOURCE_ROOT"/tests/test_capacity.py "$RUNNER_TEMP/refpot-consumer/tests/"
+          cp "$SOURCE_ROOT"/tests/test_database.py "$SOURCE_ROOT"/tests/test_sql_database.py "$SOURCE_ROOT"/tests/test_sql_maintenance.py "$SOURCE_ROOT"/tests/test_sql_absence.py "$SOURCE_ROOT"/tests/test_package_recovery.py "$SOURCE_ROOT"/tests/test_state_machine.py "$SOURCE_ROOT"/tests/test_io_failures.py "$SOURCE_ROOT"/tests/test_capacity.py "$RUNNER_TEMP/refpot-consumer/tests/"
           cp -R "$SOURCE_ROOT"/tests/native "$RUNNER_TEMP/refpot-consumer/tests/"
           cd "$RUNNER_TEMP/refpot-consumer"
           "$install" -m pytest tests -q

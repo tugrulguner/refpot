@@ -60,6 +60,7 @@ class Database {
     struct Table {std::string name;std::vector<std::string> columns;bool derived=false;};
     struct Source {std::size_t table;std::string alias;std::size_t offset;};
     struct Item {std::string kind;syntax::Ref ref;std::string alias;std::size_t column=0;};
+    struct Absence {std::size_t table=0,outer_key=0,inner_key=0;};
     using Predicate=relational::BoundPredicate;
     mutable std::uint64_t predicate_bindings_=0, predicate_tests_=0;
     struct Budget {std::size_t visits=0;void step(){if(++visits>1000000)throw std::runtime_error("query work budget exceeded");}};
@@ -135,6 +136,26 @@ class Database {
             p.need("on");left=bind(p.ref(),sources);p.need("=");right=bind(p.ref(),sources);
             if((left<offset)==(right<offset))throw std::invalid_argument("join must relate both inputs");
         }
+        std::optional<Absence> absence;
+        // Bounded correlated form: one inner source, SELECT * or SELECT 1, and
+        // exactly one qualified cross-scope equality. Extra clauses fail below.
+        if(p.peek()=="where"&&p.peek(1)=="not") {
+            p.need("where");p.need("not");p.need("exists");p.need("(");p.need("select");
+            if(!p.match("*"))p.need("1");
+            p.need("from");auto inner_name=p.name();auto inner_table=table(inner_name);
+            std::size_t inner_offset=tables_[sources[0].table].columns.size();
+            std::vector<Source> scoped{sources[0],Source{inner_table,inner_name,inner_offset}};
+            if(p.match("as"))scoped[1].alias=p.name();
+            if(scoped[0].alias==scoped[1].alias)throw std::invalid_argument("duplicate table alias");
+            p.need("where");auto first=p.ref();p.need("=");auto second=p.ref();
+            if(first.qualifier.empty()||second.qualifier.empty())throw std::invalid_argument("correlated references must be qualified");
+            auto first_column=bind(first,scoped),second_column=bind(second,scoped);
+            if((first_column<inner_offset)==(second_column<inner_offset))throw std::invalid_argument("NOT EXISTS equality must correlate outer and inner sources");
+            absence=first_column<inner_offset?Absence{inner_table,first_column,second_column-inner_offset}:
+                Absence{inner_table,second_column,first_column-inner_offset};
+            p.need(")");
+            if(joined)throw std::invalid_argument("correlated NOT EXISTS requires one outer source");
+        }
         if(star)for(const auto& s:sources)for(const auto& c:tables_[s.table].columns)items.push_back({"column",{s.alias,c},"",0});
         bool aggregate=false;
         Result result;
@@ -143,7 +164,7 @@ class Database {
             aggregate|=item.kind!="column";
             result.columns.push_back(item.alias.empty()?(item.kind=="column"?item.ref.name:item.kind=="count"?"count(*)":"sum("+(item.ref.qualifier.empty()?"":item.ref.qualifier+".")+item.ref.name+")"):item.alias);
         }
-        auto where=predicates(p,sources);
+        auto where=absence?std::vector<Predicate>{}:predicates(p,sources);
         std::optional<std::size_t> group;
         if(p.match("group")){p.need("by");group=bind(p.ref(),sources);}
         if(aggregate||group)for(const auto& item:items)if(item.kind=="column"&&(!group||item.column!=*group))throw std::invalid_argument("nonaggregate projection must be grouping column");
@@ -163,8 +184,10 @@ class Database {
         std::optional<std::size_t> limit;
         if(p.match("limit")){I n=p.value();if(n<0||n>100000)throw std::invalid_argument("LIMIT must be between 0 and 100000");limit=static_cast<std::size_t>(n);}
         p.end();
+        if(absence&&(aggregate||group||!order.empty()||limit))throw std::invalid_argument("correlated NOT EXISTS supports projection only");
         result.plan="SCAN "+tables_[sources[0].table].name;
         if(joined)result.plan+=" NESTED_LOOP_JOIN "+tables_[sources[1].table].name;
+        if(absence)result.plan+=" ANTI_JOIN "+tables_[absence->table].name;
         if(!where.empty())result.plan+=" FILTER";if(aggregate||group)result.plan+=" AGGREGATE";
         if(!order.empty())result.plan+=" SORT";if(limit)result.plan+=" LIMIT";
         if(!view.empty()) {
@@ -191,6 +214,10 @@ class Database {
                 if(left>=offset)std::swap(left,right);
                 foundation::Definition d;d.op="join";d.left=input;d.right=tables_[sources[1].table].name;
                 d.left_key=left;d.right_key=right-offset;add(std::move(d));
+            }
+            if(absence) {
+                foundation::Definition d;d.op="anti";d.left=input;d.right=tables_[absence->table].name;
+                d.left_key=absence->outer_key;d.right_key=absence->inner_key;add(std::move(d));
             }
             for(const auto& predicate:where) {
                 static const char* comparisons[]={"eq","ne","lt","le","gt","ge"};
@@ -222,8 +249,14 @@ class Database {
         Budget budget;
         struct Accumulator {I count=0;std::vector<relational::Aggregate> sums;};
         std::map<I,Accumulator> groups;
+        std::set<I> excluded;
+        if(absence)scan(absence->table,[&](const Row& row,I multiplicity) {
+            budget.step();if(multiplicity<=0)throw std::logic_error("invalid relation multiplicity");
+            excluded.insert(row[absence->inner_key]);return true;
+        });
         if(aggregate&&!group)groups.emplace(0,Accumulator{0,std::vector<relational::Aggregate>(items.size())});
         auto emit=[&](const Row& row,I multiplicity) {
+            if(absence&&excluded.count(row[absence->outer_key]))return;
             if(!matches(row,where))return;
             if(aggregate||group) {
                 I key=group?row[*group]:0;

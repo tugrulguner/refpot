@@ -45,7 +45,7 @@ published. Natural-language query
 generation, ORM and concurrent access are not shipped. The preview does not make the proposed
 shared SQL/NL interface available or provide an `agent` mode. See the
 [package contract](/package-contract/), [package results](/project/package-performance/),
-and [release checklist](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab55cfc6b614c3b1c3ce3e74683974/docs/releasing.md).
+and [release checklist](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -54,7 +54,7 @@ and [release checklist](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab5
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
-- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab55cfc6b614c3b1c3ce3e74683974/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab55cfc6b614c3b1c3ce3e74683974/research/application-model/RESULTS.md).
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/research/application-model/RESULTS.md).
 - [x] Add the initial unreleased `refpot.sql` execution/maintained-view preview with shared predicate evaluation and incremental SUM maintenance across transactions. Its earlier real-pybind wheel/sdist checks did not cover the latest persistence implementation. The later bounded persistence slice is documented below; neither slice is full SQL or completion of M1/M3/M4.
 
 The earlier bounded M3 slice added transaction-local append propagation and projection-only
@@ -67,6 +67,15 @@ all-bag net-delta record is synchronized before in-memory publication; ordinary 
 write a full snapshot. This is a bounded M4 implementation slice, not completion of M4 or its
 broad migration, backup, failure-matrix and qualification gates. Concurrency, broader SQL,
 originality and competitive advantage remain separate open gates.
+
+The next bounded source slice adds `ALTER MATERIALIZED VIEW name AS SELECT ...`: replace one
+existing view while retaining output names/order, recompute its transitive dependents, and
+validate all assertions before publishing the new catalog/results at one durable frontier.
+It preserves source and unrelated relation state, rejects cycles, and retains old-or-new
+recovery semantics. See [the migration example](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/examples/sql_evolution.py). This does not close
+the broader M4 schema/definition migration gate: table/column changes, coordinated multi-view
+migrations, future cached-plan/context invalidation, backup/restore and online evolution
+remain outstanding. Functional replacement is not evidence of novelty or competitive advantage.
 
 M1 remains open: the preview does not satisfy its full design-comparison, usability, SQL and qualification gates. M3 remains open: the bounded transaction-maintenance slice does not complete its broader relation, oracle, failure-safety or workflow gates.
 
@@ -556,6 +565,9 @@ the functional maintained engine, not durability, concurrency or algorithmic nov
 - [ ] Implement offline atomic schema/definition migration first. Invalidate affected plans,
       generated-query reuse and semantic-context bindings; never serve stale derived state as
       current or silently reinterpret a previously bound query after a definition change.
+      The bounded source preview now replaces a single maintained view with unchanged output
+      shape; extend to coordinated definitions and table/column evolution only with explicit
+      compatibility, validation, bounded-work and old-or-new recovery contracts.
 - [ ] Define backup/restore, integrity checking and old-format transitions. Retain explicit
       filesystem assumptions; process-kill tests do not establish physical power-loss safety.
 - [ ] Run installed model/SQL recovery examples and the supported platform failure matrix,

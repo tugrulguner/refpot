@@ -14,6 +14,7 @@ The core example is [`examples/sql_preview.py`](../examples/sql_preview.py). The
 ```sh
 python examples/sql_preview.py
 python examples/sql_persistence.py
+python examples/sql_evolution.py
 ```
 
 The example does not take a native-library path, alter `sys.path`, or use `ctypes`. Because the SQL API is unreleased, this command is not an installation instruction for the currently published package and is not evidence of wheel availability.
@@ -56,7 +57,7 @@ The older `from refpot import Database, Row` contract is separate: it takes a fi
 
 Persistent mode is a bounded source-preview feature. It persists schema/catalog metadata, logical definitions, named assertions, and weighted bags for both source and engine-internal derived relations. Recovery reconstructs and validates the complete model before the handle is exposed; it does not replay SQL, Python callbacks, or historical mutation requests. The canonical net changes across all changed bags are stored in one durable record/frontier. The record is synchronized before prepared in-memory changes are published. Ordinary commits do not scan, serialize, or write a full-model snapshot; remaining costs include transaction-local maintenance/visibility scans and retained derived state.
 
-`checkpoint()` is explicit and snapshots committed state only. The encoded snapshot is bounded to 64 MiB and the WAL to 128 MiB; capacity is checked before acknowledging an operation, and WAL pressure requires a checkpoint. There is no automatic checkpoint on close. Persistent storage uses a separate versioned format and `.wal`, `.tmp`, and `.lock` sidecars; it does not migrate or reinterpret the fixed-schema format. No migration, backup/restore workflow, or general schema-evolution contract is provided.
+`checkpoint()` is explicit and snapshots committed state only. The encoded snapshot is bounded to 64 MiB and the WAL to 128 MiB; capacity is checked before acknowledging an operation, and WAL pressure requires a checkpoint. There is no automatic checkpoint on close. Persistent storage uses a separate versioned format and `.wal`, `.tmp`, and `.lock` sidecars; it does not migrate or reinterpret the fixed-schema format. The bounded view-replacement operation below is the only definition-evolution operation; backup/restore and general schema evolution are not provided.
 
 The persistent handle is exclusive to one process/thread and one opener. After uncertain storage I/O the writer is poisoned; close and reopen, inspect state, and do not blindly retry the operation. The implementation relies on filesystem sync and atomic-rename behavior. Process/fault testing is not proof of physical power-loss safety, production durability, or broad filesystem/platform qualification.
 
@@ -90,6 +91,55 @@ A view query may project columns, apply comparisons joined with `AND` (each comp
 Assertions use the deliberately narrow form `CREATE ASSERTION name CHECK (NOT EXISTS (SELECT * FROM relation))`. The named table or view must be empty when the assertion is created and at subsequent validation. Rejected creation leaves the name reusable. Relation names beginning with `refpot_internal_` are reserved for engine-generated definitions. Assertions are checked after each autocommit mutation and at explicit `COMMIT`; an explicit transaction may temporarily violate an assertion and repair it before commit. A failed commit discards the entire explicit transaction. DDL (tables, views and assertions) is forbidden inside explicit transactions. As elsewhere in this preview, an ordinary executed error aborts the whole explicit transaction. `explain=True` parses and binds but does not mutate or abort an active transaction.
 
 Creating a maintained view over populated inputs computes the newly declared derived state only; it does not copy existing source rows into a replacement catalog. It does scan inputs to calculate that new state, and the declaration can be rejected by the work or intermediate-row limits.
+
+### Atomic maintained-definition replacement
+
+Use `ALTER MATERIALIZED VIEW name AS SELECT ...` to replace one view, outside explicit transactions:
+
+```sql
+ALTER MATERIALIZED VIEW counted AS
+SELECT resource, units FROM reservations WHERE status >= 1
+```
+
+This is an explicit offline migration on the exclusively owned handle, not a background refresh.
+The target must already be a public maintained view. The new query uses the same maintained
+SELECT subset and must have the same output column names and order. Source tables, internal
+relations, missing targets, changed output shape, unknown columns and dependency cycles are
+rejected. A new dependency may be a later-created independent view; self-reference and a
+reference back through a dependent view are rejected. One call replaces one view, not a group
+of definitions. Repeated replacement removes obsolete internal nodes rather than accumulating
+old versions.
+
+The native engine prepares the replacement and its transitive dependents privately, then
+validates every existing named assertion against that candidate. It preserves source rows,
+unrelated definitions/results, and assertion names/targets. The replacement can be rejected
+because the newly computed state violates an assertion even though the old state is valid.
+A rejected migration leaves the old definition and results in force; the caller can repair
+source data explicitly and try again. Later ordinary mutations use the accepted definition.
+The runnable [migration/reopen example](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/examples/sql_evolution.py) demonstrates this with
+provisional reservations that would exceed capacity under the new rule.
+
+`explain=True` parses and binds the replacement without evaluating its data or publishing it;
+it cannot promise that assertions, work limits or storage capacity will pass at execution.
+The existing DDL/transaction rules still apply: executed DDL inside a transaction aborts it,
+while explain errors do not. Results retain the ordinary DDL contract: no rows and zero
+`affected`; detached earlier query results are not rewritten. There is no prepared-query or
+natural-language interpretation cache to invalidate in this preview.
+
+In persistent mode, catalog changes and accepted affected bags cross one synchronized migration
+WAL frontier before in-memory publication. Reopening after an uncertain append yields the
+complete old or new model, never a mixture; acknowledged replacement survives WAL recovery
+and checkpoint recovery. Uncertain I/O poisons the handle, just as for ordinary writes.
+All fallible preparation, validation and encoding precede that frontier. Existing row/work,
+64 MiB encoded-state and 128 MiB WAL limits still apply; rejection for capacity precedes
+acknowledgment. Recalculation and retained candidate bags consume work and memory, so this is
+not an online migration, constant-time replacement or process-memory bound.
+
+Earlier SQL-preview records remain readable by this implementation. The migration record is
+new: older preview binaries cannot read its WAL record, and reopening an evolved model with
+an older binary is unsupported even after checkpointing. This does not migrate the separate
+published fixed-schema format. Table/column changes, assertion editing, multi-definition
+migration transactions, online schema evolution and backup/restore remain future work.
 
 ### Missing-resource constraints
 
@@ -141,7 +191,7 @@ returning a SQL `COMMIT` result are outside that native publication claim.
 
 The preview enforces bounded work, not an overall process-memory or wall-clock deadline. SQL guards include 64 KiB text, 8192 tokens/parameters, up to 128 public relations and 128 assertions, 64 columns per relation, 100000 total source rows, 10000 accumulated transaction mutation effects, 100000 rows/groups for ordinary query results, and one million logical visits per SELECT or mutation scan. For maintained relations, each internal relation is capped at 100000 logical rows, a derived delta at 200000 distinct keys, maintenance work at 1000000 steps per stage/declaration, and the internal catalog at 1024 definitions across source and derived relations. A bounded intermediate can exceed its cap and be rejected even if a later filter or projection would make the final result small. These are current implementation caps, not throughput claims. `stats()["maintenance_steps"]` is a cumulative work counter, not a speed measure. `LIMIT` bounds returned rows, not scan work or sorting work.
 
-Unsupported features include text or nullable stored columns, expressions/arithmetic, `OR`, outer joins, multiple joins or grouping keys, subqueries other than the bounded correlated `NOT EXISTS` form above, CTEs, `DISTINCT`, `HAVING`, `UNION`, SQL comments, quoted identifiers, named parameters, multi-row `VALUES`, `DROP`/`ALTER`, secondary indexes, cursors, asynchronous execution/cancellation, concurrent use and natural-language `agent=True`. Persistence is available only through the bounded optional file-backed preview described above; schema migrations, backup/restore, and a broad durability guarantee are not provided. There is no SQLite SQL, file-format or C API compatibility promise.
+Unsupported features include text or nullable stored columns, expressions/arithmetic, `OR`, outer joins, multiple joins or grouping keys, subqueries other than the bounded correlated `NOT EXISTS` form above, CTEs, `DISTINCT`, `HAVING`, `UNION`, SQL comments, quoted identifiers, named parameters, multi-row `VALUES`, `DROP` and `ALTER` other than the bounded maintained-view replacement above, secondary indexes, cursors, asynchronous execution/cancellation, concurrent use and natural-language `agent=True`. Persistence is available only through the bounded optional file-backed preview described above; general schema migrations, backup/restore, and a broad durability guarantee are not provided. There is no SQLite SQL, file-format or C API compatibility promise.
 
 ## Failure boundary and remaining costs
 

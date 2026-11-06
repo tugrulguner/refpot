@@ -46,8 +46,8 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("Implemented foundations", text)
         self.assertIn("Still-open qualification and product gates", text)
         self.assertIn("- [x] Implement fixed-schema CRUD, explicit transactions", text)
-        self.assertIn("- [x] Add an unreleased volatile `refpot.sql` execution preview", text)
-        self.assertIn("real-pybind installed wheel and sdist qualification", text)
+        self.assertIn("- [x] Add the initial unreleased `refpot.sql` execution/maintained-view preview", text)
+        self.assertIn("earlier real-pybind wheel/sdist checks did not cover the latest persistence", text)
         self.assertIn("not published", text)
         self.assertIn("- [ ] Complete native CRUD/transaction/recovery failure qualification", text)
         self.assertIn("M1 remains open", text)
@@ -55,7 +55,7 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertNotIn("there is no implemented\nSQL `execute` interface", text)
         milestones = {
             key: text.split(f"## {key}.", 1)[1].split("\n## ", 1)[0]
-            for key in ("M1", "M3")
+            for key in ("M1", "M3", "M4")
         }
         for section in milestones.values():
             self.assertNotIn("- [x]", section)
@@ -73,7 +73,10 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertNotIn("- [x]", planned)
         for phrase in (
             "self-maintaining embedded relational database",
-            "unreleased volatile `refpot.sql` preview",
+            "unreleased `refpot.sql` preview",
+            "optional bounded whole-model persistence",
+            "`Database()` remains volatile",
+            "bounded M4 implementation slice, not completion of M4",
             "Natural-language query\ngeneration, ORM and concurrent access are not shipped",
             "not a backend package",
             "same candidate language",

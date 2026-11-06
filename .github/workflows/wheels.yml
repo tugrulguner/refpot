@@ -104,7 +104,7 @@ jobs:
           src=$(find extracted -mindepth 1 -maxdepth 1 -type d)
           echo "SOURCE_ROOT=$src" >> "$GITHUB_ENV"
       - name: Build CPython wheel
-        uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         env:
           CIBW_BUILD: ${{ matrix.tag }}-*
           CIBW_SKIP: '*-musllinux_*'

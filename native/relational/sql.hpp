@@ -3,7 +3,9 @@
 #include "persistence.hpp"
 #include <charconv>
 #include <functional>
+#include <limits>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -76,6 +78,12 @@ class Database {
     std::size_t encoded_state_size_=0;
     std::size_t pending_mutations_=0, committed_rows_=0, visible_rows_=0;
     bool in_tx_=false;
+    std::uint64_t catalog_revision_=0;
+    const std::set<std::string>* authorized_relations_=nullptr;
+public:
+    struct RelationMetadata { std::string name; std::vector<std::string> columns; bool derived=false; };
+    struct QueryContext { std::uint64_t revision=0; std::vector<RelationMetadata> relations; };
+private:
     static std::vector<Table> copy_tables(const std::vector<Table>& source){return source;}
     static sqlpersistence::Image catalog_image(const std::vector<Table>& tables,const std::vector<std::string>& assertions,
             const std::vector<foundation::Definition>& definitions,const std::vector<std::string>& required) {
@@ -194,7 +202,10 @@ class Database {
         if(image.required.size()!=image.assertions.size())throw std::invalid_argument("recovered assertion catalog mismatch");
     }
     std::size_t table(const std::string& name)const {
+        if(authorized_relations_&&!authorized_relations_->count(name))
+            throw std::invalid_argument("relation is not authorized");
         for(std::size_t i=0;i<tables_.size();++i)if(tables_[i].name==name)return i;
+        if(authorized_relations_)throw std::invalid_argument("unknown relation");
         throw std::invalid_argument("unknown table: "+name);
     }
     template<class F> void scan(std::size_t n,F fn)const {model_->scan(tables_[n].name,model_->has_prepared(),fn);}
@@ -516,8 +527,12 @@ class Database {
         else model_->commit();
         encoded_state_size_=next_size;
     }
-    Result execute_impl(const std::string& query,const std::vector<I>& params,bool explain) {
+    Result execute_impl(const std::string& query,const std::vector<I>& params,bool explain,bool& ddl) {
         syntax::Parser p(query,params);auto op=p.take();Result result;
+        ddl=op=="create"||op=="alter";
+        if(ddl&&!explain&&catalog_revision_==std::numeric_limits<std::uint64_t>::max())
+            throw std::overflow_error("catalog revision exhausted");
+        if(authorized_relations_&&op!="select")throw std::invalid_argument("read-only query requires SELECT");
         if(store_&&store_->poisoned()&&op!="rollback")throw std::runtime_error("database is poisoned");
         if(op=="select")return select(p,explain);
         if(op=="begin"||op=="commit"||op=="rollback") {
@@ -631,7 +646,41 @@ public:
     }
     void rollback()noexcept{model_->rollback();pending_mutations_=0;visible_rows_=committed_rows_;in_tx_=false;}
     Result execute(const std::string& query,const std::vector<I>& params={},bool explain=false) {
-        try{return execute_impl(query,params,explain);}catch(...){if(in_tx_&&!explain)rollback();throw;}
+        try {
+            bool ddl=false;
+            auto result=execute_impl(query,params,explain,ddl);
+            if(!explain&&ddl)++catalog_revision_;
+            return result;
+        } catch(...) {if(in_tx_&&!explain)rollback();throw;}
+    }
+    QueryContext query_context(const std::vector<std::string>& requested) const {
+        if(store_&&store_->poisoned())throw std::runtime_error("database is poisoned");
+        if(in_tx_)throw std::logic_error("catalog context is forbidden inside a transaction");
+        QueryContext context;context.revision=catalog_revision_;
+        if(requested.size()>128)throw std::length_error("too many authorized relations");
+        std::set<std::string> seen;
+        for(const auto& name:requested) {
+            if(name.size()>64)throw std::length_error("relation name exceeds 64 bytes");
+            if(!seen.insert(name).second)throw std::invalid_argument("duplicate authorized relation");
+            auto found=std::find_if(tables_.begin(),tables_.end(),[&](const auto& t){return t.name==name;});
+            if(found==tables_.end())throw std::invalid_argument("unknown authorized relation");
+            context.relations.push_back({found->name,found->columns,found->derived});
+        }
+        return context;
+    }
+    Result execute_readonly(const std::string& query,const std::vector<I>& params,
+                            const std::vector<std::string>& requested,std::uint64_t revision,bool explain=false) {
+        if(in_tx_)throw std::logic_error("read-only query is forbidden inside a transaction");
+        if(revision!=catalog_revision_)throw std::invalid_argument("stale catalog context");
+        if(requested.size()>128)throw std::length_error("too many authorized relations");
+        std::set<std::string> allowed;
+        for(const auto& name:requested) {
+            if(name.size()>64)throw std::length_error("relation name exceeds 64 bytes");
+            if(!allowed.insert(name).second)throw std::invalid_argument("duplicate authorized relation");
+        }
+        struct Authorization { const std::set<std::string>*& slot; const std::set<std::string>* prior; ~Authorization(){slot=prior;} };
+        Authorization guard{authorized_relations_,authorized_relations_};authorized_relations_=&allowed;
+        return execute(query,params,explain);
     }
 };
 }

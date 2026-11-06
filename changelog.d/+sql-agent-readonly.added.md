@@ -1,0 +1,1 @@
+Adds an unreleased, explicitly selected, bounded read-only SQL agent-query preview with explicit schema disclosure, native authority checks, and a provider-free runnable fixture example. Does not complete roadmap M2 or semantic evaluation; excluded from published 0.1.2 artifacts.

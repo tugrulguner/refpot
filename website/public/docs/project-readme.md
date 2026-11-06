@@ -45,7 +45,7 @@
 
 ## Why RefPot
 
-RefPot is an early custom embedded database engine: a native C++ redo-and-checkpoint core exposed through the published fixed-schema Python `Database` / `Row` API. A separate, unreleased native SQL preview now has optional bounded whole-model persistence in the source tree; it is not part of the published package and does not replace the existing API or its storage format. ORM remains future design direction.
+RefPot is an early custom embedded database engine: a native C++ redo-and-checkpoint core exposed through the published fixed-schema Python `Database` / `Row` API. The separate, unreleased native SQL preview has optional bounded whole-model persistence and an explicitly selected, bounded read-only `agent=True` query-generation slice in this source tree; neither is part of the published package or changes the fixed-schema API/storage format. Agent mode requires configured trusted generator code and explicit schema-disclosure consent; it is not M2 completion or a semantic guarantee. See the [SQL preview contract](docs/sql-preview.md) and its [bounded evaluation evidence](docs/agent-query-evaluation.md). ORM remains future design direction.
 
 ## Quick start
 

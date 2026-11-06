@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
         "test_sql_persistence_codec.cpp",
         "test_sql_evolution_native.cpp",
         "test_sql_evolution_alloc.cpp",
+        "test_sql_agent_native.cpp",
     ],
 )
 @pytest.mark.parametrize("sanitized", [False, True])

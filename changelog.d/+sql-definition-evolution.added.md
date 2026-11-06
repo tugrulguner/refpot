@@ -1,0 +1,1 @@
+Add atomic `ALTER MATERIALIZED VIEW` replacement to the unreleased source preview, preserving output shape while recomputing dependent results and validating assertions at one durable frontier. Includes migration/reopen examples and bounded failure qualification; not part of the published 0.1.2 package.

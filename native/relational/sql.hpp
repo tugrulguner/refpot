@@ -115,6 +115,62 @@ class Database {
                 for(const auto&x:ddl.added)if(image.bags.count(x.first)||!next.bags.emplace(x.first,x.second).second)throw std::invalid_argument("relational DDL duplicates relation state");
                 if(next.bags.size()!=next.definitions.size())throw std::invalid_argument("relational DDL relation state mismatch "+std::to_string(next.bags.size())+"/"+std::to_string(next.definitions.size()));
                 image.tables=std::move(next.tables);image.assertions=std::move(next.assertions);image.definitions=std::move(next.definitions);image.required=std::move(next.required);image.bags=std::move(next.bags);
+            }else if(kind==3){
+                auto evolution=sqlpersistence::decode_evolution(record);auto& next=evolution.catalog;
+                if(next.tables.size()!=image.tables.size()||next.assertions!=image.assertions||next.required!=image.required)
+                    throw std::invalid_argument("relational evolution rewrote table or assertion catalog");
+                for(std::size_t i=0;i<image.tables.size();++i)
+                    if(image.tables[i].name!=next.tables[i].name||image.tables[i].columns!=next.tables[i].columns||image.tables[i].derived!=next.tables[i].derived)
+                        throw std::invalid_argument("relational evolution rewrote prior table");
+                std::map<std::string,foundation::Definition> prior,updated;
+                for(const auto& d:image.definitions)prior.emplace(d.name,d);
+                for(const auto& d:next.definitions)updated.emplace(d.name,d);
+                std::set<std::string> changed;
+                for(const auto& d:image.definitions)if(d.op=="source"){
+                    auto found=updated.find(d.name);
+                    if(found==updated.end()||!sqlpersistence::equal_definition(d,found->second)||evolution.affected.count(d.name))
+                        throw std::invalid_argument("relational evolution rewrote source definition");
+                }
+                for(const auto& name:evolution.removed){
+                    auto found=prior.find(name);
+                    if(!evolution.affected.count(name)||updated.count(name)||found==prior.end()||found->second.op=="source")
+                        throw std::invalid_argument("invalid removed evolution definition");
+                    changed.insert(name);
+                }
+                for(const auto& d:image.definitions){auto found=updated.find(d.name);if(found==updated.end()||!sqlpersistence::equal_definition(d,found->second)){
+                    if(!evolution.affected.count(d.name))throw std::invalid_argument("relational evolution rewrote unaffected definition");
+                    changed.insert(d.name);
+                }}
+                for(const auto& d:next.definitions)if(!prior.count(d.name)){
+                    if(d.op=="source")throw std::invalid_argument("relational evolution added a source definition");
+                    if(!evolution.affected.count(d.name))throw std::invalid_argument("relational evolution added unaffected definition");
+                    changed.insert(d.name);
+                }
+                for(const auto& name:evolution.affected)
+                    if(!prior.count(name)&&!updated.count(name))throw std::invalid_argument("evolution references unknown affected definition");
+                auto depends=[](const foundation::Definition& d,const std::string& name){
+                    return ((d.op=="map"||d.op=="filter"||d.op=="group")&&d.input==name)||
+                        ((d.op=="join"||d.op=="anti"||d.op=="union")&&(d.left==name||d.right==name));
+                };
+                std::set<std::string> closure=changed;
+                bool grew=true;
+                while(grew){grew=false;
+                    for(const auto& d:image.definitions)if(!closure.count(d.name))
+                        for(const auto& dep:closure)if(depends(d,dep)){closure.insert(d.name);grew=true;break;}
+                    for(const auto& d:next.definitions)if(!closure.count(d.name))
+                        for(const auto& dep:closure)if(depends(d,dep)){closure.insert(d.name);grew=true;break;}
+                }
+                for(const auto& name:closure)if(!evolution.affected.count(name))
+                    throw std::invalid_argument("evolution omitted dependent relation");
+                for(const auto& name:evolution.affected)if(!evolution.removed.count(name)&&!updated.count(name))
+                    throw std::invalid_argument("evolution affected relation has no definition");
+                next.bags=image.bags;
+                for(const auto& name:evolution.affected)next.bags.erase(name);
+                for(const auto& name:evolution.removed)if(updated.count(name))throw std::invalid_argument("relational evolution retained removed definition");
+                for(const auto& x:evolution.replaced){if(!updated.count(x.first)||!next.bags.emplace(x.first,x.second).second)throw std::invalid_argument("invalid evolved relation bag");}
+                for(const auto& name:evolution.affected)if(updated.count(name)&&!evolution.replaced.count(name))throw std::invalid_argument("evolution omitted affected relation bag");
+                if(next.bags.size()!=next.definitions.size())throw std::invalid_argument("relational evolution relation state mismatch");
+                image.tables=std::move(next.tables);image.assertions=std::move(next.assertions);image.definitions=std::move(next.definitions);image.required=std::move(next.required);image.bags=std::move(next.bags);
             }else throw std::invalid_argument("unknown relational record type");
         }
         validate_image_catalog(image);
@@ -201,7 +257,7 @@ class Database {
         visible_rows_=static_cast<std::size_t>(next_rows);
         statement_mutations_+=mutations.size();
     }
-    Result select(syntax::Parser& p,bool explain,const std::string& view="") {
+    Result select(syntax::Parser& p,bool explain,const std::string& view="",bool alter=false) {
         std::vector<Item> items;
         bool star=p.match("*");
         if(!star)do {
@@ -279,9 +335,18 @@ class Database {
         if(!order.empty())result.plan+=" SORT";if(limit)result.plan+=" LIMIT";
         if(!view.empty()) {
             if(in_tx_)throw std::invalid_argument("DDL inside a transaction is unsupported");
-            if(tables_.size()>=128)throw std::invalid_argument("relation limit exceeded");
-            if(view.rfind("refpot_internal_",0)==0)throw std::invalid_argument("reserved internal relation prefix");
-            for(const auto& t:tables_)if(t.name==view)throw std::invalid_argument("relation already exists");
+            std::size_t view_index=tables_.size();
+            for(std::size_t i=0;i<tables_.size();++i)if(tables_[i].name==view){view_index=i;break;}
+            if(alter) {
+                if(view_index==tables_.size()||!tables_[view_index].derived)
+                    throw std::invalid_argument("ALTER MATERIALIZED VIEW target must be an existing view");
+                if(tables_[view_index].columns!=result.columns)
+                    throw std::invalid_argument("ALTER MATERIALIZED VIEW must preserve output columns");
+            } else {
+                if(tables_.size()>=128)throw std::invalid_argument("relation limit exceeded");
+                if(view_index!=tables_.size())throw std::invalid_argument("relation already exists");
+                if(view.rfind("refpot_internal_",0)==0)throw std::invalid_argument("reserved internal relation prefix");
+            }
             if(!order.empty()||limit)throw std::invalid_argument("unsupported maintained query clause");
             if(aggregate&&!group)throw std::invalid_argument("maintained aggregates require GROUP BY");
             if(items.size()>64)throw std::invalid_argument("view column limit exceeded");
@@ -292,8 +357,10 @@ class Database {
             }
             std::vector<foundation::Definition> definitions;
             std::string input=tables_[sources[0].table].name;
+            std::size_t internal_serial=0;
             auto add=[&](foundation::Definition d) {
-                d.name="refpot_internal_"+std::to_string(tables_.size())+"_"+std::to_string(definitions.size());
+                if(alter)d.name="refpot_internal_"+std::to_string(view_index)+"_evo_"+std::to_string(internal_serial++);
+                else d.name="refpot_internal_"+std::to_string(tables_.size())+"_"+std::to_string(definitions.size());
                 input=d.name;definitions.push_back(std::move(d));
             };
             if(joined) {
@@ -325,16 +392,74 @@ class Database {
             foundation::Definition projected;projected.name=view;projected.op="map";projected.input=input;
             for(const auto& item:items) projected.exprs.push_back({"c"+std::to_string(group?(item.kind=="column"?0:item.kind=="sum"?1:2):item.column)});
             definitions.push_back(std::move(projected));
+            result.rows.clear();result.plan=alter?"ALTER MATERIALIZED VIEW "+view:"CREATE MATERIALIZED VIEW "+view;
+            if(explain&&!alter)return result;
             Table added{view,result.columns,true};
-            result.rows.clear();result.plan="CREATE MATERIALIZED VIEW "+view;
+            if(!alter) {
+                tables_.reserve(tables_.size()+1);
+                auto next_tables=tables_;next_tables.push_back(added);
+                std::size_t next_size=encoded_state_size_;
+                model_->add_definitions(definitions,[&](const auto&all_defs,const auto&,const auto&new_bags){
+                    if(store_){auto catalog=catalog_image(next_tables,assertions_,all_defs,model_->required_empty());auto payload=sqlpersistence::encode_ddl(catalog,new_bags);next_size=encoded_size_for(catalog,new_bags);append_record(payload);}
+                });
+                tables_.push_back(std::move(added));encoded_state_size_=next_size;return result;
+            }
+            const auto old_definitions=model_->definitions();
+            std::map<std::string,foundation::Definition> by_name;
+            for(const auto& d:old_definitions)by_name.emplace(d.name,d);
+            const auto public_def=by_name.find(view);
+            if(public_def==by_name.end())throw std::logic_error("view definition missing from catalog");
+            std::set<std::string> obsolete_internal;
+            std::function<void(const std::string&)> collect_internal=[&](const std::string& name){
+                auto found=by_name.find(name);if(found==by_name.end()||name.rfind("refpot_internal_",0)!=0||!obsolete_internal.insert(name).second)return;
+                const auto& d=found->second;
+                if(d.op=="map"||d.op=="filter"||d.op=="group")collect_internal(d.input);
+                else if(d.op=="join"||d.op=="anti"||d.op=="union"){collect_internal(d.left);collect_internal(d.right);}
+            };
+            collect_internal(public_def->second.input);
+            std::vector<foundation::Definition> candidate_defs;
+            for(const auto& d:old_definitions)if(!obsolete_internal.count(d.name)&&d.name!=view)candidate_defs.push_back(d);
+            candidate_defs.insert(candidate_defs.end(),definitions.begin(),definitions.end());
+            std::map<std::string,std::size_t> positions;
+            for(std::size_t i=0;i<candidate_defs.size();++i)
+                if(!positions.emplace(candidate_defs[i].name,i).second)throw std::invalid_argument("duplicate internal definition");
+            std::vector<unsigned char> marks(candidate_defs.size());std::vector<foundation::Definition> ordered;ordered.reserve(candidate_defs.size());
+            std::function<void(std::size_t)> visit=[&](std::size_t i){
+                if(marks[i]==1)throw std::invalid_argument("materialized view dependency cycle");
+                if(marks[i]==2)return;marks[i]=1;const auto& d=candidate_defs[i];
+                auto dep=[&](const std::string& name){auto p=positions.find(name);if(p==positions.end())throw std::invalid_argument("unknown materialized view dependency: "+name);visit(p->second);};
+                if(d.op=="map"||d.op=="filter"||d.op=="group")dep(d.input);
+                else if(d.op=="join"||d.op=="anti"||d.op=="union"){dep(d.left);dep(d.right);}
+                marks[i]=2;ordered.push_back(d);
+            };
+            for(std::size_t i=0;i<candidate_defs.size();++i)visit(i);
+            std::set<std::string> affected{view};
+            for(const auto& d:definitions)affected.insert(d.name);
+            bool grew=true;
+            while(grew){grew=false;for(const auto& d:ordered){
+                if(affected.count(d.name))continue;
+                bool depends=(d.op=="map"||d.op=="filter"||d.op=="group")?affected.count(d.input)!=0:
+                    (d.op=="join"||d.op=="anti"||d.op=="union")?(affected.count(d.left)!=0||affected.count(d.right)!=0):false;
+                if(depends){affected.insert(d.name);grew=true;}
+            }}
+            for(const auto& name:obsolete_internal)affected.insert(name);
+            foundation::Model checked(ordered,model_->required_empty(),mode_);
+            (void)checked;
             if(explain)return result;
-            tables_.reserve(tables_.size()+1);
-            auto next_tables=tables_;next_tables.push_back(added);
+            auto next_model=model_->replace_definitions(ordered,affected);
+            std::set<std::string> removed;
+            for(const auto& name:obsolete_internal)if(!positions.count(name))removed.insert(name);
+            std::map<std::string,Bag> replacements;
+            for(const auto& name:affected)if(positions.count(name))replacements.emplace(name,next_model->bag(name));
             std::size_t next_size=encoded_state_size_;
-            model_->add_definitions(definitions,[&](const auto&all_defs,const auto&,const auto&new_bags){
-                if(store_){auto catalog=catalog_image(next_tables,assertions_,all_defs,model_->required_empty());auto payload=sqlpersistence::encode_ddl(catalog,new_bags);next_size=encoded_size_for(catalog,new_bags);append_record(payload);}
-            });
-            tables_.push_back(std::move(added));encoded_state_size_=next_size;return result;
+            if(store_){
+                auto catalog=catalog_image(tables_,assertions_,next_model->definitions(),next_model->required_empty());
+                next_size=sqlpersistence::encoded_evolved_image_size(catalog,model_->committed_state(),replacements,removed);
+                auto payload=sqlpersistence::encode_evolution(catalog,replacements,removed);
+                append_record(payload);
+            }
+            next_model->publish_retained_from(*model_,affected);
+            model_.swap(next_model);encoded_state_size_=next_size;return result;
         }
         if(explain)return result;
         Budget budget;
@@ -403,6 +528,10 @@ class Database {
             else if(op=="rollback")rollback();
             else {if(model_->has_prepared())commit_model();pending_mutations_=0;committed_rows_=visible_rows_;in_tx_=false;}
             return result;
+        }
+        if(op=="alter") {
+            p.need("materialized");p.need("view");auto name=p.name();p.need("as");p.need("select");
+            return select(p,explain,name,true);
         }
         if(op=="create") {
             if(p.match("assertion")) {

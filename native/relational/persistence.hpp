@@ -32,6 +32,12 @@ struct Ddl {
     Image catalog;
     std::map<std::string,Bag> added;
 };
+struct Evolution {
+    Image catalog;
+    std::set<std::string> affected;
+    std::set<std::string> removed;
+    std::map<std::string,Bag> replaced;
+};
 
 class Writer {
     Bytes bytes_;
@@ -86,6 +92,29 @@ inline Bytes encode_delta(const std::map<std::string,Bag>&changes){Writer w;w.ma
 inline std::map<std::string,Bag> decode_delta(const Bytes&b){Reader r(b);r.magic("RPSQLR01");if(r.u32()!=1||r.u8()!=1)throw std::invalid_argument("unsupported relational change record");auto n=r.u32();if(n>1024)throw std::length_error("changed relation count exceeds limit");std::map<std::string,Bag> out;for(std::uint32_t i=0;i<n;++i){auto name=r.str();auto count=r.u32();if(count>200000)throw std::length_error("relation delta tuple count exceeds limit");Bag bag;for(std::uint32_t j=0;j<count;++j){auto width=r.u32();if(!width||width>128)throw std::length_error("delta tuple width exceeds limit");Row row;row.reserve(width);for(std::uint32_t k=0;k<width;++k)row.push_back(r.i64());auto amount=r.i64();if(!amount||!bag.emplace(std::move(row),amount).second)throw std::invalid_argument("invalid duplicate or zero relation delta");}if(!out.emplace(name,std::move(bag)).second)throw std::invalid_argument("duplicate changed relation");}r.end();return out;}
 inline Bytes encode_ddl(const Image&catalog,const std::map<std::string,Bag>&added){Writer w;w.magic("RPSQLR01");w.u32(1);w.u8(2);put_tables(w,catalog.tables);put_strings(w,catalog.assertions);if(catalog.definitions.size()>1024)throw std::length_error("definition count exceeds limit");w.u32(static_cast<std::uint32_t>(catalog.definitions.size()));for(const auto&d:catalog.definitions)put_definition(w,d);put_strings(w,catalog.required);if(added.size()>1024)throw std::length_error("added relation count exceeds limit");w.u32(static_cast<std::uint32_t>(added.size()));for(const auto&x:added)put_bag(w,x.first,x.second);return w.finish();}
 inline Ddl decode_ddl(const Bytes&b){Reader r(b);r.magic("RPSQLR01");if(r.u32()!=1||r.u8()!=2)throw std::invalid_argument("unsupported relational DDL record");Ddl d;d.catalog.tables=get_tables(r);d.catalog.assertions=get_strings(r,128);auto n=r.u32();if(n>1024)throw std::length_error("definition count exceeds limit");d.catalog.definitions.reserve(n);for(std::uint32_t i=0;i<n;++i)d.catalog.definitions.push_back(get_definition(r));d.catalog.required=get_strings(r,1024);n=r.u32();if(n>1024)throw std::length_error("added relation count exceeds limit");for(std::uint32_t i=0;i<n;++i){auto name=r.str();if(!d.added.emplace(name,get_bag(r)).second)throw std::invalid_argument("duplicate DDL relation");}r.end();return d;}
+inline Bytes encode_evolution(const Image&catalog,const std::map<std::string,Bag>&replaced,const std::set<std::string>&removed){
+    Writer w;w.magic("RPSQLR01");w.u32(1);w.u8(3);put_tables(w,catalog.tables);put_strings(w,catalog.assertions);
+    if(catalog.definitions.size()>1024)throw std::length_error("definition count exceeds limit");
+    w.u32(static_cast<std::uint32_t>(catalog.definitions.size()));for(const auto&d:catalog.definitions)put_definition(w,d);
+    put_strings(w,catalog.required);
+    if(replaced.empty()||replaced.size()+removed.size()>1024)throw std::length_error("evolved relation count exceeds limit");
+    w.u32(static_cast<std::uint32_t>(replaced.size()+removed.size()));
+    for(const auto&x:replaced){w.str(x.first);w.u8(1);put_bag(w,x.first,x.second);}
+    for(const auto&name:removed){if(replaced.count(name))throw std::invalid_argument("relation both replaced and removed");w.str(name);w.u8(0);}
+    return w.finish();
+}
+inline Evolution decode_evolution(const Bytes&b){
+    Reader r(b);r.magic("RPSQLR01");if(r.u32()!=1||r.u8()!=3)throw std::invalid_argument("unsupported relational evolution record");
+    Evolution e;e.catalog.tables=get_tables(r);e.catalog.assertions=get_strings(r,128);auto n=r.u32();
+    if(n>1024)throw std::length_error("definition count exceeds limit");e.catalog.definitions.reserve(n);
+    for(std::uint32_t i=0;i<n;++i)e.catalog.definitions.push_back(get_definition(r));
+    e.catalog.required=get_strings(r,1024);n=r.u32();if(!n||n>1024)throw std::length_error("evolved relation count exceeds limit");
+    for(std::uint32_t i=0;i<n;++i){auto name=r.str();auto present=r.u8();if(present>1||!e.affected.insert(name).second)throw std::invalid_argument("invalid duplicate evolved relation");
+        if(present){auto bag_name=r.str();if(bag_name!=name)throw std::invalid_argument("evolved relation name mismatch");auto bag=get_bag(r);e.replaced.emplace(name,std::move(bag));}
+        else e.removed.insert(name);
+    }
+    r.end();return e;
+}
 inline std::size_t encoded_image_size(const Image&im){
     Image catalog;catalog.tables=im.tables;catalog.assertions=im.assertions;catalog.definitions=im.definitions;catalog.required=im.required;
     const auto base=encode_image(catalog).size();
@@ -103,5 +132,21 @@ inline std::size_t encoded_image_size(const Image&im){
     return total;
 }
 inline std::size_t bag_size(const std::string&name,const Bag&bag){std::size_t n=4+name.size()+4;for(const auto&row:bag)n+=4+row.first.size()*8+8;return n;}
+inline std::size_t encoded_evolved_image_size(const Image&catalog,const std::map<std::string,Bag>& retained,
+                                               const std::map<std::string,Bag>& replaced,
+                                               const std::set<std::string>& removed) {
+    Image header;header.tables=catalog.tables;header.assertions=catalog.assertions;
+    header.definitions=catalog.definitions;header.required=catalog.required;
+    std::size_t total=encode_image(header).size();
+    for(const auto&d:catalog.definitions){
+        if(removed.count(d.name))continue;
+        auto changed=replaced.find(d.name);
+        const Bag* bag=changed==replaced.end()?&retained.at(d.name):&changed->second;
+        const auto part=bag_size(d.name,*bag);
+        if(part>sqlstorage::Store::max_payload-total)throw std::length_error("encoded relational state exceeds 64 MiB");
+        total+=part;
+    }
+    return total;
+}
 inline bool equal_definition(const Definition&a,const Definition&b){return a.name==b.name&&a.op==b.op&&a.input==b.input&&a.left==b.left&&a.right==b.right&&a.width==b.width&&a.exprs==b.exprs&&a.column==b.column&&a.cmp==b.cmp&&a.value==b.value&&a.left_key==b.left_key&&a.right_key==b.right_key&&a.key==b.key&&a.value_column==b.value_column&&a.right_column==b.right_column;}
 } // namespace refpot::sqlpersistence

@@ -8,8 +8,12 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from itertools import islice
+from typing import TYPE_CHECKING
 
 from ._sql import _Database
+
+if TYPE_CHECKING:
+    from .agent import AgentConfig, Generation
 
 
 class SQLError(RuntimeError):
@@ -24,14 +28,25 @@ class Result:
     rows: tuple[tuple[int | None, ...], ...]
     affected: int
     plan: str
+    generation: Generation | None = None
 
 
 class Database:
     """A single-owner SQL database: volatile by default, persistent with a path."""
 
     def __init__(
-        self, path: str | os.PathLike[str] | None = None, *, mode: str = "overlay"
+        self,
+        path: str | os.PathLike[str] | None = None,
+        *,
+        mode: str = "overlay",
+        agent: AgentConfig | None = None,
     ) -> None:
+        if agent is not None:
+            from .agent import AgentConfig
+
+            if type(agent) is not AgentConfig:
+                raise TypeError("agent must be an AgentConfig")
+        self._agent = agent
         if mode not in ("overlay", "modular"):
             raise ValueError("mode must be 'overlay' or 'modular'")
         filename = None if path is None else os.fspath(path)
@@ -133,17 +148,86 @@ class Database:
             self._close()
             raise
 
+    def _generate(self, query: str, parameters: Sequence[int], explain: bool) -> Result:
+        from .agent import (
+            AgentError,
+            Clarification,
+            ClarificationRequired,
+            Decline,
+            Generation,
+            GenerationRequest,
+            QueryDeclined,
+            QueryProposal,
+            Relation,
+            _bounded_texts,
+        )
+
+        config = self._agent
+        if config is None:
+            raise AgentError("agent configuration is required")
+        if self._scope or self._in_transaction or self._db.in_transaction():
+            raise AgentError("agent generation inside a transaction is unsupported")
+        if type(explain) is not bool:
+            raise TypeError("explain must be bool")
+        query, values = self._arguments(query, parameters)
+        if values:
+            raise AgentError("natural-language input does not accept SQL parameters")
+        if not config.disclose_schema:
+            raise AgentError("explicit schema disclosure consent is required")
+        context = self._db.query_context(config.relations)
+        request = GenerationRequest(
+            query,
+            tuple(
+                Relation(item["name"], tuple(item["columns"]), item["derived"])
+                for item in context["relations"]
+            ),
+        )
+        try:
+            proposal = config.generator(request)
+        except AgentError:
+            raise
+        except Exception:
+            raise AgentError("query generation failed") from None
+        if type(proposal) is Clarification:
+            _bounded_texts(proposal.questions, nonempty=True)
+            raise ClarificationRequired(proposal.questions)
+        if type(proposal) is Decline:
+            _bounded_texts((proposal.reason,), nonempty=True)
+            raise QueryDeclined(proposal.reason)
+        if type(proposal) is not QueryProposal:
+            raise AgentError("generator must return a QueryProposal")
+        generated, bound = self._arguments(proposal.query, proposal.parameters)
+        _bounded_texts(proposal.assumptions)
+        try:
+            raw = self._db.execute_readonly(
+                generated, bound, config.relations, context["revision"], explain
+            )
+        except (RuntimeError, ValueError) as exc:
+            raise SQLError(str(exc)) from exc
+        return Result(
+            tuple(raw.columns),
+            tuple(tuple(row) for row in raw.rows),
+            raw.affected,
+            raw.plan,
+            Generation(generated, bound, proposal.assumptions),
+        )
+
     def execute(
         self,
         query: str,
         parameters: Sequence[int] = (),
         *,
         explain: bool = False,
+        agent: bool = False,
     ) -> Result:
         with self._operation():
             if self._scope and self._aborted:
                 raise SQLError("transaction aborted; exit its context before further execution")
+            if agent is True:
+                return self._generate(query, parameters, explain)
             try:
+                if type(agent) is not bool:
+                    raise TypeError("agent must be bool")
                 if type(explain) is not bool:
                     raise TypeError("explain must be bool")
                 query, values = self._arguments(query, parameters)

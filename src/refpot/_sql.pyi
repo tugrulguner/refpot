@@ -1,4 +1,14 @@
 from collections.abc import Sequence
+from typing import TypedDict
+
+class _RelationMetadata(TypedDict):
+    name: str
+    columns: list[str]
+    derived: bool
+
+class _QueryContext(TypedDict):
+    revision: int
+    relations: list[_RelationMetadata]
 
 class _Result:
     @property
@@ -13,6 +23,15 @@ class _Result:
 class _Database:
     def __init__(self, mode: str = "overlay", path: str | None = None) -> None: ...
     def execute(self, query: str, parameters: Sequence[int], explain: bool = False) -> _Result: ...
+    def query_context(self, relations: Sequence[str]) -> _QueryContext: ...
+    def execute_readonly(
+        self,
+        query: str,
+        parameters: Sequence[int],
+        relations: Sequence[str],
+        revision: int,
+        explain: bool = False,
+    ) -> _Result: ...
     def closed(self) -> bool: ...
     def in_transaction(self) -> bool: ...
     def stats(self) -> dict[str, int]: ...

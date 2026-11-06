@@ -48,7 +48,8 @@ class SQLPreviewDocsTests(unittest.TestCase):
             "not included in the currently published 0.1.2 package",
             "volatile",
             "Database(path=None",
-            'Database(path=None, *, mode="overlay")',
+            'Database(path=None, *, mode="overlay", agent=None)',
+            "execute(query, parameters=(), *, explain=False, agent=False)",
             'mode="overlay"',
             'mode="modular"',
             "transaction()",
@@ -165,6 +166,51 @@ class SQLPreviewDocsTests(unittest.TestCase):
         roadmap = (ROOT / "ROADMAP.md").read_text()
         self.assertIn("ALTER MATERIALIZED VIEW", roadmap)
         self.assertIn("- [ ] Implement offline atomic schema/definition migration", roadmap)
+
+    def test_agent_preview_contract_is_bounded_and_linked(self):
+        doc = (ROOT / "docs/sql-preview.md").read_text()
+        evaluation = ROOT / "docs/agent-query-evaluation.md"
+        self.assertTrue(evaluation.exists())
+        self.assertIn("agent-query-evaluation.md", doc)
+        for phrase in (
+            "agent=True",
+            "disclose_schema=True",
+            "read-only",
+            "ordinary SQL",
+            "trusted caller Python",
+            "not proof that the sql reflects user intent",
+            "does not complete M2",
+            "not included in the currently published 0.1.2 package",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase.lower(), doc.lower())
+        report = evaluation.read_text().lower()
+        for phrase in (
+            "12 matching native query results",
+            "across both frontends combined",
+            "eleven compiler/preflight/replay tests passed",
+            "24 model calls",
+            "four developer-authored tasks",
+            "not held-out intent judgments",
+            "not a universal advantage",
+            "sql plus bindings",
+        ):
+            with self.subTest(report_phrase=phrase):
+                self.assertIn(phrase, report)
+        self.assertIn("m2", (ROOT / "ROADMAP.md").read_text().lower())
+        self.assertIn("first-class committed capability", (ROOT / "ROADMAP.md").read_text())
+
+    def test_agent_example_and_installed_test_are_wired(self):
+        example = ROOT / "examples/sql_agent.py"
+        self.assertTrue(example.exists())
+        self.assertTrue((ROOT / "tests/test_sql_agent_example.py").exists())
+        self.assertTrue((ROOT / "changelog.d/+sql-agent-readonly.added.md").exists())
+        for workflow in (".github/workflows/package.yml", ".github/workflows/wheels.yml"):
+            text = (ROOT / workflow).read_text()
+            self.assertIn("test_sql_agent_example.py", text)
+            self.assertIn("examples/sql_agent.py", text)
+        self.assertIn("test_sql_agent_example.py", (ROOT / "Makefile").read_text())
+        self.assertIn("examples/sql_agent.py", (ROOT / "Makefile").read_text())
 
     def test_initial_preview_fragment_is_retained(self):
         fragment = ROOT / "changelog.d/+volatile-native-sql-preview.added.md"

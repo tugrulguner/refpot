@@ -28,6 +28,18 @@ class PyDatabase {
         if (busy_) throw std::runtime_error("reentrant database operation is unsupported");
         if (!allow_poison && database_->poisoned()) throw std::runtime_error("uncertain SQL storage outcome; close and reopen the database");
     }
+    static std::vector<std::string> names(py::handle value) {
+        if(!PyList_CheckExact(value.ptr())&&!PyTuple_CheckExact(value.ptr())) throw py::type_error("relations must be an exact list or tuple");
+        auto count=PySequence_Size(value.ptr()); if(count>128) throw py::value_error("too many authorized relations");
+        std::vector<std::string> result; result.reserve(static_cast<std::size_t>(count));
+        for(Py_ssize_t i=0;i<count;++i){py::object x=py::reinterpret_steal<py::object>(PySequence_GetItem(value.ptr(),i));if(!PyUnicode_CheckExact(x.ptr()))throw py::type_error("relation names must be exact strings");if(PyUnicode_GET_LENGTH(x.ptr())>64)throw py::value_error("relation name exceeds 64 bytes");auto name=py::cast<std::string>(x);if(name.size()>64)throw py::value_error("relation name exceeds 64 bytes");result.push_back(std::move(name));}
+        return result;
+    }
+    static std::vector<sql::I> parameters(py::handle input) {
+        if(!PyList_CheckExact(input.ptr())&&!PyTuple_CheckExact(input.ptr()))throw py::type_error("native parameters must be an exact list or tuple");
+        auto count=PySequence_Size(input.ptr());if(count>8192)throw py::value_error("too many parameters");std::vector<sql::I> out;out.reserve(static_cast<std::size_t>(count));
+        for(Py_ssize_t i=0;i<count;++i){py::object x=py::reinterpret_steal<py::object>(PySequence_GetItem(input.ptr(),i));if(!PyLong_CheckExact(x.ptr()))throw py::type_error("parameters must be exact integers");auto n=PyLong_AsLongLong(x.ptr());if(PyErr_Occurred())throw py::error_already_set();out.push_back(n);}return out;
+    }
 
 public:
     explicit PyDatabase(const std::string& mode, py::object path) {
@@ -80,6 +92,21 @@ public:
         }
     }
 
+    py::dict query_context(py::handle relations) {
+        check(); struct Guard{bool& b;~Guard(){b=false;}} guard{busy_};busy_=true;
+        auto context=database_->query_context(names(relations));py::dict out;out["revision"]=py::int_(context.revision);py::list entries;
+        for(const auto& r:context.relations){py::dict item;item["name"]=r.name;item["columns"]=r.columns;item["derived"]=r.derived;entries.append(std::move(item));}out["relations"]=std::move(entries);return out;
+    }
+    py::object execute_readonly(py::handle query,py::handle params,py::handle relations,py::handle revision,py::handle explain) {
+        check();struct Guard{bool& b;~Guard(){b=false;}} guard{busy_};busy_=true;
+        if(!PyUnicode_CheckExact(query.ptr()))throw py::type_error("query must be an exact SQL string");
+        if(!PyBool_Check(explain.ptr()))throw py::type_error("explain must be bool");
+        if(!PyLong_CheckExact(revision.ptr()))throw py::type_error("revision must be an exact integer");
+        auto token=PyLong_AsUnsignedLongLong(revision.ptr());if(PyErr_Occurred())throw py::error_already_set();
+        auto result=database_->execute_readonly(py::cast<std::string>(query),parameters(params),names(relations),token,explain.ptr()==Py_True);
+        return py::cast(std::move(result));
+    }
+
     bool closed() const noexcept { return !database_; }
 
     bool in_transaction() const {
@@ -121,6 +148,9 @@ PYBIND11_MODULE(_sql, module) {
         .def(py::init<const std::string&,py::object>(), py::arg("mode") = "overlay", py::arg("path") = py::none())
         .def("execute", &PyDatabase::execute, py::arg("query"), py::arg("parameters"),
              py::arg("explain") = false)
+        .def("query_context", &PyDatabase::query_context, py::arg("relations"))
+        .def("execute_readonly", &PyDatabase::execute_readonly, py::arg("query"), py::arg("parameters"),
+             py::arg("relations"), py::arg("revision"), py::arg("explain") = false)
         .def("closed", &PyDatabase::closed)
         .def("in_transaction", &PyDatabase::in_transaction)
         .def("stats", &PyDatabase::stats)

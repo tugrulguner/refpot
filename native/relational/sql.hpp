@@ -2,6 +2,7 @@
 #include "foundation.hpp"
 #include "persistence.hpp"
 #include <charconv>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>

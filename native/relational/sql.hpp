@@ -1,5 +1,6 @@
 #pragma once
 #include "foundation.hpp"
+#include "persistence.hpp"
 #include <charconv>
 #include <optional>
 #include <string>
@@ -57,7 +58,8 @@ public:
 };
 }
 class Database {
-    struct Table {std::string name;std::vector<std::string> columns;bool derived=false;};
+    using Table=sqlpersistence::Table;
+    using Bag=foundation::Bag;
     struct Source {std::size_t table;std::string alias;std::size_t offset;};
     struct Item {std::string kind;syntax::Ref ref;std::string alias;std::size_t column=0;};
     struct Absence {std::size_t table=0,outer_key=0,inner_key=0;};
@@ -65,11 +67,75 @@ class Database {
     mutable std::uint64_t predicate_bindings_=0, predicate_tests_=0;
     struct Budget {std::size_t visits=0;void step(){if(++visits>1000000)throw std::runtime_error("query work budget exceeded");}};
     std::size_t row_limit_;
+    foundation::Mode mode_=foundation::Mode::Overlay;
     std::vector<Table> tables_;
     std::vector<std::string> assertions_;
     std::unique_ptr<foundation::Model> model_;
+    std::unique_ptr<sqlstorage::Store> store_;
+    std::size_t encoded_state_size_=0;
     std::size_t pending_mutations_=0, committed_rows_=0, visible_rows_=0;
     bool in_tx_=false;
+    static std::vector<Table> copy_tables(const std::vector<Table>& source){return source;}
+    static sqlpersistence::Image catalog_image(const std::vector<Table>& tables,const std::vector<std::string>& assertions,
+            const std::vector<foundation::Definition>& definitions,const std::vector<std::string>& required) {
+        sqlpersistence::Image im;im.tables=tables;im.assertions=assertions;im.definitions=definitions;im.required=required;return im;
+    }
+    std::size_t encoded_size_for(const sqlpersistence::Image& catalog,const std::map<std::string,Bag>& added={})const {
+        std::size_t total=sqlpersistence::encode_image(catalog).size();
+        auto add=[&](const std::string&name,const Bag&bag){auto n=sqlpersistence::bag_size(name,bag);if(n>sqlstorage::Store::max_payload-total)throw std::length_error("encoded relational state exceeds 64 MiB");total+=n;};
+        for(const auto&x:model_->committed_state())add(x.first,x.second);
+        for(const auto&x:added)add(x.first,x.second);
+        if(total>sqlstorage::Store::max_payload)throw std::length_error("encoded relational state exceeds 64 MiB");
+        return total;
+    }
+    void append_record(const sqlstorage::Bytes& record) {
+        if(!store_)return;
+        if(store_->needs_checkpoint(record.size()))throw std::length_error("WAL capacity requires explicit checkpoint");
+        store_->append(record);
+    }
+    void recover_store() {
+        sqlpersistence::Image image;
+        if(!store_->snapshot().empty())image=sqlpersistence::decode_image(store_->snapshot());
+        auto apply_delta=[&](const std::map<std::string,Bag>& changes){
+            for(const auto&rel:changes){auto target=image.bags.find(rel.first);if(target==image.bags.end())throw std::invalid_argument("change references unknown relation");
+                for(const auto&x:rel.second){if(target->second.find(x.first)==target->second.end()&&x.second<0)throw std::invalid_argument("negative recovered relation multiplicity");foundation::detail::change(target->second,x.first,x.second);auto p=target->second.find(x.first);if(p!=target->second.end()&&p->second<=0)throw std::invalid_argument("invalid recovered relation multiplicity");}
+            }
+        };
+        for(const auto&record:store_->records()){
+            if(record.size()<13)throw std::invalid_argument("truncated relational record");
+            const std::uint8_t kind=record[12];
+            if(kind==1)apply_delta(sqlpersistence::decode_delta(record));
+            else if(kind==2){auto ddl=sqlpersistence::decode_ddl(record);auto&next=ddl.catalog;
+                if(next.definitions.size()<image.definitions.size()||next.tables.size()<image.tables.size()||next.assertions.size()<image.assertions.size()||next.required.size()<image.required.size())throw std::invalid_argument("relational DDL catalog shrank");
+                for(std::size_t i=0;i<image.definitions.size();++i)if(!sqlpersistence::equal_definition(image.definitions[i],next.definitions[i]))throw std::invalid_argument("relational DDL rewrote prior definition");
+                for(std::size_t i=0;i<image.tables.size();++i)if(image.tables[i].name!=next.tables[i].name||image.tables[i].columns!=next.tables[i].columns||image.tables[i].derived!=next.tables[i].derived)throw std::invalid_argument("relational DDL rewrote prior table");
+                for(std::size_t i=0;i<image.assertions.size();++i)if(image.assertions[i]!=next.assertions[i])throw std::invalid_argument("relational DDL rewrote prior assertion");
+                for(std::size_t i=0;i<image.required.size();++i)if(image.required[i]!=next.required[i])throw std::invalid_argument("relational DDL rewrote prior constraint");
+                next.bags=image.bags;
+                for(const auto&x:ddl.added)if(image.bags.count(x.first)||!next.bags.emplace(x.first,x.second).second)throw std::invalid_argument("relational DDL duplicates relation state");
+                if(next.bags.size()!=next.definitions.size())throw std::invalid_argument("relational DDL relation state mismatch "+std::to_string(next.bags.size())+"/"+std::to_string(next.definitions.size()));
+                image.tables=std::move(next.tables);image.assertions=std::move(next.assertions);image.definitions=std::move(next.definitions);image.required=std::move(next.required);image.bags=std::move(next.bags);
+            }else throw std::invalid_argument("unknown relational record type");
+        }
+        validate_image_catalog(image);
+        model_=std::make_unique<foundation::Model>(image.definitions,image.required,std::move(image.bags),mode_);
+        tables_=std::move(image.tables);assertions_=std::move(image.assertions);
+        for(const auto&t:tables_)if(!t.derived){const auto&bag=model_->bag(t.name);for(const auto&x:bag)committed_rows_+=static_cast<std::size_t>(x.second);}
+        if(committed_rows_>row_limit_)throw std::length_error("recovered source rows exceed catalog row budget");
+        visible_rows_=committed_rows_;
+        encoded_state_size_=encoded_size_for(catalog_image(tables_,assertions_,model_->definitions(),model_->required_empty()));
+    }
+    static void validate_image_catalog(const sqlpersistence::Image& image) {
+        if(image.tables.size()>128||image.assertions.size()>128)throw std::length_error("recovered catalog exceeds limit");
+        std::set<std::string> names,assertions;
+        for(const auto&t:image.tables){if(!names.insert(t.name).second||t.columns.empty()||t.columns.size()>64)throw std::invalid_argument("invalid recovered table catalog");
+            auto d=std::find_if(image.definitions.begin(),image.definitions.end(),[&](const auto&x){return x.name==t.name;});
+            if(d==image.definitions.end()||(t.derived==(d->op=="source"))||((d->op=="source")!=( !t.derived))||
+               (d->op=="source"&&d->width!=t.columns.size())||(d->op=="map"&&d->exprs.size()!=t.columns.size()))throw std::invalid_argument("recovered table definition mismatch");
+        }
+        for(const auto&a:image.assertions)if(!assertions.insert(a).second)throw std::invalid_argument("duplicate recovered assertion");
+        if(image.required.size()!=image.assertions.size())throw std::invalid_argument("recovered assertion catalog mismatch");
+    }
     std::size_t table(const std::string& name)const {
         for(std::size_t i=0;i<tables_.size();++i)if(tables_[i].name==name)return i;
         throw std::invalid_argument("unknown table: "+name);
@@ -104,13 +170,34 @@ class Database {
         for(const auto& w:where){++predicate_tests_;if(!w.matches(row))return false;}return true;
     }
     std::uint64_t statement_mutations_=0;
+    std::size_t persist_changes(const std::map<std::string,Bag>& changes) {
+        if(!store_)return encoded_state_size_;
+        const auto payload=sqlpersistence::encode_delta(changes);
+        __int128 next=encoded_state_size_;
+        for(const auto&rel:changes){
+            const auto&base=model_->bag(rel.first);
+            for(const auto&x:rel.second){const auto old=base.find(x.first);const bool had=old!=base.end();
+                const __int128 final=static_cast<__int128>(had?old->second:0)+x.second;
+                if(final<0)throw std::logic_error("negative persisted candidate multiplicity");
+                if(!had&&final>0)next+=static_cast<__int128>(12+8*x.first.size());
+                else if(had&&final==0)next-=static_cast<__int128>(12+8*x.first.size());
+            }
+        }
+        if(next<0||next>sqlstorage::Store::max_payload)throw std::length_error("encoded relational state exceeds 64 MiB");
+        append_record(payload);return static_cast<std::size_t>(next);
+    }
     void apply(std::vector<foundation::Mutation> mutations) {
         if(pending_mutations_+mutations.size()>10000)throw std::runtime_error("transaction mutation limit exceeded");
         I next_rows=static_cast<I>(visible_rows_);
         for(const auto& m:mutations) next_rows+=m.op=="insert"?1:m.op=="delete"?-1:0;
         if(next_rows<0 || static_cast<std::size_t>(next_rows)>row_limit_)throw std::runtime_error("global catalog row limit exceeded");
         if(in_tx_) { model_->append(mutations,false); pending_mutations_+=mutations.size(); }
-        else { model_->apply(mutations); committed_rows_=static_cast<std::size_t>(next_rows); }
+        else if(store_) {
+            model_->prepare(mutations,true);
+            try { std::size_t next_size=encoded_state_size_;model_->commit([&](const auto&changes){next_size=persist_changes(changes);});encoded_state_size_=next_size; }
+            catch(...) { model_->rollback();throw; }
+            committed_rows_=static_cast<std::size_t>(next_rows);
+        } else { model_->apply(mutations); committed_rows_=static_cast<std::size_t>(next_rows); }
         visible_rows_=static_cast<std::size_t>(next_rows);
         statement_mutations_+=mutations.size();
     }
@@ -242,8 +329,12 @@ class Database {
             result.rows.clear();result.plan="CREATE MATERIALIZED VIEW "+view;
             if(explain)return result;
             tables_.reserve(tables_.size()+1);
-            model_->add_definitions(definitions);
-            tables_.push_back(std::move(added));return result;
+            auto next_tables=tables_;next_tables.push_back(added);
+            std::size_t next_size=encoded_state_size_;
+            model_->add_definitions(definitions,[&](const auto&all_defs,const auto&,const auto&new_bags){
+                if(store_){auto catalog=catalog_image(next_tables,assertions_,all_defs,model_->required_empty());auto payload=sqlpersistence::encode_ddl(catalog,new_bags);next_size=encoded_size_for(catalog,new_bags);append_record(payload);}
+            });
+            tables_.push_back(std::move(added));encoded_state_size_=next_size;return result;
         }
         if(explain)return result;
         Budget budget;
@@ -293,8 +384,15 @@ class Database {
         if(limit&&result.rows.size()>*limit)result.rows.resize(*limit);
         return result;
     }
+    void commit_model() {
+        std::size_t next_size=encoded_state_size_;
+        if(store_)model_->commit([&](const auto&changes){next_size=persist_changes(changes);});
+        else model_->commit();
+        encoded_state_size_=next_size;
+    }
     Result execute_impl(const std::string& query,const std::vector<I>& params,bool explain) {
         syntax::Parser p(query,params);auto op=p.take();Result result;
+        if(store_&&store_->poisoned()&&op!="rollback")throw std::runtime_error("database is poisoned");
         if(op=="select")return select(p,explain);
         if(op=="begin"||op=="commit"||op=="rollback") {
             p.end();result.plan=op;
@@ -303,7 +401,7 @@ class Database {
             if(explain)return result;
             if(op=="begin")in_tx_=true;
             else if(op=="rollback")rollback();
-            else {if(model_->has_prepared())model_->commit();pending_mutations_=0;committed_rows_=visible_rows_;in_tx_=false;}
+            else {if(model_->has_prepared())commit_model();pending_mutations_=0;committed_rows_=visible_rows_;in_tx_=false;}
             return result;
         }
         if(op=="create") {
@@ -314,7 +412,13 @@ class Database {
                 if(assertions_.size()>=128)throw std::invalid_argument("assertion limit exceeded");
                 if(std::find(assertions_.begin(),assertions_.end(),name)!=assertions_.end())throw std::invalid_argument("assertion already exists");
                 result.plan="CREATE ASSERTION "+name;if(explain)return result;
-                assertions_.reserve(assertions_.size()+1);model_->add_required_empty(relation);assertions_.push_back(std::move(name));return result;
+                assertions_.reserve(assertions_.size()+1);
+                auto next_assertions=assertions_;next_assertions.push_back(name);
+                std::size_t next_size=encoded_state_size_;
+                model_->add_required_empty(relation,[&](const auto&required){
+                    if(store_){auto catalog=catalog_image(tables_,next_assertions,model_->definitions(),required);auto payload=sqlpersistence::encode_ddl(catalog,{});next_size=encoded_size_for(catalog);append_record(payload);}
+                });
+                assertions_.swap(next_assertions);encoded_state_size_=next_size;return result;
             }
             if(p.match("materialized")) {p.need("view");auto name=p.name();p.need("as");p.need("select");return select(p,explain,name);}
             p.need("table");Table added;added.name=p.name();
@@ -333,8 +437,13 @@ class Database {
             result.plan="CREATE source catalog append";if(explain)return result;
             foundation::Definition d;d.name=added.name;d.op="source";d.width=added.columns.size();
             tables_.reserve(tables_.size()+1);
-            model_->add_source(d);
-            tables_.push_back(std::move(added));return result;
+            auto next_tables=tables_;next_tables.push_back(added);
+            std::size_t next_size=encoded_state_size_;
+            model_->add_source(d,[&](const auto&definition){
+                if(store_){auto definitions=model_->definitions();definitions.push_back(definition);std::map<std::string,Bag> new_bags;new_bags.emplace(definition.name,Bag{});
+                    auto catalog=catalog_image(next_tables,assertions_,definitions,model_->required_empty());auto payload=sqlpersistence::encode_ddl(catalog,new_bags);next_size=encoded_size_for(catalog,new_bags);append_record(payload);}
+            });
+            tables_.push_back(std::move(added));encoded_state_size_=next_size;return result;
         }
         if(op=="insert") {
             p.need("into");auto n=table(p.name());if(tables_[n].derived)throw std::invalid_argument("derived relation is read-only");p.need("values");p.need("(");Row row;
@@ -362,9 +471,25 @@ class Database {
         throw std::invalid_argument("unsupported SQL statement: "+op);
     }
 public:
-    explicit Database(foundation::Mode mode=foundation::Mode::Overlay,std::size_t row_limit=100000):row_limit_(row_limit),model_(std::make_unique<foundation::Model>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)){
+    explicit Database(foundation::Mode mode=foundation::Mode::Overlay,std::size_t row_limit=100000):row_limit_(row_limit),mode_(mode),model_(std::make_unique<foundation::Model>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)){
         if(!row_limit_||row_limit_>100000)throw std::invalid_argument("catalog row budget must be 1..100000");
     }
+    explicit Database(const std::string& path,foundation::Mode mode=foundation::Mode::Overlay,std::size_t row_limit=100000)
+      : row_limit_(row_limit),mode_(mode),model_(std::make_unique<foundation::Model>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)),store_(std::make_unique<sqlstorage::Store>(path)) {
+        if(!row_limit_||row_limit_>100000)throw std::invalid_argument("catalog row budget must be 1..100000");
+        recover_store();
+    }
+    void checkpoint() {
+        if(in_tx_)throw std::logic_error("checkpoint is forbidden inside a transaction");
+        if(!store_)return;
+        if(store_->poisoned())throw std::runtime_error("database is poisoned");
+        sqlpersistence::Image image=catalog_image(tables_,assertions_,model_->definitions(),model_->required_empty());
+        image.bags=model_->committed_state();
+        auto payload=sqlpersistence::encode_image(image);
+        if(payload.size()!=encoded_state_size_)throw std::logic_error("tracked encoded state size mismatch "+std::to_string(encoded_state_size_)+"/"+std::to_string(payload.size()));
+        store_->checkpoint(payload);
+    }
+    bool poisoned()const noexcept{return store_&&store_->poisoned();}
     bool in_transaction()const noexcept{return in_tx_;}
     std::map<std::string,std::uint64_t> stats() const {
         return {{"statement_mutations",statement_mutations_},

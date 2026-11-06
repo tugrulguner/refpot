@@ -1,6 +1,6 @@
 # Maintained SQL slice: implementation contract
 
-Base: 9bef95543bd4d2292e93c0572cbfd0f809b5b7ce. This is an additive volatile preview, not all of M3, a release, durability, concurrency, or a novelty claim. Preserve native/core.cpp, the fixed-schema API/storage, and frozen historical research sources/evidence.
+This design note records the earlier bounded M3 maintenance slice, not the latest whole-model persistent implementation. The current source preview adds an optional persistence layer described in [sql-preview.md](sql-preview.md); it remains unreleased, is not all of M3 or M4, and does not establish broad durability, concurrency, or novelty. Preserve the fixed-schema API/storage and frozen historical research sources/evidence.
 
 ## Public path
 

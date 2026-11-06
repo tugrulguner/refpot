@@ -1,4 +1,4 @@
-"""Volatile SQL preview API, backed by the installed native pybind extension."""
+"""SQL preview API with optional native whole-model file persistence."""
 
 from __future__ import annotations
 
@@ -27,11 +27,23 @@ class Result:
 
 
 class Database:
-    """A volatile, single-process and single-thread SQL database."""
+    """A single-owner SQL database: volatile by default, persistent with a path."""
 
-    def __init__(self, *, mode: str = "overlay") -> None:
+    def __init__(
+        self, path: str | os.PathLike[str] | None = None, *, mode: str = "overlay"
+    ) -> None:
         if mode not in ("overlay", "modular"):
             raise ValueError("mode must be 'overlay' or 'modular'")
+        filename = None if path is None else os.fspath(path)
+        if filename is not None:
+            if not isinstance(filename, str):
+                raise TypeError("database path must be str or PathLike[str]")
+            if not filename or "\0" in filename:
+                raise ValueError("database path must be nonempty and NUL-free")
+            try:
+                filename.encode("utf-8")
+            except UnicodeError as exc:
+                raise ValueError("database path must be valid UTF-8") from exc
         self._pid = os.getpid()
         self._thread = threading.get_ident()
         self._closed = False
@@ -39,7 +51,7 @@ class Database:
         self._in_transaction = False
         self._scope = False
         self._aborted = False
-        self._db = _Database(mode)
+        self._db = _Database(mode, filename)
 
     def _check(self) -> None:
         if (os.getpid(), threading.get_ident()) != (self._pid, self._thread):
@@ -173,6 +185,16 @@ class Database:
     def stats(self) -> dict[str, int]:
         with self._operation():
             return dict(self._db.stats())
+
+    def checkpoint(self) -> None:
+        """Checkpoint committed model state; unavailable inside a transaction."""
+        with self._operation():
+            if self._scope or self._in_transaction:
+                raise SQLError("checkpoint inside a transaction is unsupported")
+            try:
+                self._db.checkpoint()
+            except RuntimeError as exc:
+                raise SQLError(str(exc)) from exc
 
     def close(self) -> None:
         if (os.getpid(), threading.get_ident()) != (self._pid, self._thread):

@@ -4,7 +4,7 @@ RefPot is an experimental alpha custom embedded native database engine. Read `RE
 
 ## Contract and claims
 
-- The published API is the fixed-schema Python `Database`/`Row` CRUD and explicit transaction contract. The source tree also contains an unreleased, volatile `refpot.sql` native preview; read `docs/sql-preview.md` before using or describing it. Preserve the old API/storage. Durable relational SQL, ORM and natural-language execution are not shipped.
+- The published API remains the fixed-schema Python `Database`/`Row` CRUD and explicit transaction contract. The source tree additionally contains an unreleased `refpot.sql` preview with optional bounded whole-model persistence; read `docs/sql-preview.md` before using or describing it. Preserve the old API/storage. SQL persistence is still unpublished and only partially qualified; ORM and natural-language execution are not shipped.
 - Preserve the documented signed-64-bit integer and bounded UTF-8 text limits, single-process/single-creating-thread ownership, file-path semantics, and current persistence/recovery boundaries.
 - Do not claim general performance, production readiness, physical-power-loss qualification, multiwriter/concurrent-reader support, Windows support, or SQLite SQL/file/C API compatibility.
 - Keep historical random-update results scoped to their audited harness. They are not package performance claims; the historical reopen result remains 16/16 losses.

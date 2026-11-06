@@ -1,4 +1,4 @@
-"""Public contract guard for the unreleased volatile SQL preview docs."""
+"""Public contract guard for the unreleased SQL preview documentation."""
 
 import unittest
 from pathlib import Path
@@ -22,6 +22,24 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertIn("not included in the currently published package", contract)
         self.assertIn("examples/sql_preview.py", readme)
 
+    def test_canonical_surfaces_do_not_describe_all_sql_as_volatile_only(self):
+        for relative in (
+            "AGENTS.md",
+            "README.md",
+            "ROADMAP.md",
+            "docs/package-contract.md",
+            "docs/sql-preview.md",
+            "docs/maintained-sql-design.md",
+            "skills/refpot-database/SKILL.md",
+        ):
+            text = (ROOT / relative).read_text().lower()
+            with self.subTest(path=relative):
+                self.assertNotIn("in-memory sql preview", text)
+                self.assertNotIn(
+                    "sql preview uses separate in-memory state and has no persistence", text
+                )
+                self.assertNotIn("volatile, in-development sql preview", text)
+
     def test_sql_preview_doc_is_unreleased_scoped_and_complete(self):
         doc = ROOT / "docs/sql-preview.md"
         self.assertTrue(doc.exists(), "the canonical preview contract is missing")
@@ -29,7 +47,8 @@ class SQLPreviewDocsTests(unittest.TestCase):
         for phrase in (
             "not included in the currently published 0.1.2 package",
             "volatile",
-            "Database()",
+            "Database(path=None",
+            'Database(path=None, *, mode="overlay")',
             'mode="overlay"',
             'mode="modular"',
             "transaction()",
@@ -41,6 +60,12 @@ class SQLPreviewDocsTests(unittest.TestCase):
             "whole explicit transaction",
             "examples/sql_preview.py",
             "M1",
+            "64 MiB",
+            "128 MiB",
+            "all changed bags",
+            "does not checkpoint",
+            "poisons the writer",
+            "physical power-loss safety",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), text.lower())
@@ -50,6 +75,8 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertNotIn("SQLite's integer-overflow-to-float behavior", text)
         self.assertIn("SQLite integer `SUM` raises on intermediate integer overflow", text)
         self.assertIn("not included", text.lower())
+        self.assertNotIn("has no persistence", text.lower())
+        self.assertNotIn("no durable storage", text.lower())
 
     def test_maintained_sql_scope_transactions_and_caps_are_explicit(self):
         text = (ROOT / "docs/sql-preview.md").read_text()
@@ -101,10 +128,31 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertNotIn("--library", text)
         self.assertNotIn("sys.path", text)
 
-    def test_only_the_native_sql_preview_changelog_is_added(self):
-        fragments = list((ROOT / "changelog.d").glob("+volatile-native-sql-preview.added.md"))
-        self.assertEqual(len(fragments), 1)
-        self.assertIn("unreleased", fragments[0].read_text().lower())
+    def test_persistent_example_is_documented_and_exercises_recovery(self):
+        example = ROOT / "examples/sql_persistence.py"
+        self.assertTrue(example.exists(), "the documented persistence example is missing")
+        text = example.read_text()
+        self.assertIn("Database(path", text)
+        self.assertIn('Database(path, mode="modular")', text)
+        self.assertIn("resource_exists", text)
+        self.assertIn("capacity_ok", text)
+        self.assertIn("Database(path)", text)
+        self.assertIn("db.checkpoint()", text)
+        doc = (ROOT / "docs/sql-preview.md").read_text()
+        self.assertIn("examples/sql_persistence.py", doc)
+        self.assertIn("does not mark roadmap M1, M3, or M4 complete", doc)
+
+    def test_initial_preview_fragment_is_retained(self):
+        fragment = ROOT / "changelog.d/+volatile-native-sql-preview.added.md"
+        self.assertTrue(fragment.exists())
+        self.assertIn("unreleased", fragment.read_text().lower())
+
+    def test_whole_model_persistence_has_unreleased_changelog_fragment(self):
+        fragment = ROOT / "changelog.d/+sql-whole-model-persistence.added.md"
+        self.assertTrue(fragment.exists())
+        text = fragment.read_text().lower()
+        for phrase in ("unreleased", "whole-model", "not part of the published 0.1.2 package"):
+            self.assertIn(phrase, text)
 
 
 if __name__ == "__main__":

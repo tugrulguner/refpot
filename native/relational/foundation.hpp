@@ -444,7 +444,41 @@ public:
             sources_only_ &= defs_[i].op=="source";
         }
     }
-    void add_source(const Definition& definition) {
+    // Restore a complete accepted image privately without rebuilding derived state.
+    Model(std::vector<Definition> defs,std::vector<std::string> required,
+          std::map<std::string,Bag> image,Mode mode)
+      : Model(std::move(defs),std::move(required),mode) {
+        if(image.size()!=defs_.size())throw std::invalid_argument("recovery relation count mismatch");
+        std::map<std::string,std::size_t> widths;
+        for(const auto& d:defs_) {
+            const std::size_t width=d.op=="source"?d.width:d.op=="map"?d.exprs.size():d.op=="group"?3:
+                d.op=="join"?widths.at(d.left)+widths.at(d.right):
+                d.op=="filter"?widths.at(d.input):widths.at(d.left);
+            auto found=image.find(d.name);
+            if(found==image.end())throw std::invalid_argument("recovery relation missing");
+            __int128 rows=0;
+            std::set<I> source_keys;
+            for(const auto& entry:found->second) {
+                if(entry.second<=0||entry.first.size()!=width)
+                    throw std::invalid_argument("invalid recovery tuple or multiplicity");
+                rows+=entry.second;
+                if(rows>100000)throw std::length_error("recovery relation row limit exceeded");
+                if(d.op=="source") {
+                    if(entry.second!=1)throw std::invalid_argument("source multiplicity must be one in recovery image");
+                    if(!source_keys.insert(entry.first[0]).second)
+                        throw std::invalid_argument("duplicate source primary key in recovery image");
+                }
+            }
+            state_.at(d.name).swap(found->second);
+            row_counts_.at(d.name)=static_cast<I>(rows);
+            widths.emplace(d.name,width);
+        }
+        for(const auto& name:required_)if(!state_.at(name).empty())
+            throw std::invalid_argument("recovery image violates required-empty constraint");
+    }
+    void add_source(const Definition& definition) { add_source(definition,[](const auto&){}); }
+    template<class BeforePublish>
+    void add_source(const Definition& definition,BeforePublish&& before_publish) {
         if(defs_.size()>=1024)throw std::length_error("catalog definition limit exceeded");
         if (active_) throw std::logic_error("cannot change catalog during transaction");
         if (epoch_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("epoch exhausted");
@@ -457,18 +491,24 @@ public:
         auto node=empty.extract(definition.name);
         std::map<std::string,I> count_node_map;count_node_map.emplace(definition.name,0);
         auto count_node=count_node_map.extract(definition.name);
+        before_publish(definition);
         defs_.swap(defs); index_.swap(index);
         state_.insert(std::move(node)); row_counts_.insert(std::move(count_node));
         ++epoch_;
     }
-    void add_required_empty(const std::string& name) {
+    void add_required_empty(const std::string& name) { add_required_empty(name,[](const auto&){}); }
+    template<class BeforePublish>
+    void add_required_empty(const std::string& name,BeforePublish&& before_publish) {
         if(active_) throw std::logic_error("cannot change constraints during transaction");
         auto p=index_.find(name); if(p==index_.end()) throw std::invalid_argument("unknown required-empty relation");
         if(!state_.at(name).empty()) throw std::logic_error("required-empty relation is nonempty");
-        if(std::find(required_.begin(),required_.end(),name)!=required_.end()) return;
-        auto next=required_; next.push_back(name); required_.swap(next);
+        // Each SQL assertion keeps its own name-to-relation catalog entry, even
+        // when another assertion already requires this relation to be empty.
+        auto next=required_; next.push_back(name); before_publish(next); required_.swap(next);
     }
-    void add_definitions(const std::vector<Definition>& additions) {
+    void add_definitions(const std::vector<Definition>& additions) { add_definitions(additions,[](const auto&,const auto&,const auto&){}); }
+    template<class BeforePublish>
+    void add_definitions(const std::vector<Definition>& additions,BeforePublish&& before_publish) {
         if(active_) throw std::logic_error("cannot change catalog during transaction");
         if(additions.empty()) return;
         if(defs_.size()+additions.size()>1024) throw std::length_error("catalog definition limit exceeded");
@@ -525,7 +565,9 @@ public:
             added.emplace(d.name,std::move(out));
             added_counts.emplace(d.name,rows);
         }
-        // All allocation/validation has finished. Transfer disjoint map nodes.
+        // All allocation/validation has finished. Persist while the model is still
+        // unchanged; node transfers and swaps below are allocation-free publication.
+        before_publish(defs,index,added);
         state_.merge(added);row_counts_.merge(added_counts);defs_.swap(defs);index_.swap(index);sources_only_=false;++epoch_;
     }
     void prepare(const std::vector<Mutation>& mutations,bool validate=true) {
@@ -602,9 +644,12 @@ public:
             if(nonempty) throw std::logic_error("required-empty relation is nonempty");
         }
     }
-    void commit() {
+    void commit() { commit([](const auto&){}); }
+    template<class BeforePublish>
+    void commit(BeforePublish&& before_publish) {
         if (!active_) throw std::logic_error("no active transaction");
         validate_constraints();
+        before_publish(active_->changes);
         if (mode_==Mode::Modular) {
             // All map allocation and relation preparation finished in prepare().
             for (auto& item:active_->visible) state_.at(item.first).swap(item.second);
@@ -640,5 +685,12 @@ public:
     std::uint64_t source_mutation_applications() const { return source_mutation_applications_; }
     std::uint64_t materialized_entries() const { return materialized_entries_; }
     std::uint64_t epoch() const { return epoch_; }
+    const std::vector<Definition>& definitions() const noexcept { return defs_; }
+    const std::vector<std::string>& required_empty() const noexcept { return required_; }
+    const std::map<std::string,Bag>& committed_state() const noexcept { return state_; }
+    const std::map<std::string,Bag>& prepared_changes() const {
+        if(!active_)throw std::logic_error("no active transaction");
+        return active_->changes;
+    }
 };
 }

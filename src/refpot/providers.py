@@ -72,6 +72,8 @@ def _json_load(raw: bytes, limit: int):
     value = json.loads(
         raw.decode("utf-8"),
         object_pairs_hook=_no_duplicate_pairs,
+        # Preserve nonzero prices that binary float would underflow to zero.
+        parse_float=Decimal,
         parse_constant=lambda _: (_ for _ in ()).throw(ValueError("invalid JSON number")),
     )
     stack = [(value, 0)]
@@ -87,7 +89,7 @@ def _json_load(raw: bytes, limit: int):
 
 
 def _price_is_zero(value: object) -> bool:
-    if type(value) not in (str, int, float):
+    if type(value) not in (str, int, Decimal):
         return False
     try:
         price = Decimal(str(value))

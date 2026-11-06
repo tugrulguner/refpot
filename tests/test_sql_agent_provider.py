@@ -319,6 +319,99 @@ def test_response_identity_and_reported_cost_are_checked_before_query_execution(
         run_db(OpenRouter(api_key_env="FIXTURE_OPENROUTER_KEY"))
 
 
+@pytest.mark.parametrize("gate", ["prompt", "completion", "usage"])
+@pytest.mark.parametrize(
+    "token",
+    ["1e-9999", "-1e-9999", '"1e-9999"', "0.001", "true", "null", "NaN", "1e999999999999999999999"],
+)
+def test_nonzero_or_invalid_prices_are_rejected_before_request_or_execution(
+    monkeypatch, gate, token
+):
+    from refpot._sql import _Database
+    from refpot.providers import OpenRouter
+
+    monkeypatch.setenv("FIXTURE_OPENROUTER_KEY", "fixture-secret")
+    model_catalog = catalog()
+    response = chat(
+        json.dumps(
+            {"action": "query", "query": "SELECT * FROM items", "parameters": [], "assumptions": []}
+        )
+    )
+    if gate == "usage":
+        response["usage"]["cost"] = "UNDERFLOW_TOKEN"
+    else:
+        model_catalog["data"][0]["pricing"][gate] = "UNDERFLOW_TOKEN"
+    # Preserve the literal JSON number: constructing a Python float loses it first.
+    responses = [
+        FixtureResponse(json.dumps(payload).replace('"UNDERFLOW_TOKEN"', token).encode())
+        for payload in (model_catalog, response)
+    ]
+    calls = []
+    executions = []
+    original = _Database.execute_readonly
+
+    def execute_readonly(self, *args):
+        executions.append(args)
+        return original(self, *args)
+
+    monkeypatch.setattr(_Database, "execute_readonly", execute_readonly)
+    install_fixtures(monkeypatch, responses, calls)
+    with pytest.raises(AgentError):
+        run_db(OpenRouter(api_key_env="FIXTURE_OPENROUTER_KEY"))
+    assert len(calls) == (2 if gate == "usage" else 1)
+    assert executions == []
+
+
+@pytest.mark.parametrize("token", ["0", "0.0", "-0.0", "0e-9999", '"0"', '"0.000"'])
+def test_exact_zero_price_encodings_still_execute(monkeypatch, token):
+    from refpot.providers import OpenRouter
+
+    monkeypatch.setenv("FIXTURE_OPENROUTER_KEY", "fixture-secret")
+    response = chat(
+        json.dumps(
+            {
+                "action": "query",
+                "query": "SELECT id FROM items WHERE quantity > ? ORDER BY id",
+                "parameters": [5],
+                "assumptions": [],
+            }
+        )
+    )
+    response["usage"]["cost"] = "ZERO_TOKEN"
+    calls = []
+    install_fixtures(
+        monkeypatch,
+        [
+            FixtureResponse(json.dumps(payload).replace('"ZERO_TOKEN"', token).encode())
+            for payload in (catalog("ZERO_TOKEN"), response)
+        ],
+        calls,
+    )
+    result = run_db(OpenRouter(api_key_env="FIXTURE_OPENROUTER_KEY"))
+    assert result.rows == ((1,),)
+    assert result.generation is not None
+    assert result.generation.parameters == (5,)
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("token", ["1.0", "1e0", "1e-9999"])
+def test_decimal_json_bindings_are_not_coerced_to_integers(monkeypatch, token):
+    from refpot.providers import OpenRouter
+
+    monkeypatch.setenv("FIXTURE_OPENROUTER_KEY", "fixture-secret")
+    content = json.dumps(
+        {
+            "action": "query",
+            "query": "SELECT id FROM items WHERE id = ?",
+            "parameters": ["DECIMAL_TOKEN"],
+            "assumptions": [],
+        }
+    ).replace('"DECIMAL_TOKEN"', token)
+    install_fixtures(monkeypatch, [FixtureResponse(catalog()), FixtureResponse(chat(content))])
+    with pytest.raises(AgentError):
+        run_db(OpenRouter(api_key_env="FIXTURE_OPENROUTER_KEY"))
+
+
 def test_nonfinite_timeout_is_rejected():
     from refpot.providers import OpenRouter
 

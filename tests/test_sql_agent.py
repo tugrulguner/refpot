@@ -37,6 +37,62 @@ def test_agent_query_uses_same_result_and_native_readonly_path():
         assert db.execute("SELECT * FROM items").generation is None
 
 
+@pytest.mark.parametrize("mode", ["overlay", "modular"])
+@pytest.mark.parametrize(
+    "query",
+    [
+        "SELECT SUM(value) FROM items WHERE id <= 2",
+        "SELECT SUM(value) FROM items WHERE id >= 3",
+        "SELECT category, SUM(value) FROM items GROUP BY category",
+    ],
+)
+def test_agent_native_sum_overflow_preserves_sql_error_contract(mode, query):
+    from refpot.agent import AgentConfig, QueryProposal
+    from refpot.sql import SQLError
+
+    with Database(
+        mode=mode, agent=AgentConfig(lambda request: QueryProposal(query), ("items",), True)
+    ) as db:
+        db.execute(
+            "CREATE TABLE items (id INTEGER PRIMARY KEY, value INTEGER NOT NULL, "
+            "category INTEGER NOT NULL)"
+        )
+        rows = ((1, (1 << 63) - 1, 1), (2, 1, 1), (3, -(1 << 63), 2), (4, -1, 2))
+        for row in rows:
+            db.execute("INSERT INTO items VALUES (?, ?, ?)", row)
+        for agent in (False, True):
+            with pytest.raises(SQLError, match="signed 64-bit arithmetic overflow"):
+                db.execute("offline overflow fixture" if agent else query, agent=agent)
+            assert db.execute("SELECT * FROM items ORDER BY id").rows == rows
+        assert db.execute("offline overflow fixture", agent=True, explain=True).rows == ()
+
+
+@pytest.mark.parametrize("mode", ["overlay", "modular"])
+def test_agent_sum_cancellation_and_argument_range_remain_distinct(mode):
+    from refpot.agent import AgentConfig, QueryProposal
+
+    proposals = iter(
+        (
+            QueryProposal("SELECT SUM(value) FROM items"),
+            QueryProposal("SELECT id FROM items WHERE id = ?", (1 << 63,)),
+        )
+    )
+    with Database(
+        mode=mode, agent=AgentConfig(lambda request: next(proposals), ("items",), True)
+    ) as db:
+        db.execute("CREATE TABLE items (id INTEGER PRIMARY KEY, value INTEGER NOT NULL)")
+        for row in ((1, (1 << 63) - 1), (2, 1), (3, -1)):
+            db.execute("INSERT INTO items VALUES (?, ?)", row)
+        expected = (((1 << 63) - 1,),)
+        assert db.execute("SELECT SUM(value) FROM items").rows == expected
+        assert db.execute("offline cancellation fixture", agent=True).rows == expected
+        with pytest.raises(OverflowError, match="parameter outside signed 64-bit range"):
+            db.execute("offline invalid argument fixture", agent=True)
+        with pytest.raises(OverflowError, match="parameter outside signed 64-bit range"):
+            db.execute("SELECT id FROM items WHERE id = ?", (1 << 63,))
+        assert db.execute("SELECT COUNT(*) FROM items").rows == ((3,),)
+
+
 def test_agent_missing_configuration_fails_without_guessing_sql():
     from refpot.agent import AgentError
 

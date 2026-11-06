@@ -202,7 +202,8 @@ class Database:
             raw = self._db.execute_readonly(
                 generated, bound, config.relations, context["revision"], explain
             )
-        except (RuntimeError, ValueError) as exc:
+        except (RuntimeError, ValueError, OverflowError) as exc:
+            # Argument ranges were checked above; this overflow is native SQL execution.
             raise SQLError(str(exc)) from exc
         return Result(
             tuple(raw.columns),

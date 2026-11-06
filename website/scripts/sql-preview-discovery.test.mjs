@@ -39,6 +39,16 @@ test('persistent SQL preview exports retain the bounded unpublished contract', a
   }
 });
 
+test('definition evolution exports retain atomicity and scope', async () => {
+  for (const path of ['src/content/docs/reference/sql-preview.md', 'public/docs/reference-sql-preview.md']) {
+    const text = await source(path);
+    for (const phrase of ['ALTER MATERIALIZED VIEW', 'same output column names and order',
+      'transitive', 'old or new', 'older preview binaries', 'examples/sql_evolution.py']) {
+      assert.ok(text.includes(phrase), `${path}: missing ${phrase}`);
+    }
+  }
+});
+
 test('rendered-output verification inventories the page and Markdown export', async () => {
   const verifier = await source('scripts/verify-rendered-output.mjs');
   assert.match(verifier, /reference\/sql-preview\/index\.html/);

@@ -506,9 +506,59 @@ public:
         // when another assertion already requires this relation to be empty.
         auto next=required_; next.push_back(name); before_publish(next); required_.swap(next);
     }
-    void add_definitions(const std::vector<Definition>& additions) { add_definitions(additions,[](const auto&,const auto&,const auto&){}); }
+    std::unique_ptr<Model> replace_definitions(const std::vector<Definition>& definitions,
+                                               const std::set<std::string>& affected) const {
+        if (active_) throw std::logic_error("cannot evolve catalog during transaction");
+        if (affected.empty()) throw std::invalid_argument("empty evolution set");
+        std::vector<Definition> retained, replacements;
+        std::vector<std::string> retained_required;
+        std::map<std::string,Bag> placeholders;
+        retained.reserve(definitions.size()); replacements.reserve(affected.size());
+        for (const auto& d : definitions) {
+            if (affected.count(d.name)) replacements.push_back(d);
+            else {
+                retained.push_back(d);
+                placeholders.emplace(d.name, Bag{});
+            }
+        }
+        for (const auto& name : required_) if (!affected.count(name)) retained_required.push_back(name);
+        auto next = std::make_unique<Model>(std::move(retained), std::move(retained_required), std::move(placeholders), mode_);
+        next->source_mutation_applications_=source_mutation_applications_;
+        next->materialized_entries_=materialized_entries_;
+        next->maintenance_steps_=maintenance_steps_;
+        try {
+            next->add_definitions(replacements,
+                [&](const std::string& name)->const Bag& { return state_.at(name); },
+                [](const auto&,const auto&,const auto&){});
+        } catch (...) {
+            maintenance_steps_=next->maintenance_steps_;
+            throw;
+        }
+        maintenance_steps_=next->maintenance_steps_;
+        for (const auto& name : required_) if (!next->state_.at(name).empty())
+            throw std::logic_error("required-empty relation is nonempty");
+        next->required_=required_;
+        return next;
+    }
+    // Transfer untouched bag/count nodes only after all fallible preparation and durable append.
+    void publish_retained_from(Model& old,const std::set<std::string>& affected) noexcept {
+        for (auto it=defs_.begin();it!=defs_.end();++it) {
+            if (affected.count(it->name)) continue;
+            auto bag=old.state_.extract(it->name);
+            auto count=old.row_counts_.extract(it->name);
+            if (!bag.empty()) {
+                state_.erase(it->name); state_.insert(std::move(bag));
+                row_counts_.erase(it->name); row_counts_.insert(std::move(count));
+            }
+        }
+    }
+    void add_definitions(const std::vector<Definition>& additions) { add_definitions(additions,[&](const std::string& name)->const Bag& { return state_.at(name); },[](const auto&,const auto&,const auto&){}); }
     template<class BeforePublish>
     void add_definitions(const std::vector<Definition>& additions,BeforePublish&& before_publish) {
+        add_definitions(additions,[&](const std::string& name)->const Bag& { return state_.at(name); },std::forward<BeforePublish>(before_publish));
+    }
+    template<class ParentLookup,class BeforePublish>
+    void add_definitions(const std::vector<Definition>& additions,ParentLookup&& parent_lookup,BeforePublish&& before_publish) {
         if(active_) throw std::logic_error("cannot change catalog during transaction");
         if(additions.empty()) return;
         if(defs_.size()+additions.size()>1024) throw std::length_error("catalog definition limit exceeded");
@@ -527,7 +577,7 @@ public:
         std::size_t visits=0;
         auto tick=[&] { ++maintenance_steps_;if(++visits>1000000)throw std::length_error("maintenance work limit exceeded"); };
         auto parent=[&](const std::string& name)->const Bag& {
-            auto it=added.find(name);return it==added.end()?state_.at(name):it->second;
+            auto it=added.find(name);return it==added.end()?parent_lookup(name):it->second;
         };
         for(const auto& d:additions) {
             Bag out;I rows=0;

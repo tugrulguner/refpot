@@ -64,6 +64,15 @@ write a full snapshot. This is a bounded M4 implementation slice, not completion
 broad migration, backup, failure-matrix and qualification gates. Concurrency, broader SQL,
 originality and competitive advantage remain separate open gates.
 
+The next bounded source slice adds `ALTER MATERIALIZED VIEW name AS SELECT ...`: replace one
+existing view while retaining output names/order, recompute its transitive dependents, and
+validate all assertions before publishing the new catalog/results at one durable frontier.
+It preserves source and unrelated relation state, rejects cycles, and retains old-or-new
+recovery semantics. See [the migration example](examples/sql_evolution.py). This does not close
+the broader M4 schema/definition migration gate: table/column changes, coordinated multi-view
+migrations, future cached-plan/context invalidation, backup/restore and online evolution
+remain outstanding. Functional replacement is not evidence of novelty or competitive advantage.
+
 M1 remains open: the preview does not satisfy its full design-comparison, usability, SQL and qualification gates. M3 remains open: the bounded transaction-maintenance slice does not complete its broader relation, oracle, failure-safety or workflow gates.
 
 ### Still-open qualification and product gates
@@ -552,6 +561,9 @@ the functional maintained engine, not durability, concurrency or algorithmic nov
 - [ ] Implement offline atomic schema/definition migration first. Invalidate affected plans,
       generated-query reuse and semantic-context bindings; never serve stale derived state as
       current or silently reinterpret a previously bound query after a definition change.
+      The bounded source preview now replaces a single maintained view with unchanged output
+      shape; extend to coordinated definitions and table/column evolution only with explicit
+      compatibility, validation, bounded-work and old-or-new recovery contracts.
 - [ ] Define backup/restore, integrity checking and old-format transitions. Retain explicit
       filesystem assumptions; process-kill tests do not establish physical power-loss safety.
 - [ ] Run installed model/SQL recovery examples and the supported platform failure matrix,

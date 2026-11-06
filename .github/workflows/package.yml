@@ -42,7 +42,7 @@ jobs:
           uv pip install --python "$RUNNER_TEMP/refpot-consumer/bin/python" "$RUNNER_TEMP"/refpot-dist/*.whl pytest
           mkdir -p "$RUNNER_TEMP/refpot-check/tests"
           cp -R examples "$RUNNER_TEMP/refpot-check/"
-          cp tests/test_database.py tests/test_sql_database.py tests/test_sql_maintenance.py tests/test_sql_absence.py tests/test_sql_persistence.py tests/test_sql_persistence_failures.py tests/test_package_recovery.py tests/test_state_machine.py tests/test_io_failures.py tests/test_capacity.py "$RUNNER_TEMP/refpot-check/tests/"
+          cp tests/test_database.py tests/test_sql_database.py tests/test_sql_maintenance.py tests/test_sql_absence.py tests/test_sql_persistence.py tests/test_sql_persistence_failures.py tests/test_sql_evolution.py tests/test_sql_evolution_failures.py tests/test_package_recovery.py tests/test_state_machine.py tests/test_io_failures.py tests/test_capacity.py "$RUNNER_TEMP/refpot-check/tests/"
           cp -R tests/native "$RUNNER_TEMP/refpot-check/tests/"
           cd "$RUNNER_TEMP/refpot-check"
           "$RUNNER_TEMP/refpot-consumer/bin/python" -c 'import refpot; print(refpot.__file__); assert "site-packages" in refpot.__file__'
@@ -53,3 +53,5 @@ jobs:
           "$RUNNER_TEMP/refpot-consumer/bin/python" examples/sql_maintenance.py
           "$RUNNER_TEMP/refpot-consumer/bin/python" examples/sql_persistence.py
           "$RUNNER_TEMP/refpot-consumer/bin/python" examples/sql_persistence.py
+          "$RUNNER_TEMP/refpot-consumer/bin/python" examples/sql_evolution.py
+          "$RUNNER_TEMP/refpot-consumer/bin/python" examples/sql_evolution.py

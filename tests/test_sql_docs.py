@@ -142,6 +142,30 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertIn("examples/sql_persistence.py", doc)
         self.assertIn("does not mark roadmap M1, M3, or M4 complete", doc)
 
+    def test_definition_evolution_contract_and_consumers(self):
+        doc = (ROOT / "docs/sql-preview.md").read_text()
+        for phrase in (
+            "ALTER MATERIALIZED VIEW",
+            "same output column names and order",
+            "transitive",
+            "old or new",
+            "examples/sql_evolution.py",
+            "older preview binaries",
+            "one view",
+            "outside explicit transactions",
+        ):
+            self.assertIn(phrase, doc)
+        for name in ("README.md", "docs/package-contract.md", "skills/refpot-database/SKILL.md"):
+            self.assertIn("sql_evolution.py", (ROOT / name).read_text())
+        for name in (".github/workflows/package.yml", ".github/workflows/wheels.yml"):
+            workflow = (ROOT / name).read_text()
+            self.assertIn("test_sql_evolution.py", workflow)
+            self.assertIn("test_sql_evolution_failures.py", workflow)
+            self.assertEqual(workflow.count("examples/sql_evolution.py"), 2)
+        roadmap = (ROOT / "ROADMAP.md").read_text()
+        self.assertIn("ALTER MATERIALIZED VIEW", roadmap)
+        self.assertIn("- [ ] Implement offline atomic schema/definition migration", roadmap)
+
     def test_initial_preview_fragment_is_retained(self):
         fragment = ROOT / "changelog.d/+volatile-native-sql-preview.added.md"
         self.assertTrue(fragment.exists())

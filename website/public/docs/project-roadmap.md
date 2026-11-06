@@ -36,10 +36,13 @@ The fixed-schema Python `Database` / `Row` API supports CRUD, explicit transacti
 snapshot/WAL persistence. It is thread-affine and exclusively owned by one process. A separate,
 unreleased `refpot.sql` preview provides an experimental `execute` path for a bounded
 SQL/maintained-view subset and optional bounded whole-model persistence; it does not change the
-fixed-schema API or its persistence boundary. `Database()` remains volatile. The preview is not
-published. Natural-language query
-generation, ORM and concurrent access are not shipped. The preview does not make the proposed
-shared SQL/NL interface available or provide an `agent` mode. See the
+fixed-schema API or its persistence boundary. The source preview is not published and
+`Database()` remains volatile unless a persistence path is supplied. Natural-language query
+generation now exists as a bounded, unreleased source-preview slice selected explicitly with
+`agent=True`; it requires configured trusted generator code, explicit schema disclosure, and
+native read-only binding. This is not broad M2 completion or a semantic-quality result; see
+[agent-query evaluation and open M2 gates](docs/agent-query-evaluation.md). ORM and concurrent
+access are not shipped. The fixed-schema API and SQL preview remain separately scoped. See the
 [package contract](docs/package-contract.md), [package results](benchmarks/package-performance/RESULTS.md),
 and [release checklist](docs/releasing.md).
 

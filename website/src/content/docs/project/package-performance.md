@@ -31,7 +31,7 @@ Three repeats per label/count (12 raw records total), same 10,000-row checkpoint
 
 ## Protocol and provenance
 
-Browse the [complete raw evidence and frozen plans](https://github.com/tugrulguner/refpot/tree/537ebb02b53159e748240b12d7202225a9a4225f/benchmarks/package-performance/evidence), [SHA-256 manifest](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/benchmarks/package-performance/evidence/manifest.json), and [portable offline verifier](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/benchmarks/package-performance/verify_evidence.py). The retained files include every measured configuration, not just the winning cells.
+Browse the [complete raw evidence and frozen plans](https://github.com/tugrulguner/refpot/tree/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/benchmarks/package-performance/evidence), [SHA-256 manifest](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/benchmarks/package-performance/evidence/manifest.json), and [portable offline verifier](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/benchmarks/package-performance/verify_evidence.py). The retained files include every measured configuration, not just the winning cells.
 
 - Baseline engine: `6cc633fac687dbdbfab211507b3d87caa5ffcd82`.
 - Candidate engine: `e784db03cf797518ec852a19e73202311eabce7f`.

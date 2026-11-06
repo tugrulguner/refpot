@@ -40,12 +40,15 @@ The fixed-schema Python `Database` / `Row` API supports CRUD, explicit transacti
 snapshot/WAL persistence. It is thread-affine and exclusively owned by one process. A separate,
 unreleased `refpot.sql` preview provides an experimental `execute` path for a bounded
 SQL/maintained-view subset and optional bounded whole-model persistence; it does not change the
-fixed-schema API or its persistence boundary. `Database()` remains volatile. The preview is not
-published. Natural-language query
-generation, ORM and concurrent access are not shipped. The preview does not make the proposed
-shared SQL/NL interface available or provide an `agent` mode. See the
+fixed-schema API or its persistence boundary. The source preview is not published and
+`Database()` remains volatile unless a persistence path is supplied. Natural-language query
+generation now exists as a bounded, unreleased source-preview slice selected explicitly with
+`agent=True`; it requires configured trusted generator code, explicit schema disclosure, and
+native read-only binding. This is not broad M2 completion or a semantic-quality result; see
+[agent-query evaluation and open M2 gates](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/agent-query-evaluation.md). ORM and concurrent
+access are not shipped. The fixed-schema API and SQL preview remain separately scoped. See the
 [package contract](/package-contract/), [package results](/project/package-performance/),
-and [release checklist](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/docs/releasing.md).
+and [release checklist](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -54,7 +57,7 @@ and [release checklist](https://github.com/tugrulguner/refpot/blob/537ebb02b5315
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
-- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/research/application-model/RESULTS.md).
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/research/application-model/RESULTS.md).
 - [x] Add the initial unreleased `refpot.sql` execution/maintained-view preview with shared predicate evaluation and incremental SUM maintenance across transactions. Its earlier real-pybind wheel/sdist checks did not cover the latest persistence implementation. The later bounded persistence slice is documented below; neither slice is full SQL or completion of M1/M3/M4.
 
 The earlier bounded M3 slice added transaction-local append propagation and projection-only
@@ -72,7 +75,7 @@ The next bounded source slice adds `ALTER MATERIALIZED VIEW name AS SELECT ...`:
 existing view while retaining output names/order, recompute its transitive dependents, and
 validate all assertions before publishing the new catalog/results at one durable frontier.
 It preserves source and unrelated relation state, rejects cycles, and retains old-or-new
-recovery semantics. See [the migration example](https://github.com/tugrulguner/refpot/blob/537ebb02b53159e748240b12d7202225a9a4225f/examples/sql_evolution.py). This does not close
+recovery semantics. See [the migration example](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/examples/sql_evolution.py). This does not close
 the broader M4 schema/definition migration gate: table/column changes, coordinated multi-view
 migrations, future cached-plan/context invalidation, backup/restore and online evolution
 remain outstanding. Functional replacement is not evidence of novelty or competitive advantage.

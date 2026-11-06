@@ -21,21 +21,27 @@ class PyDatabase {
     const pid_t process_ = ::getpid();
     const std::thread::id thread_ = std::this_thread::get_id();
 
-    void check() const {
+    void check(bool allow_poison=false) const {
         if (process_ != ::getpid() || thread_ != std::this_thread::get_id())
             throw std::runtime_error("database belongs to its creating process and thread");
         if (!database_) throw std::runtime_error("database is closed");
         if (busy_) throw std::runtime_error("reentrant database operation is unsupported");
+        if (!allow_poison && database_->poisoned()) throw std::runtime_error("uncertain SQL storage outcome; close and reopen the database");
     }
 
 public:
-    explicit PyDatabase(const std::string& mode) {
-        if (mode == "overlay")
-            database_ = std::make_unique<sql::Database>(refpot::foundation::Mode::Overlay);
-        else if (mode == "modular")
-            database_ = std::make_unique<sql::Database>(refpot::foundation::Mode::Modular);
-        else
+    explicit PyDatabase(const std::string& mode, py::object path) {
+        if (mode != "overlay" && mode != "modular")
             throw std::invalid_argument("mode must be 'overlay' or 'modular'");
+        const auto selected=mode=="overlay"?refpot::foundation::Mode::Overlay:refpot::foundation::Mode::Modular;
+        if(path.is_none()) database_=std::make_unique<sql::Database>(selected);
+        else {
+            if(!PyUnicode_Check(path.ptr())) throw py::type_error("native database path must be str or None");
+            const auto filename=py::cast<std::string>(path);
+            if(filename.empty() || filename.find('\0')!=std::string::npos)
+                throw py::value_error("database path must be nonempty and NUL-free");
+            database_=std::make_unique<sql::Database>(filename,selected);
+        }
     }
 
     py::object execute(py::handle query, py::handle parameters, py::handle explain) {
@@ -77,7 +83,7 @@ public:
     bool closed() const noexcept { return !database_; }
 
     bool in_transaction() const {
-        check();
+        check(true);
         return database_->in_transaction();
     }
 
@@ -87,8 +93,13 @@ public:
     }
 
     void rollback() {
-        check();
+        check(true);
         database_->rollback();
+    }
+
+    void checkpoint() {
+        check();
+        database_->checkpoint();
     }
 
     void close() {
@@ -100,19 +111,20 @@ public:
 };
 
 PYBIND11_MODULE(_sql, module) {
-    module.doc() = "Native volatile SQL preview engine";
+    module.doc() = "Native SQL preview engine with optional whole-model persistence";
     py::class_<sql::Result>(module, "_Result")
         .def_readonly("columns", &sql::Result::columns)
         .def_readonly("rows", &sql::Result::rows)
         .def_readonly("affected", &sql::Result::affected)
         .def_readonly("plan", &sql::Result::plan);
     py::class_<PyDatabase>(module, "_Database")
-        .def(py::init<const std::string&>(), py::arg("mode") = "overlay")
+        .def(py::init<const std::string&,py::object>(), py::arg("mode") = "overlay", py::arg("path") = py::none())
         .def("execute", &PyDatabase::execute, py::arg("query"), py::arg("parameters"),
              py::arg("explain") = false)
         .def("closed", &PyDatabase::closed)
         .def("in_transaction", &PyDatabase::in_transaction)
         .def("stats", &PyDatabase::stats)
+        .def("checkpoint", &PyDatabase::checkpoint)
         .def("rollback", &PyDatabase::rollback)
         .def("close", &PyDatabase::close);
 }

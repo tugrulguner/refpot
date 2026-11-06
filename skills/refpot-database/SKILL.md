@@ -15,7 +15,7 @@ metadata:
 
 ## When to use
 
-Use when building an application with the current Python database preview or checking whether a requested feature is supported. This skill documents the published fixed-schema `refpot.Database` contract; it does not establish production readiness. The source tree additionally has an unreleased, volatile `refpot.sql.Database` preview documented in [the SQL preview contract](../../docs/sql-preview.md). It is not included in the currently published package, does not preserve data on close, and aborts an entire explicit transaction on any executed statement error. Do not transfer the fixed-schema transaction behavior below to that separate API. Durable relational SQL, natural-language execution, and ORM are not shipped.
+Use when building an application with the current Python database preview or checking whether a requested feature is supported. This skill documents the published fixed-schema `refpot.Database` contract; it does not establish production readiness. The source tree additionally has an unreleased `refpot.sql.Database` preview documented in [the SQL preview contract](../../docs/sql-preview.md): `Database()` is volatile, while a path opts into bounded whole-model persistence. It is not included in the currently published package; persistent mode is not broadly qualified and aborts an entire explicit transaction on any executed statement error. Do not transfer the fixed-schema transaction behavior below to that separate API. Natural-language execution and ORM are not shipped.
 
 ## Prerequisites and installation
 

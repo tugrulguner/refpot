@@ -27,6 +27,18 @@ test('SQL preview is discoverable without claiming a published package feature',
   assert.doesNotMatch(llms, /SQL and ORM are shipped/i);
 });
 
+test('persistent SQL preview exports retain the bounded unpublished contract', async () => {
+  for (const path of ['src/content/docs/reference/sql-preview.md', 'public/docs/reference-sql-preview.md']) {
+    const text = await source(path);
+    for (const phrase of ['Database(path=None, *, mode="overlay")', '64 MiB', '128 MiB',
+      'all changed bags', 'before the handle is exposed', 'does not checkpoint',
+      'not included in the currently published 0.1.2 package', 'examples/sql_persistence.py']) {
+      assert.ok(text.includes(phrase), `${path}: missing ${phrase}`);
+    }
+    assert.doesNotMatch(text, /has no persistence|no durable storage/);
+  }
+});
+
 test('rendered-output verification inventories the page and Markdown export', async () => {
   const verifier = await source('scripts/verify-rendered-output.mjs');
   assert.match(verifier, /reference\/sql-preview\/index\.html/);

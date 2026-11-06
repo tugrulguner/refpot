@@ -1,0 +1,1 @@
+Anchor native SQL storage paths to their opening working directory so later directory changes cannot redirect checkpoints, truncate the original database's acknowledged WAL without its snapshot, or overwrite a same-named database elsewhere.

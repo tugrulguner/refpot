@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>
+#include <filesystem>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -21,8 +22,7 @@ class Store {
  public:
   static constexpr std::size_t max_payload = 64U * 1024U * 1024U;
   static constexpr std::size_t max_wal = 128U * 1024U * 1024U;
-  explicit Store(const std::string& path) : path_(path), wal_path_(path+".wal"), lock_path_(path+".lock"), lock_fd_(-1), wal_fd_(-1), pid_(::getpid()), seq_(0), wal_size_(0), poisoned_(false), has_snapshot_(false) {
-    if(path.empty())throw std::invalid_argument("empty store path");
+  explicit Store(const std::string& path) : path_(anchor_path(path)), wal_path_(path_+".wal"), lock_path_(path_+".lock"), lock_fd_(-1), wal_fd_(-1), pid_(::getpid()), seq_(0), wal_size_(0), poisoned_(false), has_snapshot_(false) {
     const auto slash=path_.find_last_of('/');
     parent_path_=slash==std::string::npos?".":(slash==0?"/":path_.substr(0,slash));
     validate_namespace();
@@ -59,6 +59,12 @@ class Store {
   bool poisoned()const noexcept{return poisoned_;}
   std::uint64_t sequence()const noexcept{return seq_;}
  private:
+  static std::string anchor_path(const std::string& path) {
+    if(path.empty())throw std::invalid_argument("empty store path");
+    // Bind all later pathname operations to the opening working directory.
+    // Do not canonicalize symlinks or dot components: preserve namespace checks.
+    return std::filesystem::absolute(path).string();
+  }
   static constexpr std::size_t snap_header_size(){return 48;}
   static constexpr std::size_t frame_header_size(){return 48;}
   static constexpr std::size_t frame_overhead(){return frame_header_size()+4;}

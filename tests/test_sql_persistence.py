@@ -124,6 +124,54 @@ def test_checkpoint_rejection_preserves_active_transaction(tmp_path, managed):
         assert db.execute("SELECT * FROM t").rows == ((1,),)
 
 
+@pytest.mark.parametrize("mode", ["overlay", "modular"])
+@pytest.mark.parametrize("path_kind", ["relative", "dot_components", "absolute"])
+@pytest.mark.parametrize("initial_checkpoint", [False, True])
+def test_checkpoint_keeps_open_location_after_chdir(
+    tmp_path, monkeypatch, mode, path_kind, initial_checkpoint
+):
+    original = tmp_path / "original"
+    other = tmp_path / "other"
+    original.mkdir()
+    other.mkdir()
+    (original / "nested").mkdir()
+    target = original / "model.db"
+    bystander = other / "model.db"
+    with Database(bystander) as db:
+        db.execute("CREATE TABLE untouched (id INTEGER PRIMARY KEY)")
+        db.execute("INSERT INTO untouched VALUES (99)")
+        db.checkpoint()
+        db.execute("INSERT INTO untouched VALUES (100)")
+    before = {p.name: p.read_bytes() for p in other.iterdir()}
+    monkeypatch.chdir(original)
+    path = {
+        "relative": "model.db",
+        "dot_components": "./nested/../model.db",
+        "absolute": target,
+    }[path_kind]
+    with Database(path, mode=mode) as db:
+        db.execute("CREATE TABLE t (id INTEGER PRIMARY KEY)")
+        db.execute("INSERT INTO t VALUES (7)")
+        if initial_checkpoint:
+            db.checkpoint()
+        monkeypatch.chdir(other)
+        db.checkpoint()
+        assert {p.name: p.read_bytes() for p in other.iterdir()} == before
+        with pytest.raises(RuntimeError):
+            Database(target)
+        db.execute("INSERT INTO t VALUES (8)")
+        db.checkpoint()
+        db.execute("INSERT INTO t VALUES (9)")
+    with Database(target, mode=mode) as db:
+        assert db.execute("SELECT * FROM t ORDER BY id").rows == ((7,), (8,), (9,))
+        db.execute("INSERT INTO t VALUES (10)")
+    with Database(target) as db:
+        assert db.execute("SELECT * FROM t ORDER BY id").rows == ((7,), (8,), (9,), (10,))
+    assert {p.name: p.read_bytes() for p in other.iterdir()} == before
+    with Database(bystander) as db:
+        assert db.execute("SELECT * FROM untouched ORDER BY id").rows == ((99,), (100,))
+
+
 def test_persistent_owner_lock_close_and_wrong_thread(tmp_path):
     path = tmp_path / "owned.db"
     db = Database(path)

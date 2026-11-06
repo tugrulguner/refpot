@@ -30,12 +30,25 @@ test('SQL preview is discoverable without claiming a published package feature',
 test('persistent SQL preview exports retain the bounded unpublished contract', async () => {
   for (const path of ['src/content/docs/reference/sql-preview.md', 'public/docs/reference-sql-preview.md']) {
     const text = await source(path);
-    for (const phrase of ['Database(path=None, *, mode="overlay")', '64 MiB', '128 MiB',
+    for (const phrase of ['Database(path=None, *, mode="overlay", agent=None)', '64 MiB', '128 MiB',
       'all changed bags', 'before the handle is exposed', 'does not checkpoint',
       'not included in the currently published 0.1.2 package', 'examples/sql_persistence.py']) {
       assert.ok(text.includes(phrase), `${path}: missing ${phrase}`);
     }
     assert.doesNotMatch(text, /has no persistence|no durable storage/);
+  }
+});
+
+test('read-only agent exports preserve shared API, disclosure and qualification limits', async () => {
+  for (const path of ['src/content/docs/reference/sql-preview.md', 'public/docs/reference-sql-preview.md']) {
+    const text = await source(path);
+    for (const phrase of ['execute(query, parameters=(), *, explain=False, agent=False)',
+      'disclose_schema=True', 'trusted caller Python', 'refusal preserves that transaction',
+      'not a total wall-clock deadline', 'not an independent billing guarantee',
+      'not establish M2 completion', 'examples/sql_agent.py', 'ClarificationRequired.questions']) {
+      assert.ok(text.includes(phrase), `${path}: missing ${phrase}`);
+    }
+    assert.doesNotMatch(text, /my_trusted_generator|db\.ask\(/);
   }
 });
 

@@ -38,13 +38,14 @@ this roadmap defines the current objective, without changing those measurements.
 
 The fixed-schema Python `Database` / `Row` API supports CRUD, explicit transactions and
 snapshot/WAL persistence. It is thread-affine and exclusively owned by one process. A separate,
-unreleased volatile `refpot.sql` preview provides an experimental `execute` path for a bounded
-SQL/maintained-view subset; it does not change the fixed-schema API or its persistence boundary.
-The preview is not published, and its relational state is volatile. Natural-language query
+unreleased `refpot.sql` preview provides an experimental `execute` path for a bounded
+SQL/maintained-view subset and optional bounded whole-model persistence; it does not change the
+fixed-schema API or its persistence boundary. `Database()` remains volatile. The preview is not
+published. Natural-language query
 generation, ORM and concurrent access are not shipped. The preview does not make the proposed
 shared SQL/NL interface available or provide an `agent` mode. See the
 [package contract](/package-contract/), [package results](/project/package-performance/),
-and [release checklist](https://github.com/tugrulguner/refpot/blob/e2faac32d8f580fa343864ba9c3dea38c98e1503/docs/releasing.md).
+and [release checklist](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab55cfc6b614c3b1c3ce3e74683974/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -53,13 +54,18 @@ and [release checklist](https://github.com/tugrulguner/refpot/blob/e2faac32d8f58
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
-- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/e2faac32d8f580fa343864ba9c3dea38c98e1503/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/e2faac32d8f580fa343864ba9c3dea38c98e1503/research/application-model/RESULTS.md).
-- [x] Add an unreleased volatile `refpot.sql` execution preview with a bounded SQL/maintained-view subset, shared predicate evaluation, and incremental SUM maintenance across transactions. Completed real-pybind installed wheel and sdist qualification for this slice; artifacts are not published. This is not full SQL, durable maintained relations, or completion of M1/M3.
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab55cfc6b614c3b1c3ce3e74683974/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/c68ca0d156ab55cfc6b614c3b1c3ce3e74683974/research/application-model/RESULTS.md).
+- [x] Add the initial unreleased `refpot.sql` execution/maintained-view preview with shared predicate evaluation and incremental SUM maintenance across transactions. Its earlier real-pybind wheel/sdist checks did not cover the latest persistence implementation. The later bounded persistence slice is documented below; neither slice is full SQL or completion of M1/M3/M4.
 
-The next bounded M3 slice adds transaction-local append propagation and projection-only
+The earlier bounded M3 slice added transaction-local append propagation and projection-only
 correlated `NOT EXISTS` for absence-aware assertions. It preserves repairable temporary
 violations and checks final state. This removes cumulative derived-change replay on append,
-not join/absence scans or all population-dependent cost. Persistence, concurrency, broader SQL,
+not join/absence scans or all population-dependent cost. The latest source preview adds
+optional bounded persistence for the whole model: schema/catalog/definitions/assertions and
+weighted source plus internal derived bags recover together before serving. One canonical
+all-bag net-delta record is synchronized before in-memory publication; ordinary commits do not
+write a full snapshot. This is a bounded M4 implementation slice, not completion of M4 or its
+broad migration, backup, failure-matrix and qualification gates. Concurrency, broader SQL,
 originality and competitive advantage remain separate open gates.
 
 M1 remains open: the preview does not satisfy its full design-comparison, usability, SQL and qualification gates. M3 remains open: the bounded transaction-maintenance slice does not complete its broader relation, oracle, failure-safety or workflow gates.

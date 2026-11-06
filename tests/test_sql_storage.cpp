@@ -20,8 +20,9 @@ using refpot::sqlstorage::Store;
 
 namespace {
 std::string temp_dir() {
-  char pattern[] = "/Users/tugrulguner/.hermes/cache/scratch/sql-store-test-XXXXXX";
-  char* result = ::mkdtemp(pattern);
+  const char* root = std::getenv("TMPDIR");
+  std::string pattern = std::string(root ? root : ".") + "/sql-store-test-XXXXXX";
+  char* result = ::mkdtemp(pattern.data());
   assert(result != nullptr);
   return result;
 }
@@ -145,6 +146,14 @@ void fork_test() {
 }
 }
 int main() {
+  // Keep the fixture portable and confined to the runner's selected scratch root.
+  if (const char* root = std::getenv("TMPDIR")) {
+    const auto dir = temp_dir();
+    const std::string prefix = std::string(root) + "/";
+    const bool within_root = dir.compare(0, prefix.size(), prefix) == 0;
+    assert(::rmdir(dir.c_str()) == 0);
+    assert(within_root);
+  }
   reopen_test(); recovery_prefix_test(); corruption_and_lock_test(); fork_test();
   std::cout << "SQL storage tests passed\n";
 }

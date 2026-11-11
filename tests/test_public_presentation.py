@@ -35,6 +35,12 @@ def test_website_workflows_pin_matching_playwright_runtime_image():
         assert "fetch-depth: 0" in text
         assert "astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff" in text
         assert "npx playwright install --with-deps" not in text
-        assert "uv venv --managed-python --python 3.11 /tmp/pyenv" in text
-        assert "uv pip install --python /tmp/pyenv/bin/python pip" in text
-        assert "npm run check && npm run build" in text
+        assert "    container:\n      image: " + image in text
+        assert "node-version: 22" in text
+        assert "docker run" not in text
+        assert "playwright install" not in text
+        assert 'uv venv --managed-python --python 3.11 "$RUNNER_TEMP/refpot-presentation"' in text
+        assert 'uv pip install --python "$RUNNER_TEMP/refpot-presentation/bin/python" pip' in text
+        assert "import ssl; print(ssl.OPENSSL_VERSION)" in text
+        for command in ("npm ci", "npm run check", "npm run build"):
+            assert f"- run: {command}" in text

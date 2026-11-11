@@ -23,6 +23,9 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --init --shm-size=1g
     timeout-minutes: 20
     environment:
       name: production
@@ -38,17 +41,33 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # Match the documentation revision used by website CI.
+      - name: Configure Git workspace trust
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: website/package-lock.json
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.12.3'
+          enable-cache: false
+      - name: Prepare container-compatible Python
+        working-directory: .
+        run: |
+          uv venv --managed-python --python 3.11 "$RUNNER_TEMP/refpot-presentation"
+          uv pip install --python "$RUNNER_TEMP/refpot-presentation/bin/python" pip
+          echo "$RUNNER_TEMP/refpot-presentation/bin" >> "$GITHUB_PATH"
+      - name: Verify container runtime versions and TLS
+        run: |
+          python --version
+          python -c 'import ssl; print(ssl.OPENSSL_VERSION)'
+          node -e 'if (process.versions.node.split(".")[0] !== "22") throw Error("Expected Node 22"); console.log(process.version)'
       - name: Require configured deployment identity
         run: |
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           test -n "$CLOUDFLARE_API_TOKEN"
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: npm run check
       - run: npm run build
       - run: npx wrangler deploy

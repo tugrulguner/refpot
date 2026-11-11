@@ -11,7 +11,29 @@ concurrency:
   group: website-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  presentation:
+    name: native repository presentation contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.12.3'
+          enable-cache: false
+      - name: Repository presentation contracts
+        run: |
+          uv sync --locked --managed-python --python 3.11
+          uv run --locked python -m unittest discover -s tests -v
+          uv run --locked pytest -q tests/test_public_presentation.py
   build:
+    needs: presentation
+    if: ${{ always() }}
     name: website build and browser acceptance
     runs-on: ubuntu-latest
     container:
@@ -21,6 +43,11 @@ jobs:
       run:
         working-directory: website
     steps:
+      - name: Require successful native presentation contracts
+        working-directory: .
+        env:
+          PRESENTATION_RESULT: ${{ needs.presentation.result }}
+        run: test "$PRESENTATION_RESULT" = success
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
@@ -47,11 +74,6 @@ jobs:
           python --version
           python -c 'import ssl; print(ssl.OPENSSL_VERSION)'
           node -e 'if (process.versions.node.split(".")[0] !== "22") throw Error("Expected Node 22"); console.log(process.version)'
-      - name: Repository presentation contracts
-        working-directory: .
-        run: |
-          uv sync --locked --managed-python --python 3.11
-          uv run --locked python -m unittest discover -s tests -v
       - run: npm ci
       - run: npm run check
       - run: npm run build

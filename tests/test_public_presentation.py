@@ -44,3 +44,30 @@ def test_website_workflows_pin_matching_playwright_runtime_image():
         assert "import ssl; print(ssl.OPENSSL_VERSION)" in text
         for command in ("npm ci", "npm run check", "npm run build"):
             assert f"- run: {command}" in text
+
+
+def test_native_source_contracts_gate_the_browser_job_from_the_host():
+    text = (ROOT / ".github/workflows/website.yml").read_text()
+    host = text.split("  presentation:\n")[1].split("  build:\n")[0]
+    browser = text.split("  build:\n")[1]
+    assert "runs-on: ubuntu-latest" in host
+    assert "container:" not in host
+    assert "uv sync --locked --managed-python --python 3.11" in host
+    assert "python -m unittest discover -s tests -v" in host
+    assert "needs: presentation" in browser
+    assert "uv sync" not in browser
+    assert "if: ${{ always() }}" in browser
+    assert 'run: test "$PRESENTATION_RESULT" = success' in browser
+
+
+def test_native_presentation_gate_fails_closed_for_every_unsuccessful_result():
+    import os
+    import subprocess
+
+    for status in ("success", "failure", "cancelled", "skipped"):
+        completed = subprocess.run(
+            ["sh", "-c", 'test "$PRESENTATION_RESULT" = success'],
+            env={**os.environ, "PRESENTATION_RESULT": status},
+            check=False,
+        )
+        assert (completed.returncode == 0) == (status == "success")

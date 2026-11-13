@@ -1,5 +1,5 @@
 #pragma once
-#include "foundation.hpp"
+#include "shared_model.hpp"
 #include "persistence.hpp"
 #include <charconv>
 #include <functional>
@@ -73,7 +73,7 @@ class Database {
     foundation::Mode mode_=foundation::Mode::Overlay;
     std::vector<Table> tables_;
     std::vector<std::string> assertions_;
-    std::unique_ptr<foundation::Model> model_;
+    std::unique_ptr<relational::SharedModel> model_;
     std::unique_ptr<sqlstorage::Store> store_;
     std::size_t encoded_state_size_=0;
     std::size_t pending_mutations_=0, committed_rows_=0, visible_rows_=0;
@@ -183,7 +183,7 @@ private:
             }else throw std::invalid_argument("unknown relational record type");
         }
         validate_image_catalog(image);
-        model_=std::make_unique<foundation::Model>(image.definitions,image.required,std::move(image.bags),mode_);
+        model_=std::make_unique<relational::SharedModel>(image.definitions,image.required,std::move(image.bags),mode_);
         tables_=std::move(image.tables);assertions_=std::move(image.assertions);
         for(const auto&t:tables_)if(!t.derived){const auto&bag=model_->bag(t.name);for(const auto&x:bag)committed_rows_+=static_cast<std::size_t>(x.second);}
         if(committed_rows_>row_limit_)throw std::length_error("recovered source rows exceed catalog row budget");
@@ -616,11 +616,11 @@ private:
         throw std::invalid_argument("unsupported SQL statement: "+op);
     }
 public:
-    explicit Database(foundation::Mode mode=foundation::Mode::Overlay,std::size_t row_limit=100000):row_limit_(row_limit),mode_(mode),model_(std::make_unique<foundation::Model>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)){
+    explicit Database(foundation::Mode mode=foundation::Mode::Overlay,std::size_t row_limit=100000):row_limit_(row_limit),mode_(mode),model_(std::make_unique<relational::SharedModel>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)){
         if(!row_limit_||row_limit_>100000)throw std::invalid_argument("catalog row budget must be 1..100000");
     }
     explicit Database(const std::string& path,foundation::Mode mode=foundation::Mode::Overlay,std::size_t row_limit=100000)
-      : row_limit_(row_limit),mode_(mode),model_(std::make_unique<foundation::Model>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)),store_(std::make_unique<sqlstorage::Store>(path)) {
+      : row_limit_(row_limit),mode_(mode),model_(std::make_unique<relational::SharedModel>(std::vector<foundation::Definition>{},std::vector<std::string>{},mode)),store_(std::make_unique<sqlstorage::Store>(path)) {
         if(!row_limit_||row_limit_>100000)throw std::invalid_argument("catalog row budget must be 1..100000");
         recover_store();
     }

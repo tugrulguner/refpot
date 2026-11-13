@@ -540,6 +540,53 @@ public:
         next->required_=required_;
         return next;
     }
+    // Prepare a recompiled physical graph without copying retained tuples. The
+    // compiler supplies a dependency-closed one-to-one new-name -> old-name map.
+    std::unique_ptr<Model> prepare_reconfigured(
+        const std::vector<Definition>& definitions, const std::vector<std::string>& required,
+        const std::map<std::string,std::string>& reuse) const {
+        if(active_)throw std::logic_error("cannot evolve catalog during transaction");
+        Model validated(definitions,required,mode_);
+        std::vector<Definition> retained, additions;
+        std::set<std::string> used;
+        for(const auto& d:definitions) {
+            auto found=reuse.find(d.name);
+            if(found==reuse.end()) {
+                if(d.op=="source")throw std::invalid_argument("new source in physical reconfiguration");
+                additions.push_back(d);
+            } else {
+                if(!state_.count(found->second)||!used.insert(found->second).second)
+                    throw std::invalid_argument("invalid retained physical mapping");
+                retained.push_back(d);
+            }
+        }
+        if(retained.size()!=reuse.size())throw std::invalid_argument("unknown retained physical definition");
+        auto next=std::make_unique<Model>(std::move(retained),std::vector<std::string>{},mode_);
+        next->source_mutation_applications_=source_mutation_applications_;
+        next->materialized_entries_=materialized_entries_;
+        next->maintenance_steps_=maintenance_steps_;
+        next->epoch_=epoch_;
+        try {
+            next->add_definitions(additions,[&](const std::string& name)->const Bag& {
+                return state_.at(reuse.at(name));
+            },[](const auto&,const auto&,const auto&){});
+        } catch(...) { maintenance_steps_=next->maintenance_steps_;throw; }
+        maintenance_steps_=next->maintenance_steps_;
+        for(const auto& name:required) {
+            auto retained_name=reuse.find(name);
+            const auto& image=retained_name==reuse.end()?next->bag(name):bag(retained_name->second);
+            if(!image.empty())throw std::logic_error("required-empty relation is nonempty");
+        }
+        next->required_=required;
+        return next;
+    }
+    // Map slots and names are already allocated. Bag swap preserves tuple nodes.
+    void publish_reconfigured_from(Model& old,const std::map<std::string,std::string>& reuse) noexcept {
+        for(const auto& names:reuse) {
+            state_.at(names.first).swap(old.state_.at(names.second));
+            row_counts_.at(names.first)=old.row_counts_.at(names.second);
+        }
+    }
     // Transfer untouched bag/count nodes only after all fallible preparation and durable append.
     void publish_retained_from(Model& old,const std::set<std::string>& affected) noexcept {
         for (auto it=defs_.begin();it!=defs_.end();++it) {

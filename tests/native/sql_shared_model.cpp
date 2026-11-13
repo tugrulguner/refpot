@@ -1,4 +1,5 @@
 #include "../../native/relational/shared_model.hpp"
+#include "../../native/relational/persistence.hpp"
 #include <cassert>
 #include <stdexcept>
 using namespace refpot::relational;
@@ -28,4 +29,17 @@ int main() {
     assert(seen.at("a").at({3,7})==1 && seen.at("b").at({3,7})==1);
     assert(m.bag("a").at({3,7})==1 && m.bag("b").at({3,7})==1);
     assert(m.logical_definitions().size()==4 && m.logical_definitions()[2].name=="b");
+    int visited=0;
+    m.prepare({{"insert","s",{8,9},0}});
+    const auto expected=m.prepared_changes();
+    const auto expected_bytes=refpot::sqlpersistence::encode_delta(expected);
+    m.commit_borrowed([&](const auto& d){
+        assert(refpot::sqlpersistence::encode_delta_range(d)==expected_bytes);
+        std::vector<std::string> names;
+        for(const auto& entry:d)names.push_back(entry.first);
+        assert((names==std::vector<std::string>{"a","b","f","s"}));
+        assert(d.at("a").at({8,9})==1 && d.at("b").at({8,9})==1);
+        assert(&d.at("a")==&d.at("b")); ++visited;
+    });
+    assert(visited==1);
 }

@@ -78,6 +78,11 @@ class Database {
     std::size_t encoded_state_size_=0;
     std::size_t pending_mutations_=0, committed_rows_=0, visible_rows_=0;
     bool in_tx_=false;
+    using ReusePredicate=std::tuple<std::size_t,std::string,I,std::optional<std::size_t>>;
+    using ReuseKey=std::tuple<std::string,std::vector<std::vector<std::string>>,std::vector<ReusePredicate>>;
+    std::map<ReuseKey,std::size_t> reuse_index_;
+    std::optional<std::uint64_t> reuse_revision_;
+    std::uint64_t reuse_definition_visits_=0;
     std::uint64_t catalog_revision_=0;
     const std::set<std::string>* authorized_relations_=nullptr;
 public:
@@ -268,6 +273,31 @@ private:
         } else { model_->apply(mutations); committed_rows_=static_cast<std::size_t>(next_rows); }
         visible_rows_=static_cast<std::size_t>(next_rows);
         statement_mutations_+=mutations.size();
+    }
+    void prepare_reuse_index() {
+        if(reuse_revision_&&*reuse_revision_==catalog_revision_)return;
+        // Build privately: an allocation failure must not publish a partial index
+        // or mark stale metadata current. No row state or borrowed pointers persist.
+        std::map<std::string,const foundation::Definition*> definitions;
+        for(const auto& d:model_->definitions()){++reuse_definition_visits_;definitions.emplace(d.name,&d);}
+        std::map<ReuseKey,std::size_t> next;
+        for(std::size_t i=0;i<tables_.size();++i) {
+            if(!tables_[i].derived)continue;
+            const auto found=definitions.find(tables_[i].name);
+            if(found==definitions.end()||found->second->op!="map")continue;
+            const auto& projection=*found->second;
+            std::string input=projection.input;
+            std::vector<ReusePredicate> predicates;
+            for(;;) {
+                const auto filter=definitions.find(input);
+                if(filter==definitions.end()||filter->second->op!="filter")break;
+                ++reuse_definition_visits_;const auto& d=*filter->second;
+                predicates.emplace_back(d.column,d.cmp,d.value,d.right_column);input=d.input;
+            }
+            std::reverse(predicates.begin(),predicates.end());
+            next.emplace(ReuseKey{input,projection.exprs,std::move(predicates)},i);
+        }
+        reuse_index_.swap(next);reuse_revision_=catalog_revision_;
     }
     Result select(syntax::Parser& p,bool explain,const std::string& view="",bool alter=false) {
         std::vector<Item> items;
@@ -473,6 +503,25 @@ private:
             next_model->publish_retained_from(*model_,affected);
             model_.swap(next_model);encoded_state_size_=next_size;return result;
         }
+        // Reuse only exact bound semantics, never across transaction or
+        // restricted-read authority boundaries. Cache metadata, not query results.
+        if(!joined&&!absence&&!aggregate&&!group&&!in_tx_&&!authorized_relations_) {
+            prepare_reuse_index();
+            if(!reuse_index_.empty()) {
+                std::vector<std::vector<std::string>> projection;
+                for(const auto& item:items)projection.push_back({"c"+std::to_string(item.column)});
+                static const char* comparisons[]={"eq","ne","lt","le","gt","ge"};
+                std::vector<ReusePredicate> predicates;
+                for(const auto& w:where)predicates.emplace_back(w.column,comparisons[static_cast<std::size_t>(w.operation)],w.value,w.right_column);
+                const auto found=reuse_index_.find(ReuseKey{tables_[sources[0].table].name,std::move(projection),std::move(predicates)});
+                if(found!=reuse_index_.end()) {
+                    result.plan="MAINTAINED_REUSE "+tables_[found->second].name;
+                    if(!order.empty())result.plan+=" SORT";if(limit)result.plan+=" LIMIT";
+                    sources[0].table=found->second;where.clear();
+                    for(std::size_t i=0;i<items.size();++i)items[i].column=i;
+                }
+            }
+        }
         if(explain)return result;
         Budget budget;
         struct Accumulator {I count=0;std::vector<relational::Aggregate> sums;};
@@ -641,6 +690,8 @@ public:
                 {"source_mutation_applications",model_->source_mutation_applications()},
                 {"full_bag_copied_entries",model_->materialized_entries()},
                 {"predicate_bindings",predicate_bindings_},{"predicate_tests",predicate_tests_},
+                {"reuse_definition_visits",reuse_definition_visits_},
+
                 {"maintenance_steps",model_->maintenance_steps()},
                 {"prior_mutation_replays",0},{"catalog_copied_rows",0},{"candidate_copied_entries",0}};
     }

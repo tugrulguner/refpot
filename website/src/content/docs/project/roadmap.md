@@ -45,10 +45,10 @@ fixed-schema API or its persistence boundary. The source preview is not publishe
 generation now exists as a bounded, unreleased source-preview slice selected explicitly with
 `agent=True`; it requires configured trusted generator code, explicit schema disclosure, and
 native read-only binding. This is not broad M2 completion or a semantic-quality result; see
-[agent-query evaluation and open M2 gates](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/agent-query-evaluation.md). ORM and concurrent
+[agent-query evaluation and open M2 gates](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/docs/agent-query-evaluation.md). ORM and concurrent
 access are not shipped. The fixed-schema API and SQL preview remain separately scoped. See the
 [package contract](/package-contract/), [package results](/project/package-performance/),
-and [release checklist](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/releasing.md).
+and [release checklist](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/docs/releasing.md).
 
 ### Implemented foundations
 
@@ -57,7 +57,7 @@ and [release checklist](https://github.com/tugrulguner/refpot/blob/cab3c20e6a440
 - [x] Implement fixed-schema CRUD, explicit transactions, snapshot/WAL persistence, change-set staging/commit, and row-local recovery replay. This is not the complete durability qualification gate.
 - [x] Run a six-cell actual-package comparison against prepared SQLite using locally built wheels carrying 0.1.1 metadata. Three of six cells were below 2×. These remain historical screening results, not measurements of a 0.1.2 artifact or an active multiplier gate.
 - [x] Add the MIT license and prepare 0.1.2 documentation, metadata, changelog and artifact presentation. Preparation alone does not publish or qualify that release.
-- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/research/application-model/RESULTS.md).
+- [x] Merge a bounded native transactional relational model slice with independent-oracle, rollback, mutant and sanitizer tests. It is volatile, single-threaded and separate from the installed Python API—not a durable relational release. See its [contract](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/research/application-model/CONTRACT.md) and [results](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/research/application-model/RESULTS.md).
 - [x] Add the initial unreleased `refpot.sql` execution/maintained-view preview with shared predicate evaluation and incremental SUM maintenance across transactions. Its earlier real-pybind wheel/sdist checks did not cover the latest persistence implementation. The later bounded persistence slice is documented below; neither slice is full SQL or completion of M1/M3/M4.
 
 The earlier bounded M3 slice added transaction-local append propagation and projection-only
@@ -75,7 +75,7 @@ The next bounded source slice adds `ALTER MATERIALIZED VIEW name AS SELECT ...`:
 existing view while retaining output names/order, recompute its transitive dependents, and
 validate all assertions before publishing the new catalog/results at one durable frontier.
 It preserves source and unrelated relation state, rejects cycles, and retains old-or-new
-recovery semantics. See [the migration example](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/examples/sql_evolution.py). This does not close
+recovery semantics. See [the migration example](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/examples/sql_evolution.py). This does not close
 the broader M4 schema/definition migration gate: table/column changes, coordinated multi-view
 migrations, future cached-plan/context invalidation, backup/restore and online evolution
 remain outstanding. Functional replacement is not evidence of novelty or competitive advantage.

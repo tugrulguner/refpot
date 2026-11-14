@@ -121,6 +121,30 @@ Assertions use the deliberately narrow form `CREATE ASSERTION name CHECK (NOT EX
 
 Creating a maintained view over populated inputs computes the newly declared derived state only; it does not copy existing source rows into a replacement catalog. It does scan inputs to calculate that new state, and the declaration can be rejected by the work or intermediate-row limits.
 
+### Exact reuse by ordinary queries
+
+An eligible ordinary `SELECT` can reuse an existing maintained view whose bound
+source identity, ordered projection, and ordered filter predicates match exactly.
+Column/table aliases do not change that match. Output labels remain those requested
+by the query; duplicate multiplicities, `ORDER BY`, and `LIMIT` retain their ordinary
+semantics. `explain=True` reports `MAINTAINED_REUSE <view>` when selected.
+
+This bounded optimization excludes joins, absence queries, aggregates/grouping,
+active transactions, and restricted read-only agent execution. Those paths retain
+the original evaluator, including transaction-local read-your-writes. A nonmatching
+query falls back; no permanent view is created by a read. Existing views still incur
+their normal construction and write-maintenance costs.
+
+A lazy semantic index holds catalog metadata, not query results or row copies. Its
+first eligible read after a successful catalog change rebuilds the index privately;
+view replacement and reopen cannot reuse stale metadata. The diagnostic
+`stats()["reuse_definition_visits"]` counts definition entries inspected while
+building that index, including partial failed attempts; it is not a total-work,
+memory, or speed metric. Index construction, retained metadata and per-query lookup
+have costs, and small or nonmatching reads may be slower. No general speedup is
+promised. Run `python examples/sql_query_reuse.py` in a built source checkout for
+reuse and fallback examples. This remains unreleased SQL-preview behavior.
+
 ### Atomic maintained-definition replacement
 
 Use `ALTER MATERIALIZED VIEW name AS SELECT ...` to replace one view, outside explicit transactions:

@@ -13,9 +13,12 @@ class SharedModel {
         for(const auto& n:plan_.required)out.push_back(plan_.logical_to_physical.at(n));
         return out;
     }
+    template<class F>void visit_expanded(const std::map<std::string,foundation::Bag>& physical,F&& fn) const {
+        for(const auto& alias:plan_.logical_to_physical)fn(alias.first,physical.at(alias.second));
+    }
     auto expand(const std::map<std::string,foundation::Bag>& physical) const {
         std::map<std::string,foundation::Bag> out;
-        for(const auto& d:plan_.logical_definitions)out.emplace(d.name,physical.at(plan_.logical_to_physical.at(d.name)));
+        visit_expanded(physical,[&](const auto& name,const auto& bag){out.emplace(name,bag);});
         return out;
     }
     void validate_mutations(const std::vector<foundation::Mutation>& mutations) const {
@@ -99,7 +102,38 @@ public:
     }
     template<class F>void scan(const std::string& name,bool candidate,F fn) const{model_->scan(plan_.logical_to_physical.at(name),candidate,std::move(fn));}
     void commit(){model_->commit();}
+    struct LogicalChanges {
+        const SharedModel& owner;
+        const std::map<std::string,foundation::Bag>& physical;
+        // Borrowed references are valid only within the enclosing callback.
+        // Iterate in logical-name order, identical to the original std::map codec.
+        struct Iterator {
+            std::map<std::string,std::string>::const_iterator position;
+            const std::map<std::string,foundation::Bag>* physical;
+            auto operator*() const {return std::pair<const std::string&,const foundation::Bag&>{position->first,physical->at(position->second)};}
+            Iterator& operator++(){++position;return *this;}
+            bool operator!=(const Iterator& other) const{return position!=other.position;}
+        };
+        auto begin() const{return Iterator{owner.plan_.logical_to_physical.begin(),&physical};}
+        auto end() const{return Iterator{owner.plan_.logical_to_physical.end(),&physical};}
+        std::size_t size() const{return owner.plan_.logical_to_physical.size();}
+        const foundation::Bag& at(const std::string& name) const {return physical.at(owner.plan_.logical_to_physical.at(name));}
+        std::size_t count(const std::string& name) const {return owner.plan_.logical_to_physical.count(name);}
+        template<class G> void visit(G&& fn) const {owner.visit_expanded(physical,std::forward<G>(fn));}
+    };
+    // Compatibility callback owns detached logical bags; persistence uses the
+    // borrowed callback below to avoid materializing those copies.
     template<class F>void commit(F&& before_publish){model_->commit([&](const auto& changes){auto logical=expand(changes);before_publish(logical);});}
+    template<class F>void with_committed(F&& visit) const {
+        if(borrowed_)throw std::logic_error("committed traversal requires a published shared model");
+        const auto& physical=model_->committed_state();
+        LogicalChanges logical{*this,physical};
+        visit(logical);
+    }
+    template<class F>void commit_borrowed(F&& before_publish){model_->commit([&](const auto& changes){
+        LogicalChanges logical{*this,changes};
+        before_publish(logical);
+    });}
     void apply(const std::vector<foundation::Mutation>& changes){prepare(changes);commit();}
     template<class F>void add_source(const foundation::Definition& d,F&& before_publish) {
         auto defs=plan_.logical_definitions;defs.push_back(d);auto next=compile_shared_plan(defs,plan_.required);

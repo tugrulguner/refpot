@@ -341,6 +341,26 @@ void allocation_free_publication(refpot::foundation::Mode mode) {
     disarm();assert(allocation_attempts==0);
     assert((model.bag("projected")==Bag{{Row{1,4},1}}));
 }
+void allocation_free_logical_alias_commit(refpot::foundation::Mode mode) {
+    using namespace refpot::foundation;
+    Definition source;source.name="source";source.op="source";source.width=2;
+    Definition alias;alias.name="alias";alias.op="map";alias.input="source";alias.exprs={{"c0"},{"c1"}};
+    refpot::relational::SharedModel model({source,alias},{},mode);
+    model.prepare({{"insert","source",{1,4},0}});
+    // Positive control: the compatibility callback still materializes detached bags.
+    allocation_attempts=0;fail_after=0;bool refused=false;
+    try { model.commit([](const auto&){}); } catch(const std::bad_alloc&) { refused=true; }
+    disarm();assert(refused&&allocation_attempts>0&&model.has_prepared());
+    const std::string source_name="source",alias_name="alias";
+    std::size_t visited=0;
+    allocation_attempts=0;fail_after=0;
+    model.commit_borrowed([&](const auto& changes){
+        assert(&changes.at(source_name)==&changes.at(alias_name));
+        for(const auto& entry:changes){assert(entry.second.size()==1);++visited;}
+    });
+    disarm();assert(allocation_attempts==0&&visited==2);
+    assert((model.bag(alias_name)==Bag{{Row{1,4},1}}));
+}
 }  // namespace
 
 void* operator new(std::size_t size) { return allocate(size); }
@@ -383,6 +403,7 @@ int main() {
         statement_failure_sweep(mode);
         commit_failure_sweep(mode);
         rejected_commit_sweep(mode);
+        allocation_free_logical_alias_commit(mode);
         allocation_free_publication(mode);
         absence_append_sweep(mode);
         allocation_free_absence_publication(mode);

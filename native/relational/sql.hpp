@@ -92,7 +92,7 @@ private:
     std::size_t encoded_size_for(const sqlpersistence::Image& catalog,const std::map<std::string,Bag>& added={})const {
         std::size_t total=sqlpersistence::encode_image(catalog).size();
         auto add=[&](const std::string&name,const Bag&bag){auto n=sqlpersistence::bag_size(name,bag);if(n>sqlstorage::Store::max_payload-total)throw std::length_error("encoded relational state exceeds 64 MiB");total+=n;};
-        for(const auto&x:model_->committed_state())add(x.first,x.second);
+        model_->with_committed([&](const auto& committed){for(const auto&x:committed)add(x.first,x.second);});
         for(const auto&x:added)add(x.first,x.second);
         if(total>sqlstorage::Store::max_payload)throw std::length_error("encoded relational state exceeds 64 MiB");
         return total;
@@ -238,9 +238,9 @@ private:
         for(const auto& w:where){++predicate_tests_;if(!w.matches(row))return false;}return true;
     }
     std::uint64_t statement_mutations_=0;
-    std::size_t persist_changes(const std::map<std::string,Bag>& changes) {
+    template<class Changes> std::size_t persist_changes(const Changes& changes) {
         if(!store_)return encoded_state_size_;
-        const auto payload=sqlpersistence::encode_delta(changes);
+        const auto payload=sqlpersistence::encode_delta_range(changes);
         __int128 next=encoded_state_size_;
         for(const auto&rel:changes){
             const auto&base=model_->bag(rel.first);
@@ -262,7 +262,7 @@ private:
         if(in_tx_) { model_->append(mutations,false); pending_mutations_+=mutations.size(); }
         else if(store_) {
             model_->prepare(mutations,true);
-            try { std::size_t next_size=encoded_state_size_;model_->commit([&](const auto&changes){next_size=persist_changes(changes);});encoded_state_size_=next_size; }
+            try { std::size_t next_size=encoded_state_size_;model_->commit_borrowed([&](const auto&changes){next_size=persist_changes(changes);});encoded_state_size_=next_size; }
             catch(...) { model_->rollback();throw; }
             committed_rows_=static_cast<std::size_t>(next_rows);
         } else { model_->apply(mutations); committed_rows_=static_cast<std::size_t>(next_rows); }
@@ -523,7 +523,7 @@ private:
     }
     void commit_model() {
         std::size_t next_size=encoded_state_size_;
-        if(store_)model_->commit([&](const auto&changes){next_size=persist_changes(changes);});
+        if(store_)model_->commit_borrowed([&](const auto&changes){next_size=persist_changes(changes);});
         else model_->commit();
         encoded_state_size_=next_size;
     }
@@ -629,8 +629,8 @@ public:
         if(!store_)return;
         if(store_->poisoned())throw std::runtime_error("database is poisoned");
         sqlpersistence::Image image=catalog_image(tables_,assertions_,model_->definitions(),model_->required_empty());
-        image.bags=model_->committed_state();
-        auto payload=sqlpersistence::encode_image(image);
+        sqlpersistence::Bytes payload;
+        model_->with_committed([&](const auto& bags){payload=sqlpersistence::encode_image_range(image,bags);});
         if(payload.size()!=encoded_state_size_)throw std::logic_error("tracked encoded state size mismatch "+std::to_string(encoded_state_size_)+"/"+std::to_string(payload.size()));
         store_->checkpoint(payload);
     }

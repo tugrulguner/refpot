@@ -9,7 +9,7 @@ This is a RefPot-owned native execution path, not a SQLite wrapper. It is an int
 
 ## Try the source example
 
-The core example is [`examples/sql_preview.py`](../examples/sql_preview.py). The persistent whole-model example is [`examples/sql_persistence.py`](../examples/sql_persistence.py); it verifies recovered derived state and that capacity and missing-resource assertions remain enforced after reopen. The bounded source-only read-agent example is [`examples/sql_agent.py`](../examples/sql_agent.py); its fixture mode is provider-free by default. See the separate [agent-query evaluation and remaining M2 gates](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/agent-query-evaluation.md). In a source checkout where the preview extension has been built and is importable, run:
+The core example is [`examples/sql_preview.py`](../examples/sql_preview.py). The persistent whole-model example is [`examples/sql_persistence.py`](../examples/sql_persistence.py); it verifies recovered derived state and that capacity and missing-resource assertions remain enforced after reopen. The bounded source-only read-agent example is [`examples/sql_agent.py`](../examples/sql_agent.py); its fixture mode is provider-free by default. See the separate [agent-query evaluation and remaining M2 gates](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/docs/agent-query-evaluation.md). In a source checkout where the preview extension has been built and is importable, run:
 
 ```sh
 python examples/sql_preview.py
@@ -45,7 +45,7 @@ with Database(agent=config) as db:
 
 `disclose_schema=True` is an explicit opt-in to send the question, authorized relation names, ordered output-column names, and whether each relation is derived to the configured generator. It does not disclose rows, view definitions/private inputs, or database revision. `relations` is an immutable tuple of one to 128 exact catalog names, each at most 64 UTF-8 bytes. An authorized view is a read capability; its underlying inputs are not automatically authorized for direct queries. The configured generator is trusted caller Python: it can block, hang, or perform its own effects; RefPot cannot sandbox or preempt arbitrary callables and promises no hard deadline. Generation is not entered within an active transaction, and refusal preserves that transaction; use explicitly inspected or user-written ordinary SQL when read-your-writes is needed. The native read-only binder checks authorized tables/joins/subqueries and schema freshness regardless of generator output. It rejects mutations and unsupported authority, but binder acceptance is not proof that the SQL reflects user intent.
 
-`explain=True` can inspect the generated query without scanning or mutating. Successful agent results carry immutable generation metadata (`query`, `parameters`, `assumptions`); ordinary SQL results carry `generation=None`. Clarification and decline have distinct typed errors. Provider failures become sanitized `AgentError`; SQL syntax and authority failures remain SQL errors. The fixture-first [`examples/sql_agent.py`](../examples/sql_agent.py) runs without network by default; `--live` is an explicit OpenRouter opt-in. The bounded frontend comparison and unresolved quality gates are in [agent-query evaluation](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/agent-query-evaluation.md).
+`explain=True` can inspect the generated query without scanning or mutating. Successful agent results carry immutable generation metadata (`query`, `parameters`, `assumptions`); ordinary SQL results carry `generation=None`. Clarification and decline have distinct typed errors. Provider failures become sanitized `AgentError`; SQL syntax and authority failures remain SQL errors. The fixture-first [`examples/sql_agent.py`](../examples/sql_agent.py) runs without network by default; `--live` is an explicit OpenRouter opt-in. The bounded frontend comparison and unresolved quality gates are in [agent-query evaluation](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/docs/agent-query-evaluation.md).
 
 `OpenRouter(model=..., api_key_env="OPENROUTER_API_KEY", timeout=30, max_tokens=2048)` is a standard-library-only adapter. It accepts a fixed `:free` model, verifies zero prompt/completion prices in the public model catalog, sends zero-price routing ceilings with fallbacks disabled, and requires the response to report the configured model and zero cost before executing its proposal. Catalog/response bodies are capped at 4 MiB/1 MiB; generated JSON content and query strings at 64 KiB. `timeout` is a finite positive socket timeout of at most 120 seconds, not a total wall-clock deadline. `max_tokens` is an integer from one through 2048. There are no automatic retries, SQL repairs, tool calls, or paid fallbacks. Availability and provider-reported billing depend on OpenRouter; fail-closed checks are not an independent billing guarantee. The adapter reads only the named environment variable, not application files or Hermes settings.
 
@@ -124,6 +124,30 @@ Assertions use the deliberately narrow form `CREATE ASSERTION name CHECK (NOT EX
 
 Creating a maintained view over populated inputs computes the newly declared derived state only; it does not copy existing source rows into a replacement catalog. It does scan inputs to calculate that new state, and the declaration can be rejected by the work or intermediate-row limits.
 
+### Exact reuse by ordinary queries
+
+An eligible ordinary `SELECT` can reuse an existing maintained view whose bound
+source identity, ordered projection, and ordered filter predicates match exactly.
+Column/table aliases do not change that match. Output labels remain those requested
+by the query; duplicate multiplicities, `ORDER BY`, and `LIMIT` retain their ordinary
+semantics. `explain=True` reports `MAINTAINED_REUSE <view>` when selected.
+
+This bounded optimization excludes joins, absence queries, aggregates/grouping,
+active transactions, and restricted read-only agent execution. Those paths retain
+the original evaluator, including transaction-local read-your-writes. A nonmatching
+query falls back; no permanent view is created by a read. Existing views still incur
+their normal construction and write-maintenance costs.
+
+A lazy semantic index holds catalog metadata, not query results or row copies. Its
+first eligible read after a successful catalog change rebuilds the index privately;
+view replacement and reopen cannot reuse stale metadata. The diagnostic
+`stats()["reuse_definition_visits"]` counts definition entries inspected while
+building that index, including partial failed attempts; it is not a total-work,
+memory, or speed metric. Index construction, retained metadata and per-query lookup
+have costs, and small or nonmatching reads may be slower. No general speedup is
+promised. Run `python examples/sql_query_reuse.py` in a built source checkout for
+reuse and fallback examples. This remains unreleased SQL-preview behavior.
+
 ### Atomic maintained-definition replacement
 
 Use `ALTER MATERIALIZED VIEW name AS SELECT ...` to replace one view, outside explicit transactions:
@@ -148,7 +172,7 @@ unrelated definitions/results, and assertion names/targets. The replacement can 
 because the newly computed state violates an assertion even though the old state is valid.
 A rejected migration leaves the old definition and results in force; the caller can repair
 source data explicitly and try again. Later ordinary mutations use the accepted definition.
-The runnable [migration/reopen example](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/examples/sql_evolution.py) demonstrates this with
+The runnable [migration/reopen example](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/examples/sql_evolution.py) demonstrates this with
 provisional reservations that would exceed capacity under the new rule.
 
 `explain=True` parses and binds the replacement without evaluating its data or publishing it;
@@ -229,6 +253,6 @@ Unsupported SQL features include text or nullable stored columns, expressions/ar
 
 A rejected executed statement aborts the entire explicit transaction, unlike the fixed-schema API's behavior where catching a validation/missing/duplicate error does not discard earlier valid staged operations. A Python transaction context records a failed statement and raises on exit even if the caller caught the original error. `explain=True` does not execute or abort a transaction. If converting a native result to Python fails after execution, the preview closes the handle rather than claiming the already-executed mutation rolled back. In persistent mode an uncertain storage error poisons the writer; close/reopen and inspect before deciding whether to retry.
 
-The SQL preview is not the complete relational architecture in the roadmap. Persistent mode adds bounded whole-model storage and recovery, but does not establish broad durability qualification. Concurrent readers, multiwriter semantics, and free-threading qualification remain absent. The bounded read-only natural-language interface is a separate unreleased slice and does not complete M2 or establish semantic quality; see [agent-query evaluation](https://github.com/tugrulguner/refpot/blob/cab3c20e6a4400b9cd2562dfb0e9ac490ca53ada/docs/agent-query-evaluation.md). The supported subset is not broad SQL support. SQL predicates and maintained filters use the same bound comparison primitive; SQL and maintained groups share checked-count/wide-sum aggregation. Both overlay and modular modes use these helpers, so reuse is not an overlay-only advantage or proof of a universal intermediate representation. Transactions extend a private candidate in place, discard it on failure, and persist canonical changes rather than replayable requests. A new maintained declaration computes its new derived relation state without copying existing source rows, subject to bounded declaration work and intermediate relations; subsequent statements propagate transaction-local effects without replaying cumulative derived changes, with the remaining scans and retained-state costs described above. Ad hoc SQL has no maintained query cache. Joins use nested loops; ordering materializes and sorts before applying `LIMIT`. `maintenance_steps` is a cumulative work counter, not a speed measure. Diagnostic counters and local comparisons do not by themselves establish an architectural or performance advantage. No claim here closes roadmap M1/M3/M4 or the separate migration, backup, concurrency, installed-artifact and broader qualification work.
+The SQL preview is not the complete relational architecture in the roadmap. Persistent mode adds bounded whole-model storage and recovery, but does not establish broad durability qualification. Concurrent readers, multiwriter semantics, and free-threading qualification remain absent. The bounded read-only natural-language interface is a separate unreleased slice and does not complete M2 or establish semantic quality; see [agent-query evaluation](https://github.com/tugrulguner/refpot/blob/921d5a4e2dd29747bb07ebd016572fb0760f705f/docs/agent-query-evaluation.md). The supported subset is not broad SQL support. SQL predicates and maintained filters use the same bound comparison primitive; SQL and maintained groups share checked-count/wide-sum aggregation. Both overlay and modular modes use these helpers, so reuse is not an overlay-only advantage or proof of a universal intermediate representation. Transactions extend a private candidate in place, discard it on failure, and persist canonical changes rather than replayable requests. A new maintained declaration computes its new derived relation state without copying existing source rows, subject to bounded declaration work and intermediate relations; subsequent statements propagate transaction-local effects without replaying cumulative derived changes, with the remaining scans and retained-state costs described above. Ad hoc SQL has no maintained query cache. Joins use nested loops; ordering materializes and sorts before applying `LIMIT`. `maintenance_steps` is a cumulative work counter, not a speed measure. Diagnostic counters and local comparisons do not by themselves establish an architectural or performance advantage. No claim here closes roadmap M1/M3/M4 or the separate migration, backup, concurrency, installed-artifact and broader qualification work.
 
 [Download this page as Markdown](/docs/reference-sql-preview.md)

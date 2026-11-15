@@ -153,6 +153,64 @@ recovery costs and a counterexample workload. Select deeper unification only whe
 meaningful work or complexity; retain useful modular components elsewhere without abandoning
 the broader engine objective. Engine benefit and NL reliability require independent evidence.
 
+### Next experiments from the maintained-query reuse review
+
+[PR #46](https://github.com/tugrulguner/refpot/pull/46) is a bounded conventional
+baseline, not completion of the shared foundation. Its exact-match lookup connects
+ordinary reads to maintained results, but separately reconstructs signatures on both
+paths; physical-plan equivalence has a different purpose and signature. Semantic
+eligibility also does not prove that selecting reuse is cheaper. The following work
+carries the review forward without requiring a broad refactor in that implementation.
+
+1. **Freeze the comparison and cost inventory (M0).**
+   - [ ] Map binding, expression analysis, result scans, maintenance and final-candidate
+         validation in the complete resource-allocation workflow: define resources and
+         reservations, query availability, stage competing changes, reject an over-capacity
+         change, commit a valid one, evolve a definition and reopen with continued writes.
+   - [ ] Pin the current modular/shared-kernel control and specify a reusable bound-metadata
+         candidate. Identify the exact duplicated analysis or state each proposed reuse
+         removes, its invalidation rules and its nearest prior art. Do not force physical
+         equivalence, query identity and authority into one universal object.
+   **Exit:** executable independent state oracles, pinned controls, explicit ownership and
+   authority boundaries, and a frozen paired workload/cost matrix before candidate tuning.
+
+2. **Qualify selection and metadata costs before broadening reuse (M1).**
+   - [ ] Cross empty/tiny/larger inputs, exact matches and misses, predicate depth and catalog
+         size with warm reads, first reads after rebuild, repeated successful definition
+         changes and rejected replacements. Include no-view and direct-evaluation controls.
+   - [ ] Measure lookup/key construction, rebuild and retained metadata separately, then charge
+         them in complete Python workloads with view construction, writes, checkpoint/reopen
+         and teardown. Record latency distributions, allocation volume and peak/retained memory;
+         definition-visit counters alone are not cost evidence.
+   - [ ] Preserve all losing cells and compare any proposed selection policy on held-out
+         workloads against both unconditional eligible reuse and ordinary evaluation. Do not
+         infer a production threshold from the short PR screen or fewer predicate tests.
+   **Exit:** reproducible paired records and a bounded selection decision, including regions
+   where reuse loses. No expansion or adaptive policy is justified by eligibility alone.
+   [Source comment](https://github.com/tugrulguner/refpot/pull/46#discussion_r4580395244).
+
+3. **Test shared bound work across roles, not just matching keys (M1/M3).**
+   - [ ] Implement the isolated candidate from step 1 and execute the same bound expression
+         through ordinary reads, maintained results and final-candidate validation. Compare
+         against competent incremental/shared-kernel controls, not only full recomputation.
+   - [ ] Account for eliminated binding/analysis, intermediate state and propagation alongside
+         added metadata, conversions, maintenance, recovery and invalidation costs. Preserve
+         duplicate/overflow behavior, transaction-local visibility, rejected-write atomicity,
+         restricted-read authority and distinct ad hoc versus durable lifetimes.
+   - [ ] Exercise sparse/dense changes and shared/disjoint expressions in the resource workflow,
+         then a second maintained model. Retain a counterexample where sharing is unhelpful.
+   **Exit:** a complete-workflow comparison demonstrating removed work or developer-owned
+   machinery under unchanged guarantees, or an explicit rejection/refinement of the candidate.
+   A common type or AST alone fails this gate. Production integration requires separate
+   qualification; no runtime redesign is implied by this roadmap update.
+   [Source comment](https://github.com/tugrulguner/refpot/pull/46#discussion_r4580395252).
+
+These steps leave three verdicts separate: useful conventional implementation, demonstrated
+agent-free engine/Python-workflow advantage, and an original mechanism. Keep the latter two
+open until comparative evidence and prior-art review support them. Neither merging PR #46 nor
+finishing the cost inventory completes M1/M3 or the broader engine ambition. No model calls,
+new paid infrastructure or relaxation of transaction/authority boundaries is needed here.
+
 ### Core architectural questions and evidence
 
 | Design axis | Ambition to investigate | Evidence required with agents disabled |

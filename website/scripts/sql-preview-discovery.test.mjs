@@ -5,6 +5,22 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const source = async path => readFile(new URL(path, root), 'utf8');
 
+test('query-reuse review becomes unchecked roadmap experiments with source links', async () => {
+  const canonical = await source('../ROADMAP.md');
+  const section = text => text.split('### Next experiments from the maintained-query reuse review')[1]
+    ?.split('### Core architectural questions and evidence')[0];
+  const expected = section(canonical);
+  assert.ok(expected);
+  assert.doesNotMatch(expected, /\[x\]/i);
+  assert.equal((expected.match(/\*\*Exit:\*\*/g) || []).length, 3);
+  for (const marker of ['discussion_r4580395244', 'discussion_r4580395252',
+    'held-out', 'retained metadata', 'final-candidate validation', 'prior-art review']) {
+    assert.ok(expected.includes(marker), marker);
+  }
+  const hosted = await source('src/content/docs/project/roadmap.md');
+  assert.equal(section(hosted), expected);
+});
+
 test('unreleased SQL preview has a canonical generated page and Markdown export', async () => {
   const generator = await source('scripts/sync-public-docs.mjs');
   assert.match(generator, /slug: 'reference\/sql-preview'[\s\S]*?source: '\.\.\/\.\.\/docs\/sql-preview\.md'/);

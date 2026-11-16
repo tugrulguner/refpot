@@ -10,20 +10,20 @@ preparation assembles them here. Run `make changelog-draft` to preview the next 
 
 <!-- towncrier release notes start -->
 
-## [0.1.2] - 2026-11-15
+## [0.1.2] - 2026-11-16
 
-Release preparation; not yet published. The SQL API remains experimental and separately
+The SQL API remains experimental and separately
 scoped from the fixed-schema Database/Row API.
 
 ### Added
 
 - Add an experimental volatile native transactional relational model slice with reservation and pricing examples, independent recomputation and SQLite-view controls, and allocation-failure/correctness tests. This research slice does not change the installed Database/Row API or storage format and provides no durability, concurrency or optimization agent.
-- Add atomic `ALTER MATERIALIZED VIEW` replacement to the experimental SQL preview, preserving output shape while recomputing dependent results and validating assertions at one durable frontier. Includes migration/reopen examples and bounded failure qualification; included in the 0.1.2 release candidate.
-- Add optional bounded whole-model persistence to the experimental `refpot.sql` preview. A file-backed database recovers catalog definitions, assertions, and weighted source/derived relation state before serving, with synchronized canonical bag deltas and explicit bounded checkpoints. `Database()` remains volatile. This preview is included in the 0.1.2 release candidate; broad durability, migration, backup, and platform qualification remain open.
-- Add transaction-local maintained-relation propagation and a bounded correlated `NOT EXISTS` form for absence-aware final-state assertions in the experimental SQL preview. These volatile APIs are included in the 0.1.2 release candidate; the fixed-schema API and storage are unchanged.
-- Add volatile maintained SQL views and deferred empty-relation assertions to the experimental SQL preview. Views retain duplicate rows, track source changes, and support transaction-local reads; rejected final-state constraints discard the entire transaction. This is included in the 0.1.2 release candidate and does not claim durability, concurrency, broad SQL support, or an engine-performance advantage.
-- Adds an unreleased, explicitly selected, bounded read-only SQL agent-query preview with explicit schema disclosure, native authority checks, and a provider-free runnable fixture example. Does not complete roadmap M2 or semantic evaluation; included in 0.1.2 candidate artifacts.
-- Document the unreleased volatile native SQL preview contract separately from the currently published fixed-schema API. The experimental API is included in the 0.1.2 candidate artifacts; broader SQL, durability, concurrency, and roadmap M1 qualification remain outstanding.
+- Add atomic `ALTER MATERIALIZED VIEW` replacement to the experimental SQL preview, preserving output shape while recomputing dependent results and validating assertions at one durable frontier. Includes migration/reopen examples and bounded failure qualification; included in version 0.1.2.
+- Add optional bounded whole-model persistence to the experimental `refpot.sql` preview. A file-backed database recovers catalog definitions, assertions, and weighted source/derived relation state before serving, with synchronized canonical bag deltas and explicit bounded checkpoints. `Database()` remains volatile. This preview is included in version 0.1.2; broad durability, migration, backup, and platform qualification remain open.
+- Add transaction-local maintained-relation propagation and a bounded correlated `NOT EXISTS` form for absence-aware final-state assertions in the experimental SQL preview. These volatile APIs are included in version 0.1.2; the fixed-schema API and storage are unchanged.
+- Add volatile maintained SQL views and deferred empty-relation assertions to the experimental SQL preview. Views retain duplicate rows, track source changes, and support transaction-local reads; rejected final-state constraints discard the entire transaction. This is included in version 0.1.2 and does not claim durability, concurrency, broad SQL support, or an engine-performance advantage.
+- Adds an unreleased, explicitly selected, bounded read-only SQL agent-query preview with explicit schema disclosure, native authority checks, and a provider-free runnable fixture example. Does not complete roadmap M2 or semantic evaluation; included in 0.1.2 artifacts.
+- Document the unreleased volatile native SQL preview contract separately from the currently published fixed-schema API. The experimental API is included in version 0.1.2 artifacts; broader SQL, durability, concurrency, and roadmap M1 qualification remain outstanding.
 - Publish source-pinned package screening evidence, frozen plans, all 300 trial records and 12 recovery records, with a portable offline verifier and corruption regressions. Keep the failed SQLite target cells visible; these are locally built source-revision measurements, not release-artifact qualification.
 - Adds a bounded per-cell pilot that freezes shared operation counts and minimum durations for paired runs, warms write paths outside timing, and validates persisted raw records against the plan. Recovery evidence distinguishes RefPot pending-WAL replay from SQLite ordinary close/reopen; plan hashes detect accidental edits. This remains a screening harness, not crash-recovery or general performance qualification.
 

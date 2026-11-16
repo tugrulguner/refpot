@@ -49,4 +49,4 @@ it does not prove that the query means what the user intended.
 M2 remains unchecked. Novel questions and paraphrases, ambiguous and unsupported requests,
 schema changes, provider failures, human-held-out tasks, and broader risk/coverage and silent-
 assumption measurements remain open. The present fixture is a protocol demonstration, not a
-semantic-quality or deployment claim. The implementation is included in the 0.1.2 release candidate but is not yet in a published wheel; the currently published PyPI version remains 0.1.1.
+semantic-quality or deployment claim. The implementation is included in version 0.1.2; requires RefPot 0.1.2 or later.

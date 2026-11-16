@@ -19,8 +19,8 @@ class SQLPreviewDocsTests(unittest.TestCase):
             "caught validation/missing/duplicate error does not undo earlier valid staged operations",
             contract,
         )
-        self.assertIn("included in the 0.1.2 release candidate", contract)
-        self.assertIn("currently published 0.1.1 package", contract)
+        self.assertIn("included in version 0.1.2", contract)
+        self.assertIn("version 0.1.1", contract)
         self.assertIn("examples/sql_preview.py", readme)
 
     def test_canonical_surfaces_do_not_describe_all_sql_as_volatile_only(self):
@@ -46,7 +46,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertTrue(doc.exists(), "the canonical preview contract is missing")
         text = doc.read_text()
         for phrase in (
-            "included in the 0.1.2 release candidate",
+            "included in version 0.1.2",
             "volatile",
             "Database(path=None",
             'Database(path=None, *, mode="overlay", agent=None)',
@@ -76,7 +76,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertNotIn("M1 is complete", text)
         self.assertNotIn("SQLite's integer-overflow-to-float behavior", text)
         self.assertIn("SQLite integer `SUM` raises on intermediate integer overflow", text)
-        self.assertIn("not yet in a published wheel", text.lower())
+        self.assertIn("requires refpot 0.1.2 or later", text.lower())
         self.assertNotIn("has no persistence", text.lower())
         self.assertNotIn("no durable storage", text.lower())
 
@@ -111,13 +111,13 @@ class SQLPreviewDocsTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, normalized)
         self.assertIn("cumulative work counter, not a speed measure", normalized)
-        self.assertIn("included in the 0.1.2 release candidate", normalized)
-        self.assertIn("currently published pypi version remains 0.1.1", normalized)
+        self.assertIn("included in version 0.1.2", normalized)
+        self.assertIn("requires refpot 0.1.2 or later", normalized)
 
     def test_maintained_preview_has_candidate_release_note(self):
         fragment = ROOT / "changelog.d/+sql-maintained-relations.added.md"
         text = fragment.read_text() if fragment.exists() else (ROOT / "CHANGELOG.md").read_text()
-        self.assertIn("0.1.2 release candidate", text.lower())
+        self.assertIn("0.1.2", text.lower())
 
     def test_runnable_example_uses_only_the_public_preview_api(self):
         example = ROOT / "examples/sql_preview.py"
@@ -181,7 +181,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
             "trusted caller Python",
             "not proof that the sql reflects user intent",
             "does not complete M2",
-            "included in the 0.1.2 release candidate",
+            "included in version 0.1.2",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), doc.lower())
@@ -226,7 +226,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
         fragment = ROOT / "changelog.d/+sql-whole-model-persistence.added.md"
         text = fragment.read_text() if fragment.exists() else (ROOT / "CHANGELOG.md").read_text()
         self.assertIn("whole-model", text.lower())
-        self.assertIn("0.1.2 release candidate", text.lower())
+        self.assertIn("0.1.2", text.lower())
 
 
 if __name__ == "__main__":

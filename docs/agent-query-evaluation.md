@@ -1,6 +1,6 @@
 # Bounded agent-query preview: evaluation evidence
 
-This page records a small frontend-selection experiment for the unreleased read-only
+This page records a small frontend-selection experiment for the experimental read-only
 agent-query slice. It does not establish natural-language reliability, broad SQL support,
 or an engine advantage. The committed product direction remains first-class natural-language
 querying (roadmap M2); M2 is not complete or qualified by this evidence.
@@ -49,5 +49,4 @@ it does not prove that the query means what the user intended.
 M2 remains unchecked. Novel questions and paraphrases, ambiguous and unsupported requests,
 schema changes, provider failures, human-held-out tasks, and broader risk/coverage and silent-
 assumption measurements remain open. The present fixture is a protocol demonstration, not a
-semantic-quality or deployment claim. The implementation is not included in published 0.1.2
-or any published wheel.
+semantic-quality or deployment claim. The implementation is included in the 0.1.2 release candidate but is not yet in a published wheel; the currently published PyPI version remains 0.1.1.

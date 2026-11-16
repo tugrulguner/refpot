@@ -84,7 +84,7 @@ test('every layout preserves desktop and compact family navigation with keyboard
         const toggle=page.getByRole('button',{name:'Menu',exact:true});
         await toggle.focus(); await page.keyboard.press('Enter');
         const menu=page.getByRole('region',{name:'Menu',exact:true});
-        for(const label of ['ModePot','GitHub','Community','About Tugrul','Feedback / issue (opens in a new tab)','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Unreleased SQL preview','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
+        for(const label of ['ModePot','GitHub','Community','About Tugrul','Feedback / issue (opens in a new tab)','Package status','Quick start','CRUD','Transactions and rollback','Persistence and checkpointing','Errors and ownership','API reference','Storage and recovery','Package contract','Historical benchmarks','Package performance results','Contributing','Coding-agent guide','Experimental SQL preview','Roadmap']) await expect(menu.getByRole('link',{name:label,exact:true})).toBeVisible();
         await page.keyboard.press('Escape'); await expect(menu).toBeHidden(); await expect(toggle).toBeFocused();
       }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -187,13 +187,14 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/package-contract/');
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  const previewLink = page.getByRole('region', { name: 'Menu', exact: true }).getByRole('link', { name: 'Unreleased SQL preview', exact: true });
+  const previewLink = page.getByRole('region', { name: 'Menu', exact: true }).getByRole('link', { name: 'Experimental SQL preview', exact: true });
   await expect(previewLink).toHaveAttribute('href', '/reference/sql-preview/');
   await previewLink.click();
   await expect(page).toHaveURL(/\/reference\/sql-preview\/$/);
-  await expect(page.locator('main h1')).toHaveText('Unreleased SQL preview');
+  await expect(page.locator('main h1')).toHaveText('Experimental SQL preview');
   const main = page.locator('main');
-  await expect(main).toContainText('not included in the currently published 0.1.2 package');
+  await expect(main).toContainText('included in the 0.1.2 release candidate');
+  await expect(main).toContainText('currently published PyPI version remains 0.1.1');
   await expect(main).toContainText('The existing fixed-schema');
   await expect(main).toContainText('Maintained relations and assertions');
   await expect(main).toContainText('CREATE MATERIALIZED VIEW');
@@ -203,7 +204,8 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   const response = await page.request.get('/docs/reference-sql-preview.md');
   expect(response.ok()).toBeTruthy();
   const markdown = await response.text();
-  expect(markdown).toContain('not included in the currently published 0.1.2 package');
+  expect(markdown).toContain('included in the 0.1.2 release candidate');
+  expect(markdown).toContain('currently published PyPI version remains 0.1.1');
   expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
   expect(markdown).toContain('## Maintained relations and assertions');
   expect(markdown).toContain('CREATE ASSERTION');

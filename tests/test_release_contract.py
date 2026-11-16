@@ -195,6 +195,9 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertNotIn("not published on PyPI", text)
         self.assertIn("python -m pip install refpot", text)
         self.assertIn("change-set is not tag-ready", text)
+        self.assertIn("PyPI currently serves 0.1.1", (ROOT / "docs/releasing.md").read_text())
+        self.assertIn("0.1.2 release candidate", text)
+        self.assertIn("will be available from its published artifacts once released", text)
         for durable in (
             "README.md",
             "docs/package-contract.md",

@@ -45,7 +45,7 @@
 
 ## Why RefPot
 
-RefPot is an early custom embedded database engine: a native C++ redo-and-checkpoint core exposed through the published fixed-schema Python `Database` / `Row` API. The separate, unreleased native SQL preview has optional bounded whole-model persistence and an explicitly selected, bounded read-only `agent=True` query-generation slice in this source tree; neither is part of the published package or changes the fixed-schema API/storage format. Agent mode requires configured trusted generator code and explicit schema-disclosure consent; it is not M2 completion or a semantic guarantee. See the [SQL preview contract](docs/sql-preview.md) and its [bounded evaluation evidence](docs/agent-query-evaluation.md). ORM remains future design direction.
+RefPot is an early custom embedded database engine: a native C++ redo-and-checkpoint core exposed through the published fixed-schema Python `Database` / `Row` API. The separate native SQL preview (included in the 0.1.2 release candidate; PyPI still serves 0.1.1) has optional bounded whole-model persistence and an explicitly selected, bounded read-only `agent=True` query-generation slice; neither changes the fixed-schema API/storage format. Agent mode requires configured trusted generator code and explicit schema-disclosure consent; it is not M2 completion or a semantic guarantee. See the [SQL preview contract](docs/sql-preview.md) and its [bounded evaluation evidence](docs/agent-query-evaluation.md). ORM remains future design direction.
 
 ## Quick start
 
@@ -95,7 +95,7 @@ The complete quick start demonstrates CRUD, transaction commit and rollback, che
 
 The database starts empty. Keys and integer values are signed 64-bit integers; text is UTF-8 limited to 31 encoded bytes. The database path names a **file, not a directory**, and its parent directory must already exist. One process exclusively owns each database; only its creating thread may use the handle.
 
-The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery are each bounded to 64 MiB. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details are not broad recovery qualification or a physical power-loss guarantee. Concurrent readers, multiwriter use, Windows and existing-format compatibility are unsupported. SQL is not included in the currently published package; see the separate [unreleased SQL preview with optional bounded persistence](docs/sql-preview.md). ORM is not provided. See the full [package contract](docs/package-contract.md) and [package recommendation](docs/package-recommendation.md).
+The native engine uses versioned snapshots and a WAL. Snapshot and WAL recovery are each bounded to 64 MiB. Incomplete unacknowledged tails are discarded; complete transactions with both copies corrupt are rejected; uncertain writes poison the writer. These implementation details are not broad recovery qualification or a physical power-loss guarantee. Concurrent readers, multiwriter use, Windows and existing-format compatibility are unsupported. SQL is not included in the currently published package; see the separate [SQL preview with optional bounded persistence](docs/sql-preview.md). ORM is not provided. See the full [package contract](docs/package-contract.md) and [package recommendation](docs/package-recommendation.md).
 
 ## Current package architecture
 
@@ -113,7 +113,7 @@ Task-oriented guides are available for [CRUD](https://refpot.modepot.io/build/cr
 
 The [package contract](docs/package-contract.md) documents the exact `Database` and `Row` API, validation, errors, ownership, capacity and unsupported behavior. Hosted guides: [API reference](https://refpot.modepot.io/reference/api/) · [package reference](https://refpot.modepot.io/package-contract/).
 
-The separate [`refpot.sql` SQL preview](docs/sql-preview.md) documents source-preview maintained views, transaction-local propagation, deferred capacity/missing-reference assertions, and optional whole-model persistence. `Database()` remains volatile; `Database(path, mode="overlay")` opts into persistence. Runnable source examples include [the SQL preview](examples/sql_preview.py), [maintained SQL](examples/sql_maintenance.py), [whole-model persistence](examples/sql_persistence.py), and [atomic maintained-definition replacement](examples/sql_evolution.py). These APIs are not available from the published 0.1.2 package or a published wheel, and do not alter `from refpot import Database, Row`.
+The separate [`refpot.sql` SQL preview](docs/sql-preview.md) documents source-preview maintained views, transaction-local propagation, deferred capacity/missing-reference assertions, and optional whole-model persistence. `Database()` remains volatile; `Database(path, mode="overlay")` opts into persistence. Runnable examples include [the SQL preview](examples/sql_preview.py), [maintained SQL](examples/sql_maintenance.py), [whole-model persistence](examples/sql_persistence.py), and [atomic maintained-definition replacement](examples/sql_evolution.py). These APIs are included in the 0.1.2 release candidate and will be available from its published artifacts once released; the currently published PyPI version remains 0.1.1. They do not alter `from refpot import Database, Row`.
 
 ## Internals
 
@@ -147,7 +147,7 @@ The historical findings are separate from package performance. The 3.04–5.95×
 
 ## Planned design direction
 
-The preserved [planned architecture visual](#refpot) remains a future SQL/ORM direction, not a depiction of the separate SQL preview. The SQL preview is unreleased; callers may use it in volatile mode or opt into bounded persistence, distinct from the fixed-schema API and file format. ORM is not implemented.
+The preserved [planned architecture visual](#refpot) remains a future SQL/ORM direction, not a depiction of the separate SQL preview. The SQL preview is a release-candidate preview; callers may use it in volatile mode or opt into bounded persistence, distinct from the fixed-schema API and file format. ORM is not implemented.
 
 - **Engine first.** Establish correctness and performance before building the ORM.
 - **One semantic boundary.** Direct operations must not bypass validation or constraints.

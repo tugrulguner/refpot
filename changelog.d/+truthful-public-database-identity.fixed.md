@@ -1,1 +1,0 @@
-Correct RefPot identity and social artwork to describe the experimental native database and Python CRUD/transaction API, remove obsolete unshipped ORM and unreleased claims, and clarify database discovery metadata.

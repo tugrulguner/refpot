@@ -49,7 +49,7 @@ for (const route of ['project/benchmarks','project/package-performance','project
 }
 
 const llms=await readFile(new URL('llms.txt',root),'utf8');
-assert.match(llms,/three remain below 2×, so the overall target is unmet/); assert.match(llms,/publicly available on PyPI/); assert.match(llms,/package-contract/); assert.match(llms,/reference\/sql-preview/); assert.match(llms,/not included in the currently published package/);
+assert.match(llms,/three remain below 2×, so the overall target is unmet/); assert.match(llms,/publicly available on PyPI/); assert.match(llms,/package-contract/); assert.match(llms,/reference\/sql-preview/); assert.match(llms,/included in the 0\.1\.2 release candidate/);assert.match(llms,/currently published PyPI version remains 0\.1\.1/);
 console.log(`Verified ${routes.length} HTML layouts, one PostHog initialization each, canonical destinations, PNG dimensions, discovery and ${(await readdir(new URL("docs/", root))).filter(name => name.endsWith(".md")).length} same-source Markdown exports.`);
 
 for (const [source, copy] of [["../../docs/assets/refpot-lockup.svg","refpot-lockup.svg"],["../../docs/assets/refpot-execution.svg","refpot-execution.svg"],["../../docs/assets/refpot-package.svg","refpot-package.svg"]]) assert.equal((await readFile(new URL(source, import.meta.url))).toString(), (await readFile(new URL(copy, root))).toString());

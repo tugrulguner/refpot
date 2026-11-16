@@ -1,6 +1,6 @@
 # Release checklist
 
-RefPot is an **experimental alpha**, intended for evaluation rather than production use. This change-set is not tag-ready: finish and review all release gates, then obtain explicit maintainer approval before tagging or publishing. Published prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; Windows, other architectures, free-threaded Python, and physical power-loss guarantees are unsupported. See `docs/package-contract.md` for scope and caveats.
+RefPot is an **experimental alpha**, intended for evaluation rather than production use. PyPI currently serves 0.1.1. The 0.1.2 release candidate includes the bounded `refpot.sql` preview (including optional persistence and explicitly selected read-only agent mode); candidate availability is not publication. This change-set is not tag-ready: finish and review all release gates, then obtain explicit maintainer approval before tagging or publishing. Published prebuilt wheels target Linux x86_64 and macOS arm64 on CPython 3.11–3.14; Windows, other architectures, free-threaded Python, and physical power-loss guarantees are unsupported. See `docs/package-contract.md` for scope and caveats.
 
 1. Confirm the intended version and update the sole editable version with `uv version X.Y.Z` (`uv version 0.1.2` for this preparation).
 2. Review `make changelog-draft`, assemble with `make changelog`, and inspect staged and unstaged changes. Confirm the generated `0.1.2` notes include every user-facing fragment.

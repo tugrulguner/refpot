@@ -1,4 +1,4 @@
-"""Public contract guard for the unreleased SQL preview documentation."""
+"""Public contract guard for the SQL preview and release-candidate documentation."""
 
 import unittest
 from pathlib import Path
@@ -19,7 +19,8 @@ class SQLPreviewDocsTests(unittest.TestCase):
             "caught validation/missing/duplicate error does not undo earlier valid staged operations",
             contract,
         )
-        self.assertIn("not included in the currently published package", contract)
+        self.assertIn("included in the 0.1.2 release candidate", contract)
+        self.assertIn("currently published 0.1.1 package", contract)
         self.assertIn("examples/sql_preview.py", readme)
 
     def test_canonical_surfaces_do_not_describe_all_sql_as_volatile_only(self):
@@ -40,12 +41,12 @@ class SQLPreviewDocsTests(unittest.TestCase):
                 )
                 self.assertNotIn("volatile, in-development sql preview", text)
 
-    def test_sql_preview_doc_is_unreleased_scoped_and_complete(self):
+    def test_sql_preview_doc_is_candidate_scoped_and_complete(self):
         doc = ROOT / "docs/sql-preview.md"
         self.assertTrue(doc.exists(), "the canonical preview contract is missing")
         text = doc.read_text()
         for phrase in (
-            "not included in the currently published 0.1.2 package",
+            "included in the 0.1.2 release candidate",
             "volatile",
             "Database(path=None",
             'Database(path=None, *, mode="overlay", agent=None)',
@@ -75,7 +76,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
         self.assertNotIn("M1 is complete", text)
         self.assertNotIn("SQLite's integer-overflow-to-float behavior", text)
         self.assertIn("SQLite integer `SUM` raises on intermediate integer overflow", text)
-        self.assertIn("not included", text.lower())
+        self.assertIn("not yet in a published wheel", text.lower())
         self.assertNotIn("has no persistence", text.lower())
         self.assertNotIn("no durable storage", text.lower())
 
@@ -110,13 +111,13 @@ class SQLPreviewDocsTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, normalized)
         self.assertIn("cumulative work counter, not a speed measure", normalized)
-        self.assertIn("not included in the currently published 0.1.2 package", normalized)
-        self.assertIn("published 0.1.2", normalized)
+        self.assertIn("included in the 0.1.2 release candidate", normalized)
+        self.assertIn("currently published pypi version remains 0.1.1", normalized)
 
-    def test_maintained_preview_has_an_unreleased_changelog_fragment(self):
-        text = (ROOT / "changelog.d/+sql-maintained-relations.added.md").read_text()
-        self.assertIn("unreleased source preview", text.lower())
-        self.assertIn("not part of the published 0.1.2 package", text)
+    def test_maintained_preview_has_candidate_release_note(self):
+        fragment = ROOT / "changelog.d/+sql-maintained-relations.added.md"
+        text = fragment.read_text() if fragment.exists() else (ROOT / "CHANGELOG.md").read_text()
+        self.assertIn("0.1.2 release candidate", text.lower())
 
     def test_runnable_example_uses_only_the_public_preview_api(self):
         example = ROOT / "examples/sql_preview.py"
@@ -180,7 +181,7 @@ class SQLPreviewDocsTests(unittest.TestCase):
             "trusted caller Python",
             "not proof that the sql reflects user intent",
             "does not complete M2",
-            "not included in the currently published 0.1.2 package",
+            "included in the 0.1.2 release candidate",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), doc.lower())
@@ -204,7 +205,9 @@ class SQLPreviewDocsTests(unittest.TestCase):
         example = ROOT / "examples/sql_agent.py"
         self.assertTrue(example.exists())
         self.assertTrue((ROOT / "tests/test_sql_agent_example.py").exists())
-        self.assertTrue((ROOT / "changelog.d/+sql-agent-readonly.added.md").exists())
+        fragment = ROOT / "changelog.d/+sql-agent-readonly.added.md"
+        release_notes = (ROOT / "CHANGELOG.md").read_text()
+        self.assertTrue(fragment.exists() or "SQL agent-query preview" in release_notes)
         for workflow in (".github/workflows/package.yml", ".github/workflows/wheels.yml"):
             text = (ROOT / workflow).read_text()
             self.assertIn("test_sql_agent_example.py", text)
@@ -214,15 +217,16 @@ class SQLPreviewDocsTests(unittest.TestCase):
 
     def test_initial_preview_fragment_is_retained(self):
         fragment = ROOT / "changelog.d/+volatile-native-sql-preview.added.md"
-        self.assertTrue(fragment.exists())
-        self.assertIn("unreleased", fragment.read_text().lower())
+        release_notes = (ROOT / "CHANGELOG.md").read_text().lower()
+        self.assertTrue(fragment.exists() or "native sql preview" in release_notes)
+        if fragment.exists():
+            self.assertIn("unreleased", fragment.read_text().lower())
 
-    def test_whole_model_persistence_has_unreleased_changelog_fragment(self):
+    def test_whole_model_persistence_has_candidate_release_note(self):
         fragment = ROOT / "changelog.d/+sql-whole-model-persistence.added.md"
-        self.assertTrue(fragment.exists())
-        text = fragment.read_text().lower()
-        for phrase in ("unreleased", "whole-model", "not part of the published 0.1.2 package"):
-            self.assertIn(phrase, text)
+        text = fragment.read_text() if fragment.exists() else (ROOT / "CHANGELOG.md").read_text()
+        self.assertIn("whole-model", text.lower())
+        self.assertIn("0.1.2 release candidate", text.lower())
 
 
 if __name__ == "__main__":

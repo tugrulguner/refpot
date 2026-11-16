@@ -1,0 +1,1 @@
+Reuse exact bound filter/projection results from existing maintained views for eligible ordinary SQL-preview reads. Preserve output labels, bag multiplicities, sorting and limits; active transactions and restricted read-only execution retain the original path. This is bounded reuse, not general query rewriting or a universal performance guarantee.

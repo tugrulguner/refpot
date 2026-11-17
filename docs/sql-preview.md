@@ -1,6 +1,6 @@
 # SQL preview (`refpot.sql`): optional bounded persistence
 
-> **Preview, not a published-package capability.** `from refpot.sql import Database, Result, SQLError` describes a source-preview API under development. It is included in the 0.1.2 release candidate; it is not yet in a published wheel. The currently published PyPI version remains 0.1.1. This does not mark roadmap M1, M3, or M4 complete. The existing fixed-schema `from refpot import Database, Row` API and its file/storage contract remain unchanged. SQL preview defaults to volatile state, with optional bounded persistence when a path is supplied.
+> **Experimental preview, available starting with 0.1.2.** `from refpot.sql import Database, Result, SQLError` describes a source-preview API under development. It is included in version 0.1.2. Requires RefPot 0.1.2 or later. This does not mark roadmap M1, M3, or M4 complete. The existing fixed-schema `from refpot import Database, Row` API and its file/storage contract remain unchanged. SQL preview defaults to volatile state, with optional bounded persistence when a path is supplied.
 
 This is a RefPot-owned native execution path, not a SQLite wrapper. It is an intentionally small SQL subset. Unsupported syntax fails; it is not delegated to another database. The bounded natural-language mode described below is experimental and not reliability-qualified; ORM is not provided.
 
@@ -15,11 +15,11 @@ python examples/sql_evolution.py
 python examples/sql_agent.py
 ```
 
-The example does not take a native-library path, alter `sys.path`, or use `ctypes`. This source-checkout command is not an installation instruction for the currently published package; PyPI still serves 0.1.1.
+The example does not take a native-library path, alter `sys.path`, or use `ctypes`. This source-checkout command is not an installation instruction for the currently published package; requires RefPot 0.1.2 or later.
 
 ## Read-only natural-language queries
 
-Natural-language query generation is an explicitly selected, bounded source-preview feature; it is included in the 0.1.2 release candidate, but is not yet available from a published wheel; the currently published PyPI version remains 0.1.1. `Database(agent=config)` supplies configuration, while `execute(query="...", agent=True)` selects generation for that call. Ordinary SQL remains provider-free. The feature is experimental, read-only, and does not establish M2 completion or semantic correctness. The following remote example requires `OPENROUTER_API_KEY` to be configured securely in the process environment and sends the question plus authorized schema metadata to OpenRouter:
+Natural-language query generation is an explicitly selected, bounded source-preview feature; it is included in version 0.1.2; requires RefPot 0.1.2 or later. `Database(agent=config)` supplies configuration, while `execute(query="...", agent=True)` selects generation for that call. Ordinary SQL remains provider-free. The feature is experimental, read-only, and does not establish M2 completion or semantic correctness. The following remote example requires `OPENROUTER_API_KEY` to be configured securely in the process environment and sends the question plus authorized schema metadata to OpenRouter:
 
 ```python
 from refpot.agent import AgentConfig

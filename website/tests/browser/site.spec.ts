@@ -193,8 +193,8 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   await expect(page).toHaveURL(/\/reference\/sql-preview\/$/);
   await expect(page.locator('main h1')).toHaveText('Experimental SQL preview');
   const main = page.locator('main');
-  await expect(main).toContainText('included in the 0.1.2 release candidate');
-  await expect(main).toContainText('currently published PyPI version remains 0.1.1');
+  await expect(main).toContainText('included in version 0.1.2');
+  await expect(main).toContainText('requires RefPot 0.1.2 or later');
   await expect(main).toContainText('The existing fixed-schema');
   await expect(main).toContainText('Maintained relations and assertions');
   await expect(main).toContainText('CREATE MATERIALIZED VIEW');
@@ -204,8 +204,8 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   const response = await page.request.get('/docs/reference-sql-preview.md');
   expect(response.ok()).toBeTruthy();
   const markdown = await response.text();
-  expect(markdown).toContain('included in the 0.1.2 release candidate');
-  expect(markdown).toContain('currently published PyPI version remains 0.1.1');
+  expect(markdown).toContain('included in version 0.1.2');
+  expect(markdown).toContain('requires RefPot 0.1.2 or later');
   expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
   expect(markdown).toContain('## Maintained relations and assertions');
   expect(markdown).toContain('CREATE ASSERTION');

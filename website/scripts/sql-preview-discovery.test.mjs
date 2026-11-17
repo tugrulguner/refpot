@@ -39,8 +39,8 @@ test('SQL preview is discoverable without claiming a published package feature',
   assert.match(sidebar, /slug: 'reference\/sql-preview'/);
   assert.match(header, /href="\/reference\/sql-preview\/"[^>]*>Experimental SQL preview<\/a>/);
   assert.match(llms, /\/reference\/sql-preview\//);
-  assert.match(llms, /included in the 0\.1\.2 release candidate/);
-  assert.match(llms, /currently published PyPI version remains 0\.1\.1/);
+  assert.match(llms, /included in version 0\.1\.2/);
+  assert.match(llms, /requires RefPot 0\.1\.2 or later/);
   assert.doesNotMatch(llms, /SQL and ORM are shipped/i);
 });
 
@@ -49,7 +49,7 @@ test('persistent SQL preview exports retain the bounded unpublished contract', a
     const text = await source(path);
     for (const phrase of ['Database(path=None, *, mode="overlay", agent=None)', '64 MiB', '128 MiB',
       'all changed bags', 'before the handle is exposed', 'does not checkpoint',
-      'included in the 0.1.2 release candidate', 'currently published PyPI version remains 0.1.1', 'examples/sql_persistence.py']) {
+      'included in version 0.1.2', 'requires RefPot 0.1.2 or later', 'examples/sql_persistence.py']) {
       assert.ok(text.includes(phrase), `${path}: missing ${phrase}`);
     }
     assert.doesNotMatch(text, /has no persistence|no durable storage/);

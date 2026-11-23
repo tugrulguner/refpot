@@ -26,7 +26,13 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(python).toHaveCount(1);
       await expect(python).toContainText('db.insert(1, 42, "answer")');
       await expect(python.locator('xpath=ancestor::figure').getByRole('button', { name: /copy to clipboard/i })).toHaveCount(1);
-      await expect(page.locator('main h2')).toContainText(['A first database','Current package implementation','Run the shipped CRUD and transaction examples']);
+      await expect(page.locator('main h2')).toContainText(['Try a reservation rule','A first database','Current package implementation','Build with RefPot']);
+      const reservation = page.locator('pre').filter({ hasText: 'from refpot.sql import Database, SQLError' });
+      await expect(reservation).toHaveCount(1);
+      await expect(reservation).toContainText('CREATE ASSERTION capacity');
+      await expect(reservation.locator('xpath=ancestor::figure').getByRole('button', { name: /copy to clipboard/i })).toHaveCount(1);
+      await expect(page.locator('main')).toContainText('Reserved seats: 6');
+      await expect(page.locator('.framework-action.primary')).toBeInViewport();
       await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg?v=alpha-implementation-2');
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveCount(1);
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveAttribute('href','/package/');
@@ -56,6 +62,17 @@ for (const width of [1280, 768, 390, 320]) {
     });
   }
 }
+
+test('new readers can choose SQL or fixed-schema Python from quick start', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('.framework-action.primary').click();
+  await expect(page).toHaveURL(/\/package\/$/);
+  await expect(page.locator('main')).toContainText('Fixed-schema Python API');
+  await page.getByRole('link', { name: 'runnable reservation example' }).click();
+  await expect(page).toHaveURL(/#try-a-reservation-rule$/);
+  await expect(page.getByRole('heading', { name: 'Try a reservation rule' })).toBeInViewport();
+});
 
 test('every layout preserves desktop and compact family navigation with keyboard access', async ({ page }) => {
   for (const width of [1280,320]) {

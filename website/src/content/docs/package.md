@@ -1,10 +1,10 @@
 ---
 title: Package quick start
 slug: package
-description: Install the experimental alpha from PyPI or build from source, then run real CRUD and transaction examples.
+description: Install RefPot and choose the experimental SQL preview or the fixed-schema Python API.
 ---
 
-**Experimental alpha.** RefPot is not a production-qualified database. It contains an early custom C++ redo-and-checkpoint engine with a Python `Database` / `Row` interface. Qualification remains limited.
+**Experimental alpha.** RefPot is not a production-qualified database. It runs a native database engine inside your Python program.
 
 ## Prerequisites and install
 
@@ -21,6 +21,11 @@ uv pip install .
 ```
 
 This builds the package from the current checkout.
+
+## Choose an API
+
+- **SQL preview (0.1.2 or later):** start with `refpot.sql.Database` and the [runnable reservation example](/#try-a-reservation-rule), then use the [SQL reference](/reference/sql-preview/) to explore maintained views, commit rules, and persistence. No model is required for ordinary SQL.
+- **Fixed-schema Python API:** use `refpot.Database` and `Row` to store integer-keyed records. The complete example below uses this API, which has its own storage format and transaction contract.
 
 ## Run a complete program
 

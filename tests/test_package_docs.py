@@ -23,7 +23,7 @@ class PackageDocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, text)
         self.assertIn("below 2×", text)
-        self.assertIn("The overall **2×-over-SQLite goal remains unmet**", text)
+        self.assertIn("The historical **2× SQLite target is retired**", text)
         self.assertIn("row-local effects", text)
         self.assertNotIn("Mutation and diff-scan paths copy maps", text)
         self.assertIn("locally built wheels carrying 0.1.1 metadata", text)

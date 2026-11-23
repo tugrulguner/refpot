@@ -52,7 +52,7 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(page.locator('header .refpot-mark')).toHaveCSS('filter', isDark ? 'none' : 'brightness(0.31)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('color', isDark ? 'rgb(24, 26, 29)' : 'rgb(255, 255, 255)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('background-color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
-      await expect(page.locator('.sl-markdown-content p a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
+      await expect(page.locator('.sl-markdown-content li a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
       expect(measured.overflow).toBe(false);
       expect(measured.creatorTop).toBeGreaterThanOrEqual(measured.actionsBottom);
       expect(measured.creatorBottom).toBeLessThan(900);
@@ -200,7 +200,7 @@ test('package performance report is complete, linked, and downloadable', async (
   await expect(page.locator('nav').getByRole('link', { name: 'Package performance results' })).toHaveAttribute('href', '/project/package-performance/');
 });
 
-test('unreleased SQL preview is labeled and downloadable without implying shipped support', async ({ page }) => {
+test('published SQL preview is labeled experimental and downloadable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/package-contract/');
   await page.getByRole('button', { name: 'Menu', exact: true }).click();

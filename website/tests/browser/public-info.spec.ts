@@ -6,8 +6,8 @@ for (const width of [1280, 390]) {
     await page.goto('/');
     await expect(page).toHaveTitle('Embedded Database for Python | RefPot');
     await expect(page.locator('.framework-art img')).toHaveAttribute('src', '/refpot-lockup.png?v=public-info-1');
-    await expect(page.locator('.framework-art img')).toHaveAttribute('alt', /experimental alpha.*CRUD.*transactions/);
-    await expect(page.locator('.framework-copy')).toContainText('qualification remains limited');
+    await expect(page.locator('.framework-art img')).toHaveAttribute('alt', /RefPot.*native embedded database for Python/);
+    await expect(page.locator('.research-notice')).toContainText('not qualified for production use');
     const graph = await page.locator('script[type="application/ld+json"]').evaluateAll(nodes => nodes.map(node => JSON.parse(node.textContent || '{}')));
     expect(JSON.stringify(graph)).toContain('C++');
     expect(JSON.stringify(graph)).toContain('Python');

@@ -9,13 +9,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_homepage_and_practical_guides_execute_twice(tmp_path):
-    sources = [
-        ROOT / "website/src/content/docs/index.mdx",
-        ROOT / "docs/usage.md",
-    ]
-    count = 0
-    for source in sources:
-        for program in re.findall(r"```python\n(.*?)\n```", source.read_text(), re.S):
+    sources = {
+        ROOT / "website/src/content/docs/index.mdx": 2,
+        ROOT / "docs/usage.md": 4,
+    }
+    for source, expected_count in sources.items():
+        programs = re.findall(r"```python\n(.*?)\n```", source.read_text(), re.S)
+        assert len(programs) == expected_count, source
+        for program in programs:
             compile(program, str(source), "exec")
             for _ in range(2):
                 result = subprocess.run(
@@ -25,8 +26,11 @@ def test_homepage_and_practical_guides_execute_twice(tmp_path):
                     text=True,
                 )
                 assert result.returncode == 0, f"{source}: {result.stderr}"
-            count += 1
-    assert count == 5
+                if "from refpot.sql import Database, SQLError" in program:
+                    assert result.stdout.splitlines() == [
+                        "Booking rejected: capacity is 10",
+                        "Reserved seats: 6",
+                    ]
 
 
 def test_guides_are_task_specific_and_have_complete_programs():

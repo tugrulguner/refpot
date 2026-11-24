@@ -226,7 +226,27 @@ test('published SQL preview is labeled experimental and downloadable', async ({ 
   expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
   expect(markdown).toContain('## Maintained relations and assertions');
   expect(markdown).toContain('CREATE ASSERTION');
+  const examples = ['sql_agent.py', 'sql_agent.py', 'sql_evolution.py', 'sql_maintenance.py', 'sql_persistence.py', 'sql_preview.py'];
+  const links = await main.locator('a[href*="/examples/"]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')!));
+  expect(links.map(link => link.split('/').pop()).sort()).toEqual(examples);
+  for (const link of links) {
+    expect(link).toMatch(/^https:\/\/github\.com\/tugrulguner\/refpot\/blob\/[a-f0-9]{40}\/examples\/sql_\w+\.py$/);
+    expect(markdown).toContain(`](${link})`);
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('agent guidance distinguishes the fixed-schema limits from the SQL preview', async ({ page }) => {
+  await page.goto('/reference/agent-guide/');
+  const main = page.locator('main');
+  const download = await page.request.get('/docs/reference-agent-guide.md');
+  expect(download.ok()).toBe(true);
+  for (const text of [await main.innerText(), await download.text()]) {
+    expect(text).toContain('The historical 2× SQLite target is retired');
+    expect(text).toContain('The fixed-schema API does not support SQL, joins, or public index APIs');
+    expect(text).toContain('The separate SQL preview supports a bounded SQL subset, including one inner join');
+    expect(text).not.toContain('the overall SQLite target is unmet');
+  }
 });
 
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{

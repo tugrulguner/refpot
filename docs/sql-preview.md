@@ -6,7 +6,7 @@ This is a RefPot-owned native execution path, not a SQLite wrapper. It is an int
 
 ## Try the source example
 
-The core example is [`examples/sql_preview.py`](../examples/sql_preview.py). The persistent whole-model example is [`examples/sql_persistence.py`](../examples/sql_persistence.py); it verifies recovered derived state and that capacity and missing-resource assertions remain enforced after reopen. The bounded source-only read-agent example is [`examples/sql_agent.py`](../examples/sql_agent.py); its fixture mode is provider-free by default. See the separate [agent-query evaluation and remaining M2 gates](agent-query-evaluation.md). In a source checkout where the preview extension has been built and is importable, run:
+The [core SQL example](../examples/sql_preview.py) covers basic table changes and reads. The [whole-model persistence example](../examples/sql_persistence.py) verifies recovered derived state and that capacity and missing-resource assertions remain enforced after reopen. The [read-only agent-query example](../examples/sql_agent.py) uses a provider-free fixture by default. See the separate [agent-query evaluation and remaining M2 gates](agent-query-evaluation.md). In a source checkout where the preview extension has been built and is importable, run:
 
 ```sh
 python examples/sql_preview.py
@@ -42,7 +42,7 @@ with Database(agent=config) as db:
 
 `disclose_schema=True` is an explicit opt-in to send the question, authorized relation names, ordered output-column names, and whether each relation is derived to the configured generator. It does not disclose rows, view definitions/private inputs, or database revision. `relations` is an immutable tuple of one to 128 exact catalog names, each at most 64 UTF-8 bytes. An authorized view is a read capability; its underlying inputs are not automatically authorized for direct queries. The configured generator is trusted caller Python: it can block, hang, or perform its own effects; RefPot cannot sandbox or preempt arbitrary callables and promises no hard deadline. Generation is not entered within an active transaction, and refusal preserves that transaction; use explicitly inspected or user-written ordinary SQL when read-your-writes is needed. The native read-only binder checks authorized tables/joins/subqueries and schema freshness regardless of generator output. It rejects mutations and unsupported authority, but binder acceptance is not proof that the SQL reflects user intent.
 
-`explain=True` can inspect the generated query without scanning or mutating. Successful agent results carry immutable generation metadata (`query`, `parameters`, `assumptions`); ordinary SQL results carry `generation=None`. Clarification and decline have distinct typed errors. Provider failures become sanitized `AgentError`; SQL syntax and authority failures remain SQL errors. The fixture-first [`examples/sql_agent.py`](../examples/sql_agent.py) runs without network by default; `--live` is an explicit OpenRouter opt-in. The bounded frontend comparison and unresolved quality gates are in [agent-query evaluation](agent-query-evaluation.md).
+`explain=True` can inspect the generated query without scanning or mutating. Successful agent results carry immutable generation metadata (`query`, `parameters`, `assumptions`); ordinary SQL results carry `generation=None`. Clarification and decline have distinct typed errors. Provider failures become sanitized `AgentError`; SQL syntax and authority failures remain SQL errors. The [fixture-first agent example](../examples/sql_agent.py) runs without network by default; `--live` is an explicit OpenRouter opt-in. The bounded frontend comparison and unresolved quality gates are in [agent-query evaluation](agent-query-evaluation.md).
 
 `OpenRouter(model=..., api_key_env="OPENROUTER_API_KEY", timeout=30, max_tokens=2048)` is a standard-library-only adapter. It accepts a fixed `:free` model, verifies zero prompt/completion prices in the public model catalog, sends zero-price routing ceilings with fallbacks disabled, and requires the response to report the configured model and zero cost before executing its proposal. Catalog/response bodies are capped at 4 MiB/1 MiB; generated JSON content and query strings at 64 KiB. `timeout` is a finite positive socket timeout of at most 120 seconds, not a total wall-clock deadline. `max_tokens` is an integer from one through 2048. There are no automatic retries, SQL repairs, tool calls, or paid fallbacks. Availability and provider-reported billing depend on OpenRouter; fail-closed checks are not an independent billing guarantee. The adapter reads only the named environment variable, not application files or Hermes settings.
 
@@ -219,7 +219,7 @@ The same projection-only form works in ordinary `SELECT`. It cannot be combined 
 another predicate, join, aggregate, grouping, ordering, or limit in that statement.
 Create a named absence view and query it separately for those supported operations.
 Other subqueries remain unsupported. The runnable
-[`examples/sql_maintenance.py`](../examples/sql_maintenance.py) demonstrates both capacity
+[maintained-reservations example](../examples/sql_maintenance.py) demonstrates both capacity
 and missing-resource assertions, including rejection and delete/reinsert repair.
 
 ### Transaction-local propagation

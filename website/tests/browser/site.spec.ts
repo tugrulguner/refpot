@@ -26,7 +26,13 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(python).toHaveCount(1);
       await expect(python).toContainText('db.insert(1, 42, "answer")');
       await expect(python.locator('xpath=ancestor::figure').getByRole('button', { name: /copy to clipboard/i })).toHaveCount(1);
-      await expect(page.locator('main h2')).toContainText(['A first database','Current package implementation','Run the shipped CRUD and transaction examples']);
+      await expect(page.locator('main h2')).toContainText(['Try a reservation rule','A first database','Current package implementation','Build with RefPot']);
+      const reservation = page.locator('pre').filter({ hasText: 'from refpot.sql import Database, SQLError' });
+      await expect(reservation).toHaveCount(1);
+      await expect(reservation).toContainText('CREATE ASSERTION capacity');
+      await expect(reservation.locator('xpath=ancestor::figure').getByRole('button', { name: /copy to clipboard/i })).toHaveCount(1);
+      await expect(page.locator('main')).toContainText('Reserved seats: 6');
+      await expect(page.locator('.framework-action.primary')).toBeInViewport();
       await expect(page.getByRole('link',{name:'Full-size editable SVG'})).toHaveAttribute('href','/refpot-package.svg?v=alpha-implementation-2');
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveCount(1);
       await expect(page.locator('.pagination-links a[rel="next"]')).toHaveAttribute('href','/package/');
@@ -46,7 +52,7 @@ for (const width of [1280, 768, 390, 320]) {
       await expect(page.locator('header .refpot-mark')).toHaveCSS('filter', isDark ? 'none' : 'brightness(0.31)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('color', isDark ? 'rgb(24, 26, 29)' : 'rgb(255, 255, 255)');
       await expect(page.locator('.framework-action.primary')).toHaveCSS('background-color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
-      await expect(page.locator('.sl-markdown-content p a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
+      await expect(page.locator('.sl-markdown-content li a[href="/design/"]')).toHaveCSS('color', isDark ? 'rgb(244, 242, 234)' : 'rgb(73, 81, 94)');
       expect(measured.overflow).toBe(false);
       expect(measured.creatorTop).toBeGreaterThanOrEqual(measured.actionsBottom);
       expect(measured.creatorBottom).toBeLessThan(900);
@@ -56,6 +62,17 @@ for (const width of [1280, 768, 390, 320]) {
     });
   }
 }
+
+test('new readers can choose SQL or fixed-schema Python from quick start', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('.framework-action.primary').click();
+  await expect(page).toHaveURL(/\/package\/$/);
+  await expect(page.locator('main')).toContainText('Fixed-schema Python API');
+  await page.getByRole('link', { name: 'runnable reservation example' }).click();
+  await expect(page).toHaveURL(/#try-a-reservation-rule$/);
+  await expect(page.getByRole('heading', { name: 'Try a reservation rule' })).toBeInViewport();
+});
 
 test('every layout preserves desktop and compact family navigation with keyboard access', async ({ page }) => {
   for (const width of [1280,320]) {
@@ -183,7 +200,7 @@ test('package performance report is complete, linked, and downloadable', async (
   await expect(page.locator('nav').getByRole('link', { name: 'Package performance results' })).toHaveAttribute('href', '/project/package-performance/');
 });
 
-test('unreleased SQL preview is labeled and downloadable without implying shipped support', async ({ page }) => {
+test('published SQL preview is labeled experimental and downloadable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/package-contract/');
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
@@ -209,7 +226,27 @@ test('unreleased SQL preview is labeled and downloadable without implying shippe
   expect(markdown).toContain('from refpot.sql import Database, Result, SQLError');
   expect(markdown).toContain('## Maintained relations and assertions');
   expect(markdown).toContain('CREATE ASSERTION');
+  const examples = ['sql_agent.py', 'sql_agent.py', 'sql_evolution.py', 'sql_maintenance.py', 'sql_persistence.py', 'sql_preview.py'];
+  const links = await main.locator('a[href*="/examples/"]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')!));
+  expect(links.map(link => link.split('/').pop()).sort()).toEqual(examples);
+  for (const link of links) {
+    expect(link).toMatch(/^https:\/\/github\.com\/tugrulguner\/refpot\/blob\/[a-f0-9]{40}\/examples\/sql_\w+\.py$/);
+    expect(markdown).toContain(`](${link})`);
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('agent guidance distinguishes the fixed-schema limits from the SQL preview', async ({ page }) => {
+  await page.goto('/reference/agent-guide/');
+  const main = page.locator('main');
+  const download = await page.request.get('/docs/reference-agent-guide.md');
+  expect(download.ok()).toBe(true);
+  for (const text of [await main.innerText(), await download.text()]) {
+    expect(text).toContain('The historical 2× SQLite target is retired');
+    expect(text).toContain('The fixed-schema API does not support SQL, joins, or public index APIs');
+    expect(text).toContain('The separate SQL preview supports a bounded SQL subset, including one inner join');
+    expect(text).not.toContain('the overall SQLite target is unmet');
+  }
 });
 
 test('Auto follows live OS changes, metadata and the social raster are real',async({page})=>{

@@ -32,7 +32,19 @@ test('SQL preview source links resolve to its public route', async () => {
   assert.match(links, /\['docs\/sql-preview\.md','\/reference\/sql-preview\/'\]/);
 });
 
-test('SQL preview is discoverable without claiming a published package feature', async () => {
+test('the homepage and onboarding state what the published SQL preview can do', async () => {
+  const [home, quick, status, design, method] = await Promise.all([
+    'index.mdx', 'package.md', 'status.md', 'design-direction.md', 'performance-method.md',
+  ].map(path => source(`src/content/docs/${path}`)));
+  assert.match(home, /## Try a reservation rule[\s\S]*?from refpot\.sql import Database, SQLError[\s\S]*?CREATE ASSERTION[\s\S]*?## A first database/);
+  assert.match(quick, /## Choose an API[\s\S]*?refpot\.sql\.Database[\s\S]*?refpot\.Database/);
+  for (const text of [home, status, design]) assert.match(text, /\b0\.1\.2\b/);
+  for (const text of [home, quick, status, design, method, await source('public/llms.txt')]) {
+    assert.doesNotMatch(text, /\bNo SQL\b|SQL and (?:the )?ORM are (?:later )?planned|SQL and ORM are design direction|remains an acceptance (?:target|gate)|is an acceptance target/i);
+  }
+});
+
+test('SQL preview is discoverable with a minimum supported version', async () => {
   const [sidebar, header, llms] = await Promise.all([
     source('astro.config.mjs'), source('src/components/FamilyHeader.astro'), source('public/llms.txt'),
   ]);

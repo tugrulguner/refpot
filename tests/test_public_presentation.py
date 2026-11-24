@@ -20,7 +20,8 @@ def test_homepage_is_category_qualified_and_keeps_alpha_boundary():
     text = (ROOT / "website/src/content/docs/index.mdx").read_text()
     assert "title: Embedded Database for Python" in text
     assert "qualification remains limited" in text
-    assert "SQL, ORM" in text
+    assert "The SQL preview is available starting with 0.1.2" in text
+    assert "ORM and concurrent access are not shipped" in text
     assert "public-info-1" in text
     assert "custom relational engine and simple Python ORM" not in text
 

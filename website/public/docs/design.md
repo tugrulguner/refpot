@@ -1,5 +1,5 @@
 
-The current experimental alpha is a custom C++ engine with Python CRUD and explicit transactions. It is not a SQLite wrapper. SQL and the ORM are later planned work, not current capabilities.
+RefPot is a custom native embedded database for Python. Starting with 0.1.2, it ships a bounded [SQL preview](/reference/sql-preview/) alongside the [fixed-schema Python API](/package-contract/). The ORM and the unified architecture described below remain planned.
 
 ## One semantic execution core
 
@@ -21,6 +21,6 @@ Candidate mechanisms include cache-aware separated key/value layouts, occupancy-
 
 ## Preview and roadmap
 
-The package preview implements CRUD, transactions and snapshot/WAL persistence, with row-local change sets for staging, nonallocating publication after redo synchronization, and row-local replay. Recovery qualification remains in progress. A six-cell actual-package screen exists, but three cells remain below 2× and the overall SQLite goal is unmet; its source revisions are represented by wheels labeled 0.1.1, not release artifacts built from 0.1.2 metadata. See the [roadmap](/project/roadmap/) for open qualification gates and the [performance method](/performance-method/) for evidence requirements.
+The package preview implements CRUD, transactions and snapshot/WAL persistence, with row-local change sets for staging, nonallocating publication after redo synchronization, and row-local replay. Recovery qualification remains in progress. The historical six-cell package screen recorded three cells below the then-used 2× SQLite target. It used locally built wheels carrying 0.1.1 metadata, not 0.1.2 release artifacts. The fixed speed target is no longer a roadmap gate. See the [roadmap](/project/roadmap/) for open qualification gates and the [performance method](/performance-method/) for evidence requirements.
 
 <a class="next-link" href="/performance-method/">Next — Performance qualification method →</a>

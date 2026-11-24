@@ -208,7 +208,7 @@ class ReleaseContractTests(unittest.TestCase):
             self.assertNotIn("not yet published", value)
             self.assertNotIn("current public latest", value)
         self.assertIn("experimental alpha", text)
-        self.assertIn("Qualification remains limited", text)
+        self.assertIn("qualification remains limited", text.lower())
         homepage = (ROOT / "website/src/content/docs/index.mdx").read_text()
         self.assertIn("INSTALL FROM PYPI", homepage)
         self.assertNotIn("SOURCE BUILD", homepage)

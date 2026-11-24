@@ -50,9 +50,8 @@ def test_evidence_is_discoverable_without_erasing_alpha_boundaries():
     home = (ROOT / "website/src/content/docs/index.mdx").read_text()
     for phrase in (
         "Historical benchmark findings",
-        "3.04–5.95×",
         "16/16 losses",
-        "not a package claim",
+        "not a benchmark of the published Python package",
         "/project/benchmarks/",
         "/project/contributing/",
         "/reference/agent-guide/",

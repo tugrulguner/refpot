@@ -164,7 +164,7 @@ is not a differentiator. No SQLite SQL, file-format, or C API compatibility is p
 
 ## Package performance evidence
 
-The actual-package campaign uses the public Python API and prepared SQLite over six workload/size cells. See the canonical [measured results](benchmarks/package-performance/RESULTS.md) and [reproduction guide](benchmarks/package-performance/README.md). Provenance identifies locally built wheels carrying 0.1.1 metadata; these are neither published PyPI 0.1.1 wheels nor a 0.1.2 package artifact. The overall 2× SQLite target remains unmet: three of six measured cells are below 2× (both singleton/batch writes at 1,000 rows and singleton updates at 10,000 rows). Point reads exceed 2× in both sizes, and 10,000-row batch updates exceed 2×; these wins do not satisfy the complete target.
+The actual-package campaign uses the public Python API and prepared SQLite over six workload/size cells. See the canonical [measured results](benchmarks/package-performance/RESULTS.md) and [reproduction guide](benchmarks/package-performance/README.md). Provenance identifies locally built wheels carrying 0.1.1 metadata; these are neither published PyPI 0.1.1 wheels nor a 0.1.2 package artifact. The historical 2× SQLite target is retired; in that comparison, three of six measured cells are below 2× (both singleton/batch writes at 1,000 rows and singleton updates at 10,000 rows). Point reads exceed 2× in both sizes, and 10,000-row batch updates exceed 2×; these scoped results do not establish a general advantage.
 
 ## Community
 

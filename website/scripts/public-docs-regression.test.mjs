@@ -37,7 +37,7 @@ test('roadmap exports preserve proposed unified query examples and all planned m
 });
 test('published evidence uses existing pinned source objects, not mutable main links',async()=>{
  const destinations=new Set();
- for(const name of ['project/benchmarks','project/package-performance','internals/recovery','reference/api']){
+ for(const name of ['project/benchmarks','project/package-performance','internals/recovery','reference/api','reference/sql-preview']){
   const text=await readFile(new URL(`src/content/docs/${name}.md`,root),'utf8');
   assert.doesNotMatch(text,/\]\(https:\/\/github\.com\/tugrulguner\/refpot\/(?:blob|tree)\/main\//);
   for(const match of text.matchAll(/https:\/\/github\.com\/tugrulguner\/refpot\/(?:blob|tree)\/([a-f0-9]{40})\/([^\s)#?]+)/g)) destinations.add(`${match[1]}:${decodeURIComponent(match[2])}`);

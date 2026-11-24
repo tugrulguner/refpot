@@ -15,12 +15,12 @@ Install the latest published alpha with `python -m pip install refpot`. Prebuilt
 
 ## Performance evidence and limits
 
-The actual-package campaign compares the public Python package with prepared SQLite over six cells. See the [canonical measured results](../benchmarks/package-performance/RESULTS.md) and the [reproduction guide](../benchmarks/package-performance/README.md). Provenance identifies locally built wheels carrying 0.1.1 metadata; these are neither published PyPI 0.1.1 wheels nor a 0.1.2 package artifact. Three of the six cells remain below 2×; the overall 2× SQLite target is unmet. The 10,000-row batch-update and both point-read cells exceed 2×, but those wins do not satisfy the complete target.
+The actual-package campaign compares the public Python package with prepared SQLite over six cells. See the [canonical measured results](../benchmarks/package-performance/RESULTS.md) and the [reproduction guide](../benchmarks/package-performance/README.md). Provenance identifies locally built wheels carrying 0.1.1 metadata; these are neither published PyPI 0.1.1 wheels nor a 0.1.2 package artifact. Three of the six cells fell below the historical 2× SQLite target, which is no longer an acceptance gate. The 10,000-row batch-update and both point-read cells exceed 2×, but those scoped wins do not establish a general advantage.
 
 Historical experimental update-harness results are separate: 3.04–5.95× belongs only to that harness, and the historical reopen comparison remains 16/16 losses. Neither should be conflated with package results.
 
 ## Boundaries and remaining work
 
-No SQL, ORM, concurrent-reader or multiwriter support, Windows support, existing-format compatibility, independent physical replicas, or physical power-loss qualification is claimed. Recovery accepts incomplete unacknowledged tails as discarded, rejects complete corrupt transactions with both copies corrupt, and bounds each snapshot/WAL to 64 MiB. Uncertain writes poison the writer. See the [package contract](package-contract.md) for detail.
+The fixed-schema API does not accept SQL; the [separate SQL preview](sql-preview.md) is included starting with 0.1.2. No ORM, concurrent-reader or multiwriter support, Windows support, existing-format compatibility, independent physical replicas, or physical power-loss qualification is claimed. Recovery accepts incomplete unacknowledged tails as discarded, rejects complete corrupt transactions with both copies corrupt, and bounds each snapshot/WAL to 64 MiB. Uncertain writes poison the writer. See the [package contract](package-contract.md) for detail.
 
 Open gates include failure/recovery qualification, installed-artifact and platform verification, sustained and broader package-performance testing, and qualification of release artifacts. No broad roadmap milestone is implied complete; tagging and publication require separate explicit approval.

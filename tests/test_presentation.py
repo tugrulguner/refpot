@@ -137,27 +137,28 @@ class PresentationTests(unittest.TestCase):
             'href="https://github.com/tugrulguner/refpot">GitHub',
             "Created by Tugrul Guner",
             'class="installation-strip"',
-            "Try the experimental alpha",
+            "Install RefPot",
+            'class="research-notice"',
+            'class="project-demo"',
+            "Try a reservation rule",
+            "python reservations.py",
             "A first database",
-            "Install RefPot with",
+            "python first_database.py",
             'class="package-architecture"',
-            "Run the shipped CRUD and transaction examples",
-            "python examples/crud.py",
-            "Package contract and qualification",
+            "Build with RefPot",
             "Planned architecture — not shipped",
-            "Next — Quick start",
         ]
         positions = [page.index(marker) for marker in markers]
         self.assertEqual(positions, sorted(positions))
-        self.assertLess(positions[-1], page.rindex("(/package/)"))
+        self.assertIn("next: { label: Quick start, link: /package/ }", page)
         self.assertIn('href="/refpot-package.svg?v=alpha-implementation-2"', page)
         self.assertIn('href="/package-contract/"', page)
         self.assertIn("experimental alpha", page)
-        self.assertIn("Check PyPI for the latest published version", page)
-        self.assertIn("SQL and ORM are design direction, not shipped functionality", page)
+        self.assertIn("The SQL preview is available starting with 0.1.2", page)
+        self.assertIn("ORM and concurrent access are not shipped", page)
         self.assertNotIn("<iframe", page.lower())
         self.assertNotIn("Playground", page)
-        self.assertIn("native package; this site does not simulate database execution", page)
+        self.assertIn("ordinary SQL and no model", page)
 
     def test_package_route_and_agent_export_expose_actual_commands(self):
         quick = (ROOT / "website/src/content/docs/package.md").read_text()
@@ -186,7 +187,7 @@ class PresentationTests(unittest.TestCase):
     def test_planned_boundary_and_unreleased_design_visual(self):
         text = (ROOT / "README.md").read_text()
         self.assertIn("experimental alpha", text)
-        self.assertIn("overall 2× SQLite target remains unmet", text)
+        self.assertIn("historical 2× SQLite target is retired", text)
         diagram = ET.parse(ROOT / "docs/assets/refpot-execution.svg").getroot()
         labels = " ".join(diagram.itertext())
         self.assertIn("Planned architecture", labels)

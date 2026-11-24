@@ -42,6 +42,23 @@ int main() {
     for(auto mode:{Mode::Overlay,Mode::Modular}) {
         Definition left;left.name="left";left.op="source";left.width=2;
         Definition right=left;right.name="right";
+        Definition grouped;grouped.name="grouped";grouped.op="group";grouped.input="right";
+        grouped.key=0;grouped.value_column=1;
+        Definition keyed;keyed.name="keyed";keyed.op="join";keyed.left="left";keyed.right="grouped";
+        keyed.left_key=1;keyed.right_key=0;
+        Model grouped_join({left,right,grouped,keyed},{},mode);
+        grouped_join.apply({{"insert","right",{7,3},0}});
+        grouped_join.prepare({{"insert","left",{9,8},0}},false);
+        // Both operands change in this statement; the join must see the new
+        // group output and account for the cross term exactly once.
+        grouped_join.append({{"update","right",{7,9},0},{"insert","left",{1,7},0}},false);
+        assert((grouped_join.preview().at("keyed")==Bag{{{1,7,7,9,1},1}}));
+        grouped_join.append({{"delete","right",{},7},{"insert","left",{2,7},0}},false);
+        assert(grouped_join.preview().at("keyed").empty());
+        grouped_join.append({{"insert","right",{7,6},0}},false);
+        grouped_join.commit();
+        assert((grouped_join.bag("keyed")==Bag{{{1,7,7,6,1},1},{{2,7,7,6,1},1}}));
+
         Model bounded({left,right},{},mode);
         std::vector<Mutation> batch;
         for(int i=0;i<1001;++i)batch.push_back({"insert","left",{i,0},0});

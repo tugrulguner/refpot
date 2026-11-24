@@ -211,7 +211,21 @@ class Model {
             };
             // dL*newR + newL*dR - dL*dR: uses current candidate inputs,
             // including simultaneous deletion and self-join cross terms exactly once.
-            for(const auto& a:local(d.left))visible(c,d.right,[&](const Row& b,I bc){pair(a.first,a.second,b,bc);return true;},&c.stats);
+            const auto& left_delta=local(d.left);
+            if(!left_delta.empty()) {
+                const auto& right=defs_.at(index_.at(d.right));
+                // Only sources and groups guarantee a single unit-weight row per
+                // column-zero key. Look up newR, not just the committed right bag.
+                if(d.right_key==0&&(right.op=="source"||right.op=="group")) {
+                    for(const auto& a:left_delta) {
+                        maintenance_step(c.stats,1,true); // One lookup, not each tree comparison.
+                        if(const Row* b=source_row(c,d.right,a.first[d.left_key]))
+                            pair(a.first,a.second,*b,1);
+                    }
+                } else {
+                    for(const auto& a:left_delta)visible(c,d.right,[&](const Row& b,I bc){pair(a.first,a.second,b,bc);return true;},&c.stats);
+                }
+            }
             if(!local(d.right).empty())visible(c,d.left,[&](const Row& a,I ac){for(const auto& b:local(d.right))pair(a,ac,b.first,b.second);return true;},&c.stats);
             for(const auto& a:local(d.left))for(const auto& b:local(d.right))pair(a.first,-a.second,b.first,b.second);
             for(const auto& x:wide)add(x.first,detail::checked(x.second));

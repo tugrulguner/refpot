@@ -1,11 +1,132 @@
 """Installed public API checks for maintained SQL relations."""
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from refpot.sql import Database, SQLError
 
 
 class MaintainedSQLTests(unittest.TestCase):
+    def test_staged_capacity_join_does_not_scan_unrelated_rooms(self):
+        for mode in ("overlay", "modular"):
+            with self.subTest(mode=mode):
+                work = []
+                for rooms in (1, 128):
+                    with Database(mode=mode) as db:
+                        room_rows = tuple((room, 10) for room in range(1, rooms + 1))
+                        db.execute(
+                            "CREATE TABLE rooms (id INTEGER PRIMARY KEY, cap INTEGER NOT NULL)"
+                        )
+                        db.execute(
+                            "CREATE TABLE bookings (id INTEGER PRIMARY KEY, "
+                            "room INTEGER NOT NULL, seats INTEGER NOT NULL)"
+                        )
+                        with db.transaction():
+                            for row in room_rows:
+                                db.execute("INSERT INTO rooms VALUES (?, ?)", row)
+                            db.execute("INSERT INTO bookings VALUES (1, 1, 6)")
+                        db.execute(
+                            "CREATE MATERIALIZED VIEW usage AS SELECT room, SUM(seats) AS total "
+                            "FROM bookings GROUP BY room"
+                        )
+                        db.execute(
+                            "CREATE MATERIALIZED VIEW over_capacity AS SELECT u.room, u.total, r.cap "
+                            "FROM usage AS u JOIN rooms AS r ON u.room = r.id WHERE u.total > r.cap"
+                        )
+                        db.execute(
+                            "CREATE ASSERTION capacity_ok CHECK (NOT EXISTS (SELECT * FROM over_capacity))"
+                        )
+
+                        def check_state(expected_bookings, total, db=db, room_rows=room_rows):
+                            self.assertEqual(
+                                db.execute("SELECT * FROM rooms ORDER BY id").rows, room_rows
+                            )
+                            self.assertEqual(
+                                db.execute("SELECT * FROM bookings ORDER BY id").rows,
+                                expected_bookings,
+                            )
+                            self.assertEqual(db.execute("SELECT * FROM usage").rows, ((1, total),))
+                            self.assertEqual(
+                                db.execute("SELECT * FROM over_capacity").rows,
+                                ((1, total, 10),) if total > 10 else (),
+                            )
+
+                        db.execute("BEGIN")
+                        # The first write prepares the candidate; measure the next
+                        # write, which uses statement-delta join maintenance.
+                        db.execute("INSERT INTO bookings VALUES (2, 1, 1)")
+                        check_state(((1, 1, 6), (2, 1, 1)), 7)
+                        before = db.stats()["maintenance_steps"]
+                        db.execute("INSERT INTO bookings VALUES (3, 1, 4)")
+                        work.append(db.stats()["maintenance_steps"] - before)
+                        check_state(((1, 1, 6), (2, 1, 1), (3, 1, 4)), 11)
+                        with self.assertRaisesRegex(SQLError, "required-empty"):
+                            db.execute("COMMIT")
+                        check_state(((1, 1, 6),), 6)
+                self.assertGreater(work[0], 0)
+                self.assertEqual(work[0], work[1], f"staged work at 1 vs 128 rooms: {work}")
+
+    def test_keyed_join_reads_staged_right_rows_without_collapsing_fallback_bags(self):
+        for mode in ("overlay", "modular"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "joins"
+                with Database(path, mode=mode) as db:
+                    db.execute("CREATE TABLE rooms (id INTEGER PRIMARY KEY, cap INTEGER NOT NULL)")
+                    db.execute(
+                        "CREATE TABLE bookings (id INTEGER PRIMARY KEY, room INTEGER NOT NULL)"
+                    )
+                    db.execute("INSERT INTO rooms VALUES (1, 10)")
+                    db.execute("INSERT INTO rooms VALUES (2, 10)")
+                    db.execute("CREATE MATERIALIZED VIEW caps AS SELECT cap FROM rooms")
+                    db.execute(
+                        "CREATE MATERIALIZED VIEW matched AS SELECT b.id, r.cap "
+                        "FROM bookings AS b JOIN rooms AS r ON b.room = r.id"
+                    )
+                    db.execute(
+                        "CREATE MATERIALIZED VIEW by_value AS SELECT b.id, r.id AS room "
+                        "FROM bookings AS b JOIN rooms AS r ON b.room = r.cap"
+                    )
+                    db.execute(
+                        "CREATE MATERIALIZED VIEW by_bag AS SELECT b.id, c.cap "
+                        "FROM bookings AS b JOIN caps AS c ON b.room = c.cap"
+                    )
+                    db.execute("BEGIN")
+                    db.execute("INSERT INTO bookings VALUES (5, -1)")
+                    db.execute("INSERT INTO bookings VALUES (1, 10)")
+                    self.assertEqual(db.execute("SELECT * FROM matched").rows, ())
+                    self.assertEqual(
+                        db.execute("SELECT * FROM by_value ORDER BY room").rows, ((1, 1), (1, 2))
+                    )
+                    self.assertEqual(db.execute("SELECT * FROM by_bag").rows, ((1, 10), (1, 10)))
+                    db.execute("ROLLBACK")
+                    self.assertEqual(db.execute("SELECT * FROM bookings").rows, ())
+                    self.assertEqual(db.execute("SELECT * FROM by_bag").rows, ())
+                    with db.transaction():
+                        db.execute("UPDATE rooms SET cap = 11 WHERE id = 1")
+                        db.execute("DELETE FROM rooms WHERE id = 2")
+                        db.execute("INSERT INTO bookings VALUES (2, 1)")
+                        db.execute("INSERT INTO bookings VALUES (3, 2)")
+                        self.assertEqual(db.execute("SELECT * FROM matched").rows, ((2, 11),))
+                        db.execute("INSERT INTO rooms VALUES (2, 22)")
+                        self.assertEqual(
+                            db.execute("SELECT * FROM matched ORDER BY id").rows, ((2, 11), (3, 22))
+                        )
+                with Database(path, mode=mode) as db:
+                    self.assertEqual(
+                        db.execute("SELECT * FROM matched ORDER BY id").rows, ((2, 11), (3, 22))
+                    )
+                    db.checkpoint()
+                with Database(path, mode=mode) as db:
+                    self.assertEqual(
+                        db.execute("SELECT * FROM matched ORDER BY id").rows, ((2, 11), (3, 22))
+                    )
+                    db.execute("INSERT INTO bookings VALUES (4, 2)")
+                    self.assertEqual(
+                        db.execute("SELECT * FROM matched ORDER BY id").rows,
+                        ((2, 11), (3, 22), (4, 22)),
+                    )
+
     def test_declared_group_tracks_candidate_changes_and_rollback(self):
         for mode in ("overlay", "modular"):
             with self.subTest(mode=mode), Database(mode=mode) as db:

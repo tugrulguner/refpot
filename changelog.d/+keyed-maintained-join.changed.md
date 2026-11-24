@@ -1,0 +1,1 @@
+Reuse existing key lookups when maintaining equality joins against a table primary key or a grouped relation’s key. Joins without a unique right-side key still preserve all matching rows and their multiplicities.

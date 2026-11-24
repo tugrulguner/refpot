@@ -219,8 +219,11 @@ class PackageDocumentationTests(unittest.TestCase):
         self.assertIn("skills/refpot-database/SKILL.md", agents)
         self.assertIn("latest published package", skill)
         self.assertIn("physical power-loss", skill.lower())
-        self.assertIn("initial six-cell performance screen", skill)
-        self.assertIn("overall SQLite target is unmet", skill)
+        self.assertIn("six-cell performance screen against prepared SQLite", skill)
+        self.assertIn("The historical 2× SQLite target is retired", skill)
+        self.assertIn("The fixed-schema API does not support SQL, joins", skill)
+        self.assertIn("The separate SQL preview supports a bounded SQL subset", skill)
+        self.assertNotIn("overall SQLite target is unmet", skill)
         self.assertIn(
             "installable [RefPot database skill](https://github.com/tugrulguner/refpot/blob/main/skills/refpot-database/SKILL.md)",
             (ROOT / "README.md").read_text(),

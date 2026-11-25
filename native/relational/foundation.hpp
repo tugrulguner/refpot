@@ -259,16 +259,30 @@ class Model {
                 if(keys.count(row[d.left_key]))add(row,-count);
                 return true;
             },&c.stats);
-            std::set<I> present;
-            visible(c,d.right,[&](const Row& row,I) {
-                if(keys.count(row[d.right_key]))present.insert(row[d.right_key]);
-                return true;
-            },&c.stats);
-            visible(c,d.left,[&](const Row& row,I count) {
-                const I key=row[d.left_key];
-                if(keys.count(key)&&!present.count(key))add(row,count);
-                return true;
-            },&c.stats);
+            if(d.right_key==0&&defs_.at(index_.at(d.right)).op=="source") {
+                // Old output was removed using all affected keys. Keep only
+                // keys absent from the statement's new right-hand input.
+                for(auto key=keys.begin();key!=keys.end();) {
+                    maintenance_step(c.stats,1,true);
+                    if(source_row(c,d.right,*key))key=keys.erase(key);
+                    else ++key;
+                }
+                if(!keys.empty())visible(c,d.left,[&](const Row& row,I count) {
+                    if(keys.count(row[d.left_key]))add(row,count);
+                    return true;
+                },&c.stats);
+            } else {
+                std::set<I> present;
+                visible(c,d.right,[&](const Row& row,I) {
+                    if(keys.count(row[d.right_key]))present.insert(row[d.right_key]);
+                    return true;
+                },&c.stats);
+                visible(c,d.left,[&](const Row& row,I count) {
+                    const I key=row[d.left_key];
+                    if(keys.count(key)&&!present.count(key))add(row,count);
+                    return true;
+                },&c.stats);
+            }
         }
         __int128 row_change=0;
         auto& canonical_delta=c.changes.at(d.name);

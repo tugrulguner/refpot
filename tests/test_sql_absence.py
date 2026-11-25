@@ -8,6 +8,48 @@ from refpot.sql import Database, SQLError
 
 
 class AbsenceSQLTests(unittest.TestCase):
+    def test_appended_booking_with_existing_room_skips_unrelated_rows(self):
+        for mode in ("overlay", "modular"):
+            with self.subTest(mode=mode):
+                work = []
+                for size in (1, 128):
+                    with Database(mode=mode) as db:
+                        db.execute("CREATE TABLE rooms (id INTEGER PRIMARY KEY)")
+                        db.execute(
+                            "CREATE TABLE bookings (id INTEGER PRIMARY KEY, room INTEGER NOT NULL)"
+                        )
+                        with db.transaction():
+                            for room in range(1, size + 1):
+                                db.execute("INSERT INTO rooms VALUES (?)", (room,))
+                                db.execute("INSERT INTO bookings VALUES (?, ?)", (room, room))
+                        db.execute(
+                            "CREATE MATERIALIZED VIEW missing AS SELECT b.id, b.room "
+                            "FROM bookings AS b WHERE NOT EXISTS "
+                            "(SELECT * FROM rooms AS r WHERE r.id = b.room)"
+                        )
+                        db.execute(
+                            "CREATE ASSERTION valid_rooms CHECK (NOT EXISTS (SELECT * FROM missing))"
+                        )
+                        db.execute("BEGIN")
+                        # The first mutation prepares the transaction; the second appends to it.
+                        db.execute("INSERT INTO bookings VALUES (500, 1)")
+                        before = db.stats()["maintenance_steps"]
+                        db.execute("INSERT INTO bookings VALUES (501, 1)")
+                        work.append(db.stats()["maintenance_steps"] - before)
+                        seed = tuple((room, room) for room in range(1, size + 1))
+                        self.assertEqual(
+                            db.execute("SELECT * FROM bookings ORDER BY id").rows,
+                            (*seed, (500, 1), (501, 1)),
+                        )
+                        self.assertEqual(db.execute("SELECT * FROM missing").rows, ())
+                        db.execute("ROLLBACK")
+                        self.assertEqual(
+                            db.execute("SELECT * FROM bookings ORDER BY id").rows, seed
+                        )
+                        self.assertEqual(db.execute("SELECT * FROM missing").rows, ())
+                self.assertGreater(work[0], 0)
+                self.assertEqual(work[0], work[1], f"unrelated-room work: {work}")
+
     def test_missing_resource_rejects_commit_but_allows_repair(self):
         for mode in ("overlay", "modular"):
             with self.subTest(mode=mode), Database(mode=mode) as db:

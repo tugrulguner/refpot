@@ -43,6 +43,25 @@ static void correlated_view_tracks_presence() {
     }
 }
 
+static void appended_mixed_keys_track_candidate_presence() {
+    using namespace refpot::foundation;
+    for(auto mode:{Mode::Overlay,Mode::Modular}) {
+        Definition bookings; bookings.name="bookings"; bookings.op="source"; bookings.width=2;
+        Definition rooms=bookings; rooms.name="rooms";
+        Definition missing; missing.name="missing"; missing.op="anti";
+        missing.left="bookings"; missing.right="rooms"; missing.left_key=1; missing.right_key=0;
+        Model model({bookings,rooms,missing},{},mode);
+        model.apply({{"insert","bookings",{1,7},0},{"insert","rooms",{7,1},0},{"insert","rooms",{8,1},0}});
+        model.prepare({{"insert","bookings",{2,8},0}},false);
+        model.append({{"delete","rooms",{},7},{"insert","bookings",{3,7},0},{"insert","bookings",{4,8},0}},false);
+        assert((model.preview().at("missing")==Bag{{{1,7},1},{{3,7},1}}));
+        model.append({{"insert","rooms",{7,2},0},{"delete","bookings",{},3}},false);
+        assert(model.preview().at("missing").empty());
+        model.commit();
+        assert(model.bag("missing").empty());
+    }
+}
+
 static void ordinary_select_and_alias_binding() {
     Database db;
     db.execute("CREATE TABLE entries (id INTEGER PRIMARY KEY, parent INTEGER NOT NULL)");
@@ -126,6 +145,7 @@ static void rejects_unsupported_correlations_and_nonmutation() {
 
 int main() {
     correlated_view_tracks_presence();
+    appended_mixed_keys_track_candidate_presence();
     ordinary_select_and_alias_binding();
     derived_bag_duplicates_and_populated_declaration();
     final_state_assertion_repair_and_rejection();

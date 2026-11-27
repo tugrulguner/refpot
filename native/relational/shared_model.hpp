@@ -101,6 +101,12 @@ public:
         return model_->bag(target);
     }
     template<class F>void scan(const std::string& name,bool candidate,F fn) const{model_->scan(plan_.logical_to_physical.at(name),candidate,std::move(fn));}
+    bool has_leading_key(const std::string& name) const {
+        return model_->has_leading_key(plan_.logical_to_physical.at(name));
+    }
+    template<class F>void scan_key(const std::string& name,foundation::I key,F fn) const {
+        model_->scan_key(plan_.logical_to_physical.at(name),key,std::move(fn));
+    }
     void commit(){model_->commit();}
     struct LogicalChanges {
         const SharedModel& owner;

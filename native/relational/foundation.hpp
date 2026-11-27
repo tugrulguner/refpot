@@ -774,6 +774,24 @@ public:
         }
     }
     bool has_prepared() const noexcept { return static_cast<bool>(active_); }
+    bool has_leading_key(const std::string& name) const {
+        const auto& d=defs_.at(index_.at(name));
+        if(d.op=="source"||d.op=="group")return true;
+        // SQL projects a group to its public columns. Keeping the group key
+        // first still guarantees one row per key, even if aggregates are omitted.
+        return d.op=="map"&&!d.exprs.empty()&&d.exprs.front().size()==1&&d.exprs.front().front()=="c0"&&
+               defs_.at(index_.at(d.input)).op=="group";
+    }
+    // Requires a leading key; borrow the row only for the callback lifetime.
+    template<class F> void scan_key(const std::string& name,I key,F fn) const {
+        if(active_) {
+            if(const Row* row=source_row(*active_,name,key))fn(*row,1);
+        } else {
+            const auto& bag=state_.at(name);
+            const auto row=bag.lower_bound(Row{key});
+            if(row!=bag.end()&&row->first[0]==key)fn(row->first,row->second);
+        }
+    }
     std::uint64_t active_candidate_entries() const noexcept {
         if (!active_) return 0;
         std::uint64_t n=0;

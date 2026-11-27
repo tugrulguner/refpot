@@ -214,6 +214,17 @@ private:
         throw std::invalid_argument("unknown table: "+name);
     }
     template<class F> void scan(std::size_t n,F fn)const {model_->scan(tables_[n].name,model_->has_prepared(),fn);}
+    std::optional<I> point_key(std::size_t n,const std::vector<Predicate>& where) const {
+        if(where.size()!=1)return std::nullopt;
+        const auto& p=where.front();
+        if(p.column!=0||p.right_column||p.operation!=relational::Comparison::Equal)return std::nullopt;
+        if(tables_[n].derived&&!model_->has_leading_key(tables_[n].name))return std::nullopt;
+        return p.value;
+    }
+    template<class F>void scan_bound(std::size_t n,std::optional<I> key,F fn) const {
+        if(key)model_->scan_key(tables_[n].name,*key,std::move(fn));
+        else scan(n,std::move(fn));
+    }
     std::size_t bind(const syntax::Ref& r,const std::vector<Source>& sources)const {
         std::optional<std::size_t> result;
         for(const auto& s:sources) {
@@ -522,6 +533,9 @@ private:
                 }
             }
         }
+        const auto key=(!joined&&!absence&&!aggregate&&!group&&!authorized_relations_)
+            ?point_key(sources[0].table,where):std::nullopt;
+        if(key)result.plan.replace(0,4,"KEY_LOOKUP");
         if(explain)return result;
         Budget budget;
         struct Accumulator {I count=0;std::vector<relational::Aggregate> sums;};
@@ -547,7 +561,7 @@ private:
                 for(I n=0;n<multiplicity;++n){budget.step();result.rows.push_back(projected);}
             }
         };
-        scan(sources[0].table,[&](const Row& a,I ac) {
+        scan_bound(sources[0].table,key,[&](const Row& a,I ac) {
             budget.step();if(ac<=0)throw std::logic_error("invalid relation multiplicity");
             if(joined)scan(sources[1].table,[&](const Row& b,I bc) {
                 budget.step();if(bc<=0)throw std::logic_error("invalid relation multiplicity");
@@ -652,9 +666,11 @@ private:
             std::vector<Source> sources{{n,name,0}};std::vector<std::pair<std::size_t,I>> assignments;
             if(!del){p.need("set");do {auto c=bind(p.ref(),sources);if(c==0)throw std::invalid_argument("primary key is immutable");p.need("=");I value=p.value();for(const auto& a:assignments)if(a.first==c)throw std::invalid_argument("duplicate assignment");assignments.emplace_back(c,value);}while(p.match(","));}
             auto where=predicates(p,sources);p.end();result.plan=del?"DELETE source scan":"UPDATE source scan";
+            const auto key=point_key(n,where);
+            if(key)result.plan=del?"DELETE source KEY_LOOKUP":"UPDATE source KEY_LOOKUP";
             if(explain)return result;
             std::vector<foundation::Mutation> mutations;Budget budget;
-            scan(n,[&](const Row& row,I){budget.step();if(matches(row,where)) {
+            scan_bound(n,key,[&](const Row& row,I){budget.step();if(matches(row,where)) {
                 if(mutations.size()>=10000)throw std::runtime_error("mutation limit exceeded");
                 foundation::Mutation m;m.op=del?"delete":"update";m.table=name;m.key=row[0];
                 if(!del){m.row=row;for(const auto& [c,v]:assignments)m.row[c]=v;}

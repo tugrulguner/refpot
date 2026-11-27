@@ -2,11 +2,87 @@
 
 import importlib.util
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 
 class SQLPackageTests(unittest.TestCase):
+    def test_point_access_uses_the_candidate_key_for_reads_and_mutations(self):
+        from refpot.sql import Database
+
+        for mode in ("overlay", "modular"):
+            with self.subTest(mode=mode), Database(mode=mode) as db:
+                db.execute("CREATE TABLE stock (id INTEGER PRIMARY KEY, units INTEGER NOT NULL)")
+                with db.transaction():
+                    for key in range(128):
+                        db.execute("INSERT INTO stock VALUES (?, ?)", (key, key))
+                db.execute(
+                    "CREATE MATERIALIZED VIEW totals AS SELECT id, SUM(units) AS total FROM stock GROUP BY id"
+                )
+                before = db.stats()["predicate_tests"]
+                db.execute("BEGIN")
+                self.assertEqual(db.execute("SELECT units FROM stock WHERE id = 63").rows, ((63,),))
+                self.assertEqual(
+                    db.execute("UPDATE stock SET units = 90 WHERE id = ?", (63,)).affected, 1
+                )
+                rows = db.execute("SELECT t.total AS amount FROM totals AS t WHERE t.id = ?", (63,))
+                self.assertEqual((rows.columns, rows.rows), (("amount",), ((90,),)))
+                self.assertEqual(db.execute("DELETE FROM stock WHERE id = 63").affected, 1)
+                self.assertEqual(db.execute("SELECT * FROM stock WHERE id = 63").rows, ())
+                self.assertEqual(db.execute("SELECT * FROM totals WHERE id = 63").rows, ())
+                self.assertEqual(
+                    db.execute("UPDATE stock SET units = 80 WHERE id = 63").affected, 0
+                )
+                db.execute("ROLLBACK")
+                self.assertEqual(db.execute("SELECT units FROM stock WHERE id = 63").rows, ((63,),))
+                self.assertLessEqual(db.stats()["predicate_tests"] - before, 5)
+
+    def test_point_access_preserves_scan_fallbacks_and_reopen(self):
+        from refpot.sql import Database, SQLError
+
+        for mode in ("overlay", "modular"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "stock"
+                with Database(path, mode=mode) as db:
+                    db.execute(
+                        "CREATE TABLE stock (id INTEGER PRIMARY KEY, units INTEGER NOT NULL)"
+                    )
+                    db.execute("INSERT INTO stock VALUES (-1, 4)")
+                    db.execute("INSERT INTO stock VALUES (0, 4)")
+                    db.execute("CREATE MATERIALIZED VIEW counts AS SELECT units FROM stock")
+                    db.execute(
+                        "CREATE MATERIALIZED VIEW reversed AS SELECT SUM(units) AS total, id FROM stock GROUP BY id"
+                    )
+                    self.assertEqual(
+                        db.execute("SELECT * FROM counts WHERE units = 4").rows, ((4,), (4,))
+                    )
+                    self.assertEqual(
+                        db.execute("SELECT id FROM reversed WHERE total = 4 ORDER BY id").rows,
+                        ((-1,), (0,)),
+                    )
+                    self.assertEqual(
+                        db.execute("SELECT * FROM stock WHERE id = 0 AND units = 5").rows, ()
+                    )
+                    self.assertEqual(db.execute("SELECT * FROM stock WHERE id = units").rows, ())
+                    self.assertIn(
+                        "KEY_LOOKUP",
+                        db.execute("DELETE FROM stock WHERE id = -1", explain=True).plan,
+                    )
+                    self.assertEqual(
+                        db.execute("SELECT units FROM stock WHERE id = -1").rows, ((4,),)
+                    )
+                    with self.assertRaisesRegex(SQLError, "primary key is immutable"):
+                        db.execute("UPDATE stock SET id = 2 WHERE id = 0")
+                    db.execute("UPDATE stock SET units = 8 WHERE id = 0")
+                with Database(path, mode=mode) as db:
+                    self.assertEqual(
+                        db.execute("SELECT units FROM stock WHERE id = 0").rows, ((8,),)
+                    )
+                    self.assertEqual(db.execute("DELETE FROM stock WHERE id = -1").affected, 1)
+                    self.assertEqual(db.execute("SELECT * FROM stock WHERE id = -1").rows, ())
+
     def test_public_volatile_sql_entry_point(self):
         self.assertIsNotNone(
             importlib.util.find_spec("refpot.sql"), "packaged SQL preview is missing"

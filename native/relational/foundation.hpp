@@ -347,8 +347,24 @@ class Model {
                 }
             };
             // delta_left * old_right + new_left * delta_right includes cross terms once.
-            for (const auto& a:delta(d.left))
-                for (const auto& b:state_.at(d.right)) pair(a.first,a.second,b.first,b.second);
+            if (!delta(d.left).empty()) {
+                const auto& right=defs_.at(index_.at(d.right));
+                const auto& old_right=state_.at(d.right);
+                // Use committed rows here, even if the right candidate has changed.
+                if (d.right_key==0&&(right.op=="source"||right.op=="group")) {
+                    Row key(1);
+                    for (const auto& a:delta(d.left)) {
+                        maintenance_step(c.stats,1,true);
+                        key[0]=a.first[d.left_key];
+                        const auto b=old_right.lower_bound(key);
+                        if (b!=old_right.end()&&b->first[0]==key[0])
+                            pair(a.first,a.second,b->first,b->second);
+                    }
+                } else {
+                    for (const auto& a:delta(d.left))
+                        for (const auto& b:old_right) pair(a.first,a.second,b.first,b.second);
+                }
+            }
             // Avoid scanning new_left when delta_right is empty, in both modes.
             if (!delta(d.right).empty()) visible(c,d.left,[&](const Row& a,I ac) {
                 for (const auto& b:delta(d.right)) pair(a,ac,b.first,b.second);
@@ -356,22 +372,26 @@ class Model {
             },&c.stats);
             for (const auto& x:wide) add(x.first,detail::checked(x.second));
         } else if (d.op=="group") {
-            std::set<I> keys;
-            for (const auto& x:delta(d.input)) { maintenance_step(c.stats); keys.insert(x.first[d.key]); }
-            for (I key:keys) {
-                for (const auto& x:prior) {
-                    maintenance_step(c.stats);
-                    if (x.first[0]==key) add(x.first,-x.second);
-                }
-                relational::Aggregate aggregate;
-                visible(c,d.input,[&](const Row& row,I multiplicity) {
-                    maintenance_step(c.stats);
-                    if (row[d.key]==key) {
-                        aggregate.add(row[d.value_column],multiplicity);
-                    }
-                    return true;
-                },&c.stats);
-                if (aggregate.count) add(Row{key,aggregate.value(),aggregate.count},1);
+            struct Effect { __int128 sum=0,count=0; };
+            std::map<I,Effect> effects;
+            for (const auto& x:delta(d.input)) {
+                maintenance_step(c.stats);
+                auto& effect=effects[x.first[d.key]];
+                effect.sum+=static_cast<__int128>(x.first[d.value_column])*x.second;
+                effect.count+=x.second;
+            }
+            Row lookup(1);
+            for (const auto& entry:effects) {
+                maintenance_step(c.stats,1,true);
+                const I key=entry.first;
+                lookup[0]=key;
+                const auto it=prior.lower_bound(lookup);
+                const Row* old=it!=prior.end()&&it->first[0]==key?&it->first:nullptr;
+                const __int128 count=(old?(*old)[2]:0)+entry.second.count;
+                const __int128 sum=(old?(*old)[1]:0)+entry.second.sum;
+                if (old) add(*old,-1);
+                if (count<0) throw std::logic_error("negative aggregate count");
+                if (count) add({key,detail::checked(sum),detail::checked(count)},1);
             }
         } else if (d.op=="anti") {
             std::set<I> keys;
@@ -396,8 +416,9 @@ class Model {
             }
         }
         // Check logical rows, not just distinct tuples, before any consumer/publication.
-        __int128 rows=0;
-        for(const auto& x:prior){maintenance_step(c.stats);rows+=x.second;}
+        // The group's count is still the committed count until this node is installed.
+        __int128 rows=d.op=="group"?c.row_counts.at(d.name):0;
+        if (d.op!="group") for(const auto& x:prior){maintenance_step(c.stats);rows+=x.second;}
         for (const auto& x:out) {
             maintenance_step(c.stats);rows+=x.second;
             auto old=prior.find(x.first);

@@ -8,7 +8,7 @@ from refpot.sql import Database, SQLError
 
 
 class MaintainedSQLTests(unittest.TestCase):
-    def test_staged_capacity_join_does_not_scan_unrelated_rooms(self):
+    def test_capacity_join_does_not_scan_unrelated_rooms(self):
         for mode in ("overlay", "modular"):
             with self.subTest(mode=mode):
                 work = []
@@ -53,19 +53,21 @@ class MaintainedSQLTests(unittest.TestCase):
                             )
 
                         db.execute("BEGIN")
-                        # The first write prepares the candidate; measure the next
-                        # write, which uses statement-delta join maintenance.
+                        before = db.stats()["maintenance_steps"]
                         db.execute("INSERT INTO bookings VALUES (2, 1, 1)")
+                        initial_work = db.stats()["maintenance_steps"] - before
                         check_state(((1, 1, 6), (2, 1, 1)), 7)
                         before = db.stats()["maintenance_steps"]
                         db.execute("INSERT INTO bookings VALUES (3, 1, 4)")
-                        work.append(db.stats()["maintenance_steps"] - before)
+                        work.append((initial_work, db.stats()["maintenance_steps"] - before))
                         check_state(((1, 1, 6), (2, 1, 1), (3, 1, 4)), 11)
                         with self.assertRaisesRegex(SQLError, "required-empty"):
                             db.execute("COMMIT")
                         check_state(((1, 1, 6),), 6)
-                self.assertGreater(work[0], 0)
-                self.assertEqual(work[0], work[1], f"staged work at 1 vs 128 rooms: {work}")
+                self.assertTrue(all(value > 0 for value in work[0]))
+                self.assertEqual(
+                    work[0], work[1], f"initial and appended work at 1 vs 128 rooms: {work}"
+                )
 
     def test_keyed_join_reads_staged_right_rows_without_collapsing_fallback_bags(self):
         for mode in ("overlay", "modular"):
@@ -126,6 +128,39 @@ class MaintainedSQLTests(unittest.TestCase):
                         db.execute("SELECT * FROM matched ORDER BY id").rows,
                         ((2, 11), (3, 22), (4, 22)),
                     )
+
+    def test_first_group_update_does_not_rescan_unaffected_input(self):
+        for mode in ("overlay", "modular"):
+            with self.subTest(mode=mode):
+                steps = []
+                for groups in (1, 128):
+                    with Database(mode=mode) as db:
+                        db.execute(
+                            "CREATE TABLE lines (id INTEGER PRIMARY KEY, basket INTEGER NOT NULL, units INTEGER NOT NULL)"
+                        )
+                        with db.transaction():
+                            for i in range(groups):
+                                db.execute("INSERT INTO lines VALUES (?, ?, 3)", (i, i))
+                        db.execute(
+                            "CREATE MATERIALIZED VIEW totals AS SELECT basket, SUM(units) AS total, COUNT(*) AS n FROM lines GROUP BY basket"
+                        )
+                        db.execute("BEGIN")
+                        before = db.stats()["maintenance_steps"]
+                        db.execute("UPDATE lines SET units = 5 WHERE id = 0")
+                        steps.append(db.stats()["maintenance_steps"] - before)
+                        self.assertEqual(
+                            db.execute("SELECT * FROM totals ORDER BY basket").rows,
+                            tuple((i, 5 if i == 0 else 3, 1) for i in range(groups)),
+                        )
+                        db.execute("ROLLBACK")
+                        self.assertEqual(
+                            db.execute("SELECT * FROM totals ORDER BY basket").rows,
+                            tuple((i, 3, 1) for i in range(groups)),
+                        )
+                # Source staging still scans once. The group stage must not
+                # add further full-population passes on top of that work.
+                if mode == "overlay":
+                    self.assertLessEqual(steps[1] - steps[0], 127, steps)
 
     def test_declared_group_tracks_candidate_changes_and_rollback(self):
         for mode in ("overlay", "modular"):

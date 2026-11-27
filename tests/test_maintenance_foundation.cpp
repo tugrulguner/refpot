@@ -48,6 +48,10 @@ int main() {
         keyed.left_key=1;keyed.right_key=0;
         Model grouped_join({left,right,grouped,keyed},{},mode);
         grouped_join.apply({{"insert","right",{7,3},0}});
+        grouped_join.prepare({{"update","right",{7,9},0},{"insert","left",{1,7},0}},false);
+        assert((grouped_join.preview().at("keyed")==Bag{{{1,7,7,9,1},1}}));
+        grouped_join.rollback();
+        assert(grouped_join.bag("keyed").empty());
         grouped_join.prepare({{"insert","left",{9,8},0}},false);
         // Both operands change in this statement; the join must see the new
         // group output and account for the cross term exactly once.

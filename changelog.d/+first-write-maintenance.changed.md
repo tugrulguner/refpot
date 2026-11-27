@@ -1,0 +1,1 @@
+Maintain grouped totals from affected input changes on the first write, and use existing keys for the committed side of eligible maintained joins.
